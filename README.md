@@ -28,13 +28,13 @@ _But go-message-queue is message queue, not pub/sub model._
 
 #### components
 
-| Component | Features |
-| ------ | ------ |
-| Publisher | * Message push to Topic |
-| Topic | * Recieve publish Message<br/> * Save Message to datastor<br/> * Transport Message to Subscription |
-| Datastore | * Save and mutex Message<br/> * Selectable backend storage |
-| Subscription | * Recieve Subscriber pull request<br/> * Push Message to Subscriber |
-| Subscriber | * Register some Subscription<br/>* Pull message from Subscription<br/>* Receive push Message from Subscription<br/> * Return ack response to Subscription|
+| Component    | Features                                                                                                                                                  |
+| ------       | ------                                                                                                                                                    |
+| Publisher    | * Message push to Topic                                                                                                                                   |
+| Topic        | * Recieve publish Message<br/> * Save Message to datastor<br/> * Transport Message to Subscription                                                        |
+| Datastore    | * Save and mutex Message<br/> * Selectable backend storage                                                                                                |
+| Subscription | * Recieve Subscriber pull request<br/> * Push Message to Subscriber                                                                                       |
+| Subscriber   | * Register some Subscription<br/>* Pull message from Subscription<br/>* Receive push Message from Subscription<br/> * Return ack response to Subscription |
 
 #### message flow
 
@@ -46,7 +46,28 @@ _But go-message-queue is message queue, not pub/sub model._
 6. Subscriber ack response
 7. When Subscription received ack response, delete message
 
-#### options
+#### API
 
-# TODO: refs by https://cloud.google.com/pubsub/docs/publisher#pubsub-publish-message-protocol
-#       write options Topic, Subscription...
+* Topic
+
+| Method             | URL                                   |
+| ------             | ------                                |
+| create             | PUT:    `/topic/{name}`               |
+| delete             | DELETE: `/topic/{name}`               |
+| get                | GET:    `/topic/{name}`               |
+| list               | GET:    `/topic/list`                 |
+| list subscriptions | GET:    `/topic/{name}/subscriptions` |
+| publish            | POST:   `/topic/{name}/publish`       |
+
+* Subscription
+
+| Method             | URL                                        |
+| ------             | ------                                     |
+| ack                | POST:   `/subscription/{name}/ack`         |
+| create             | PUT:    `/subscription/{name}`             |
+| delete             | DELETE: `/subscription/{name}`             |
+| get(subscription)  | GET:    `/subscription/{name}`             |
+| pull(message)      | POST:   `/subscription/{name}/pull`        |
+| modify ack config  | POST:   `/subscription/{name}/ack/modify`  |
+| modify push config | POST:   `/subscription/{name}/push/modify` |
+| list               | GET:    `/subscription/list`               |
