@@ -82,6 +82,7 @@ func (t *Topic) Delete() {
 
 // Message store backend storage and delivery to Subscription
 func (t *Topic) Publish(m Message) error {
+	// TODO: make unique message id
 	err := t.store.Set("", m)
 	if err != nil {
 		return errors.Wrapf(err, "failed store message")

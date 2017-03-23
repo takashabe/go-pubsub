@@ -5,26 +5,6 @@ import (
 	"testing"
 )
 
-type DummyDatastore struct{}
-
-func setupGlobal() {
-	GlobalTopics = newTopics()
-}
-
-func dummyTopic(name string) *Topic {
-	return &Topic{
-		name: name,
-	}
-}
-
-func dummyTopics(args ...string) *topics {
-	m := newTopics()
-	for _, a := range args {
-		m.Set(dummyTopic(a))
-	}
-	return m
-}
-
 func TestNewTopic(t *testing.T) {
 	cases := []struct {
 		inputs       []string
@@ -34,16 +14,16 @@ func TestNewTopic(t *testing.T) {
 		{
 			[]string{"a", "b"},
 			nil,
-			dummyTopics("a", "b"),
+			helper.dummyTopics("a", "b"),
 		},
 		{
 			[]string{"a", "a"},
 			ErrAlreadyExistTopic,
-			dummyTopics("a"),
+			helper.dummyTopics("a"),
 		},
 	}
 	for i, c := range cases {
-		setupGlobal()
+		helper.setupGlobal()
 		var err error
 		for _, s := range c.inputs {
 			// expect last input return value equal expectErr
@@ -60,16 +40,16 @@ func TestNewTopic(t *testing.T) {
 
 func TestGetTopic(t *testing.T) {
 	// make test topics
-	setupGlobal()
-	GlobalTopics.Set(dummyTopic("a"))
-	GlobalTopics.Set(dummyTopic("b"))
+	helper.setupGlobal()
+	GlobalTopics.Set(helper.dummyTopic("a"))
+	GlobalTopics.Set(helper.dummyTopic("b"))
 
 	cases := []struct {
 		input       string
 		expectTopic *Topic
 		expectErr   error
 	}{
-		{"a", dummyTopic("a"), nil},
+		{"a", helper.dummyTopic("a"), nil},
 		{"c", nil, ErrNotFoundTopic},
 	}
 	for i, c := range cases {
@@ -90,14 +70,14 @@ func TestDelete(t *testing.T) {
 		expect     *topics
 	}{
 		{
-			dummyTopics("a", "b"),
-			dummyTopic("a"),
-			dummyTopics("b"),
+			helper.dummyTopics("a", "b"),
+			helper.dummyTopic("a"),
+			helper.dummyTopics("b"),
 		},
 		{
-			dummyTopics("a", "b"),
-			dummyTopic("c"),
-			dummyTopics("a", "b"),
+			helper.dummyTopics("a", "b"),
+			helper.dummyTopic("c"),
+			helper.dummyTopics("a", "b"),
 		},
 	}
 	for i, c := range cases {
@@ -122,7 +102,7 @@ func TestPublish(t *testing.T) {
 		},
 	}
 	for i, c := range cases {
-		topic := dummyTopic("a")
+		topic := helper.dummyTopic("a")
 		topic.store = newTestDatastore()
 		topic.subscriptions = []Subscription{}
 		got := topic.Publish(c.input)
