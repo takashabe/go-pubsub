@@ -40,7 +40,7 @@ _But go-message-queue is message queue, not pub/sub model. To be a simple!!_
 
 #### quickstart
 
-_When do not specify created component(topic, subscription), Default topic used._
+_When do not specify created component(topic, subscription), Default component used._
 
 1. Publish Message
 2. Pull Message
