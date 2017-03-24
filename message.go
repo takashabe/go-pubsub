@@ -18,17 +18,17 @@ type Message struct {
 	Data        []byte
 	Attributes  *Attributes
 	Topic       *Topic
-	sends       *sendSubscriptions
+	acks        *acks
 	PublishedAt time.Time
 }
 
-// sendSubscriptions repsents Subscriptions and Ack map.
-type sendSubscriptions struct {
+// acks repsents Subscriptions and Ack map.
+type acks struct {
 	list map[string]bool
 	mu   sync.Mutex
 }
 
-func (s *sendSubscriptions) ack(id string) {
+func (s *acks) ack(id string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -39,7 +39,7 @@ func (s *sendSubscriptions) ack(id string) {
 	s.list[id] = true
 }
 
-func (s *sendSubscriptions) add(id string) {
+func (s *acks) add(id string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -93,7 +93,7 @@ func (m *MessageList) Ack(subID, messID string) {
 
 	for _, v := range m.list {
 		if v.ID == messID {
-			v.sends.ack(subID)
+			v.acks.ack(subID)
 			return
 		}
 	}
