@@ -16,7 +16,7 @@ var (
 type Message struct {
 	ID          string
 	Data        []byte
-	Attributes  Attributes
+	Attributes  *Attributes
 	Topic       *Topic
 	sends       *sendSubscriptions
 	PublishedAt time.Time
@@ -63,27 +63,13 @@ func (m *MessageList) Append(message *Message) {
 	m.list = append(m.list, message)
 }
 
-// Get a message
-func (m *MessageList) Get() (*Message, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	if len(m.list) == 0 {
-		return nil, ErrEmptyMessage
-	}
-
-	ret := m.list[0]
-	m.list = m.list[1:]
-	return ret
-}
-
 // Get some messages
 func (m *MessageList) GetRange(size int) ([]*Message, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	var ret []Message
-	maxLen = len(m.list)
+	var ret []*Message
+	maxLen := len(m.list)
 	if maxLen == 0 {
 		return nil, ErrEmptyMessage
 	}
@@ -91,7 +77,7 @@ func (m *MessageList) GetRange(size int) ([]*Message, error) {
 	// non error, when request over size
 	if maxLen < size {
 		ret = m.list[:]
-		m.list = m.list[maxLen]
+		m.list = m.list[maxLen:]
 		return ret, nil
 	}
 

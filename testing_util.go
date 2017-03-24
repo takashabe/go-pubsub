@@ -35,7 +35,7 @@ func newTestDatastore() *testDatastore {
 	return &testDatastore{}
 }
 
-func (d *testDatastore) Set(key string, value Message) error {
+func (d *testDatastore) Set(m Message) error {
 	return nil
 }
 

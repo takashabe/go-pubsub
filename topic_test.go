@@ -93,19 +93,19 @@ func TestDelete(t *testing.T) {
 // TODO: integration datastore and subscription
 func TestPublish(t *testing.T) {
 	cases := []struct {
-		input     Message
+		inputData []byte
+		inputAttr map[string]string
 		expectErr error
 	}{
 		{
-			Message{},
-			nil,
+			[]byte(""), nil, nil,
 		},
 	}
 	for i, c := range cases {
 		topic := helper.dummyTopic("a")
 		topic.store = newTestDatastore()
 		topic.subscriptions = []Subscription{}
-		got := topic.Publish(c.input)
+		got := topic.Publish(c.inputData, c.inputAttr)
 		if got != c.expectErr {
 			t.Errorf("%#d: want %v, got %v", i, c.expectErr, got)
 		}

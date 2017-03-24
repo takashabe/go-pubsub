@@ -83,12 +83,19 @@ func (t *Topic) Delete() {
 
 // Message store backend storage and delivery to Subscription
 func (t *Topic) Publish(data []byte, attributes map[string]string) error {
-	m := &Message{
-		ID:            makeMessageID(),
-		Data:          data,
-		Attributes:    newAttributes(attributes),
-		Subscriptions: t.subscriptions,
-		PublishedAt:   time.Now(),
+	acks := &sendSubscriptions{
+		list: make(map[string]bool),
+	}
+	for _, sub := range t.subscriptions {
+		acks.add(sub.name)
+	}
+
+	m := Message{
+		ID:          makeMessageID(),
+		Data:        data,
+		Attributes:  newAttributes(attributes),
+		sends:       acks,
+		PublishedAt: time.Now(),
 	}
 	err := t.store.Set(m)
 	if err != nil {
@@ -96,7 +103,8 @@ func (t *Topic) Publish(data []byte, attributes map[string]string) error {
 	}
 
 	for _, s := range t.subscriptions {
-		s.Subscribe(m)
+		// TODO: need pointer?
+		s.Subscribe(&m)
 	}
 	return nil
 }

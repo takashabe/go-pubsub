@@ -5,7 +5,7 @@ import "time"
 type Subscription struct {
 	name       string
 	topic      *Topic
-	messages   MessageList
+	messages   *MessageList
 	ackTimeout time.Duration
 	push       *Push
 }
@@ -29,8 +29,18 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 }
 
 // Receive Message from Topic
-func (s *Subscription) Subscribe(m Message) {
-	s.messages.Set(m)
+func (s *Subscription) Subscribe(m *Message) {
+	s.messages.Append(m)
+}
+
+// Deliver Message
+func (s *Subscription) Pull(size int) ([]*Message, error) {
+	messages, err := s.messages.GetRange(size)
+	if err != nil {
+		return nil, err
+	}
+
+	return messages, nil
 }
 
 // Succeed Message delivery. remove sent Message.
