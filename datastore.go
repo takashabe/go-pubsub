@@ -6,8 +6,8 @@ import (
 )
 
 type Datastore interface {
-	Set(key string, value Message) error
-	Get(key string) (Message, error)
+	Set(m Message) error
+	Get(id string) (Message, error)
 }
 
 // Load backend datastore from cnofiguration json file.

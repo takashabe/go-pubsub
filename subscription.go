@@ -30,11 +30,14 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 
 // Receive Message from Topic
 func (s *Subscription) Subscribe(m Message) {
+	s.messages.Set(m)
 }
 
 // Succeed Message delivery. remove sent Message.
 func (s *Subscription) Ack(ids ...string) {
-
+	for _, id := range ids {
+		s.messages.Ack(s.name, id)
+	}
 }
 
 // Set Ack timeout, arg time expect millisecond.

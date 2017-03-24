@@ -2,6 +2,7 @@ package queue
 
 import (
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -81,9 +82,15 @@ func (t *Topic) Delete() {
 }
 
 // Message store backend storage and delivery to Subscription
-func (t *Topic) Publish(m Message) error {
-	// TODO: make unique message id
-	err := t.store.Set("", m)
+func (t *Topic) Publish(data []byte, attributes map[string]string) error {
+	m := &Message{
+		ID:            makeMessageID(),
+		Data:          data,
+		Attributes:    newAttributes(attributes),
+		Subscriptions: t.subscriptions,
+		PublishedAt:   time.Now(),
+	}
+	err := t.store.Set(m)
 	if err != nil {
 		return errors.Wrapf(err, "failed store message")
 	}
