@@ -35,7 +35,7 @@ func TestNewSubscription(t *testing.T) {
 				ackTimeout: 0,
 				push: &Push{
 					endpoint: testUrl(t, "localhost:8080"),
-					attributes: &pushAttributes{
+					attributes: &Attributes{
 						attr: map[string]string{"key": "value"},
 					},
 				},
