@@ -45,6 +45,7 @@ func TestAck(t *testing.T) {
 			map[string]string{
 				"a": "foo",
 				"b": "bar",
+				"z": "foo",
 			},
 			dummyMessageList(
 				&Message{
