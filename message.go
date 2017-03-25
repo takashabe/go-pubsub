@@ -50,7 +50,7 @@ func makeMessageID() string {
 	return uuid.NewV1().String()
 }
 
-// MessageList is Message slice.
+// MessageList is Message slice as queue.
 type MessageList struct {
 	list []*Message
 	mu   sync.Mutex
