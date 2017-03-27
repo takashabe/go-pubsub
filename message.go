@@ -4,97 +4,138 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/k0kubun/pp"
 	"github.com/satori/go.uuid"
 )
 
-// Message errors
-var (
-	ErrEmptyMessage = errors.New("empty message")
+type messageState int
+
+const (
+	_ messageState = iota
+	stateWait
+	stateDeliver
+	stateAck
 )
 
+func (s messageState) String() string {
+	switch s {
+	case stateWait:
+		return "Waiting"
+	case stateDeliver:
+		return "Delivered"
+	case stateAck:
+		return "Ack"
+	default:
+		return "Non define"
+	}
+}
+
+// Message is data object
 type Message struct {
 	ID          string
+	Topic       Topic
 	Data        []byte
 	Attributes  *Attributes
-	Topic       *Topic
-	acks        *acks
+	States      *states
 	PublishedAt time.Time
-}
-
-// acks repsents Subscriptions and Ack map.
-type acks struct {
-	list map[string]bool
-	mu   sync.Mutex
-}
-
-func (s *acks) ack(id string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if _, ok := s.list[id]; !ok {
-		// NOP
-		return
-	}
-	s.list[id] = true
-}
-
-func (s *acks) add(id string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.list[id] = false
+	DeliveredAt time.Time
 }
 
 func makeMessageID() string {
 	return uuid.NewV1().String()
 }
 
-// MessageList is Message slice as queue.
-type MessageList struct {
-	list []*Message
-	mu   sync.Mutex
+func NewMessage(id string, topic Topic, data []byte, attr map[string]string, subs map[string]Subscription) *Message {
+	m := &Message{
+		ID:         id,
+		Data:       data,
+		Attributes: newAttributes(attr),
+		Topic:      topic,
+		States: &states{
+			list: make(map[string]messageState),
+		},
+		PublishedAt: time.Now(),
+	}
+	for _, sub := range subs {
+		m.States.add(sub.name)
+	}
+	return m
 }
 
-// Append message to list
-func (m *MessageList) Append(message *Message) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.list = append(m.list, message)
+func (m *Message) Ack(subID string) {
+	m.States.ack(subID)
 }
 
-// Get some messages
-func (m *MessageList) GetRange(size int) ([]*Message, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	var ret []*Message
-	maxLen := len(m.list)
-	if maxLen == 0 {
-		return nil, ErrEmptyMessage
+func (m *Message) Deliver(subID string) {
+	// TODO: need DeliveredAt in each Subscriptions?
+	if m.States.deliver(subID) {
+		m.DeliveredAt = time.Now()
+		pp.Println("update time")
+		pp.Println(m)
 	}
-
-	// non error, when request over size
-	if maxLen < size {
-		ret = m.list[:]
-		m.list = m.list[maxLen:]
-		return ret, nil
-	}
-
-	ret = m.list[:size]
-	m.list = m.list[size:]
-	return ret, nil
 }
 
-func (m *MessageList) Ack(subID, messID string) {
-	// TODO: too slow
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	for _, v := range m.list {
-		if v.ID == messID {
-			v.acks.ack(subID)
-			return
-		}
+func (m *Message) Readable(id string, timeout time.Duration) bool {
+	pp.Println(m)
+	state, ok := m.States.get(id)
+	if !ok {
+		return false
 	}
+
+	if state == stateWait {
+		return true
+	}
+	// not readable between deliver and ack
+	if state == stateDeliver {
+		return time.Now().Sub(m.DeliveredAt) > timeout
+	}
+	return false
+}
+
+// states repsents Subscriptions and Ack map.
+type states struct {
+	list map[string]messageState
+	mu   sync.RWMutex
+}
+
+func (s *states) ack(id string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	state, ok := s.list[id]
+	if !ok || state != stateDeliver {
+		return false
+	}
+	s.list[id] = stateAck
+	return true
+}
+
+func (s *states) deliver(id string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	pp.Println(id)
+	state, ok := s.list[id]
+	if !ok || state != stateWait {
+		pp.Println("not deliver")
+		return false
+	}
+	s.list[id] = stateDeliver
+	pp.Println("done deliver")
+	return true
+}
+
+func (s *states) add(id string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.list[id] = stateWait
+}
+
+func (s *states) get(id string) (messageState, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	state, ok := s.list[id]
+	return state, ok
 }

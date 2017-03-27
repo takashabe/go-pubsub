@@ -3,6 +3,8 @@ package queue
 import (
 	"reflect"
 	"testing"
+
+	"github.com/k0kubun/pp"
 )
 
 func TestNewTopic(t *testing.T) {
@@ -14,12 +16,12 @@ func TestNewTopic(t *testing.T) {
 		{
 			[]string{"a", "b"},
 			nil,
-			helper.dummyTopics("a", "b"),
+			helper.dummyTopics(t, "a", "b"),
 		},
 		{
 			[]string{"a", "a"},
 			ErrAlreadyExistTopic,
-			helper.dummyTopics("a"),
+			helper.dummyTopics(t, "a"),
 		},
 	}
 	for i, c := range cases {
@@ -27,13 +29,14 @@ func TestNewTopic(t *testing.T) {
 		var err error
 		for _, s := range c.inputs {
 			// expect last input return value equal expectErr
-			_, err = NewTopic(s, nil)
+			_, err = NewTopic(s, newTestDatastore())
 		}
 		if err != c.expectErr {
 			t.Errorf("%#d: want %v, got %v", i, c.expectErr, err)
 		}
 		if !reflect.DeepEqual(GlobalTopics, c.expectTopics) {
 			t.Errorf("%#d: want %v, got %v", i, c.expectTopics, GlobalTopics)
+			pp.Println(GlobalTopics, "\n", c.expectTopics)
 		}
 	}
 }
@@ -41,15 +44,15 @@ func TestNewTopic(t *testing.T) {
 func TestGetTopic(t *testing.T) {
 	// make test topics
 	helper.setupGlobal()
-	GlobalTopics.Set(helper.dummyTopic("a"))
-	GlobalTopics.Set(helper.dummyTopic("b"))
+	GlobalTopics.Set(helper.dummyTopic(t, "a"))
+	GlobalTopics.Set(helper.dummyTopic(t, "b"))
 
 	cases := []struct {
 		input       string
 		expectTopic *Topic
 		expectErr   error
 	}{
-		{"a", helper.dummyTopic("a"), nil},
+		{"a", helper.dummyTopic(t, "a"), nil},
 		{"c", nil, ErrNotFoundTopic},
 	}
 	for i, c := range cases {
@@ -70,14 +73,14 @@ func TestDelete(t *testing.T) {
 		expect     *topics
 	}{
 		{
-			helper.dummyTopics("a", "b"),
-			helper.dummyTopic("a"),
-			helper.dummyTopics("b"),
+			helper.dummyTopics(t, "a", "b"),
+			helper.dummyTopic(t, "a"),
+			helper.dummyTopics(t, "b"),
 		},
 		{
-			helper.dummyTopics("a", "b"),
-			helper.dummyTopic("c"),
-			helper.dummyTopics("a", "b"),
+			helper.dummyTopics(t, "a", "b"),
+			helper.dummyTopic(t, "c"),
+			helper.dummyTopics(t, "a", "b"),
 		},
 	}
 	for i, c := range cases {
@@ -102,9 +105,8 @@ func TestPublish(t *testing.T) {
 		},
 	}
 	for i, c := range cases {
-		topic := helper.dummyTopic("a")
+		topic := helper.dummyTopic(t, "a")
 		topic.store = newTestDatastore()
-		topic.subscriptions = []Subscription{}
 		got := topic.Publish(c.inputData, c.inputAttr)
 		if got != c.expectErr {
 			t.Errorf("%#d: want %v, got %v", i, c.expectErr, got)
