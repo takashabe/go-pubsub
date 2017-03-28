@@ -34,7 +34,7 @@ func LoadDatastore(path string) (Datastore, error) {
 // Datastore driver at "in memory"
 type Memory struct {
 	messages map[string]Message
-	mu       sync.Mutex
+	mu       sync.RWMutex
 }
 
 // Create memory object
@@ -55,8 +55,8 @@ func (m *Memory) Set(item Message) error {
 
 // Get message from memory
 func (m *Memory) Get(id string) (Message, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 
 	item, ok := m.messages[id]
 	if !ok {
