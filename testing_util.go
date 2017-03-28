@@ -104,10 +104,14 @@ func newTestDatastore() *testDatastore {
 	return &testDatastore{}
 }
 
-func (d *testDatastore) Set(m Message) error {
+func (d *testDatastore) Set(key, value interface{}) error {
 	return nil
 }
 
-func (d *testDatastore) Get(key string) (Message, error) {
-	return Message{}, nil
+func (d *testDatastore) Get(key interface{}) (interface{}, error) {
+	return nil, nil
+}
+
+func (d *testDatastore) Delete(key interface{}) error {
+	return nil
 }

@@ -13,9 +13,11 @@ var (
 	ErrNotFoundMessage = errors.New("not found entry")
 )
 
+// Datastore is behavior like Key-Value store
 type Datastore interface {
-	Set(m Message) error
-	Get(id string) (Message, error)
+	Set(key, value interface{}) error
+	Get(key interface{}) (interface{}, error)
+	Delete(key interface{}) error
 }
 
 // Load backend datastore from cnofiguration json file.
@@ -33,34 +35,43 @@ func LoadDatastore(path string) (Datastore, error) {
 
 // Datastore driver at "in memory"
 type Memory struct {
-	messages map[string]Message
-	mu       sync.RWMutex
+	store map[interface{}]interface{}
+	mu    sync.RWMutex
 }
 
 // Create memory object
 func NewMemory() *Memory {
 	return &Memory{
-		messages: make(map[string]Message),
+		store: make(map[interface{}]interface{}),
 	}
 }
 
-// Save message to memory
-func (m *Memory) Set(item Message) error {
+// Save item
+func (m *Memory) Set(key, value interface{}) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.messages[item.ID] = item
+	m.store[key] = value
 	return nil
 }
 
-// Get message from memory
-func (m *Memory) Get(id string) (Message, error) {
+// Get item
+func (m *Memory) Get(key interface{}) (interface{}, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	item, ok := m.messages[id]
+	item, ok := m.store[key]
 	if !ok {
-		return Message{}, errors.Wrapf(ErrNotFoundMessage, fmt.Sprintf("id=%s", id))
+		return nil, errors.Wrapf(ErrNotFoundMessage, fmt.Sprintf("key=%s", key))
 	}
 	return item, nil
+}
+
+// Delete item
+func (m *Memory) Delete(key interface{}) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	delete(m.store, key)
+	return nil
 }

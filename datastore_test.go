@@ -13,13 +13,13 @@ func TestSet(t *testing.T) {
 
 	cases := []struct {
 		inputMsgs []Message
-		expect    map[string]Message
+		expect    map[interface{}]interface{}
 	}{
 		{
 			[]Message{
 				msgA, msgA, msgB,
 			},
-			map[string]Message{
+			map[interface{}]interface{}{
 				"a": msgA, "b": msgB,
 			},
 		},
@@ -27,9 +27,9 @@ func TestSet(t *testing.T) {
 	for i, c := range cases {
 		m := NewMemory()
 		for _, v := range c.inputMsgs {
-			m.Set(v)
+			m.Set(v.ID, v)
 		}
-		if got := m.messages; !reflect.DeepEqual(got, c.expect) {
+		if got := m.store; !reflect.DeepEqual(got, c.expect) {
 			t.Errorf("#%d: want %v, got %v", i, c.expect, got)
 		}
 	}
@@ -39,12 +39,12 @@ func TestGet(t *testing.T) {
 	msgA := Message{ID: "a"}
 	msgB := Message{ID: "b"}
 	baseStore := Memory{
-		messages: map[string]Message{"a": msgA, "b": msgB},
+		store: map[interface{}]interface{}{"a": msgA, "b": msgB},
 	}
 
 	cases := []struct {
 		input     string
-		expectMsg Message
+		expectMsg interface{}
 		expectErr error
 	}{
 		{
@@ -54,7 +54,7 @@ func TestGet(t *testing.T) {
 		},
 		{
 			"c",
-			Message{},
+			nil,
 			ErrNotFoundMessage,
 		},
 	}

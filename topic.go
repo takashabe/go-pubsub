@@ -118,7 +118,7 @@ func (t *Topic) Publish(data []byte, attributes map[string]string) error {
 	defer t.mu.RUnlock()
 
 	m := NewMessage(makeMessageID(), *t, data, attributes, t.subscriptions)
-	err := t.store.Set(*m)
+	err := t.store.Set(m.ID, m)
 	if err != nil {
 		return errors.Wrapf(err, "failed store message")
 	}
