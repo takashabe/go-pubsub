@@ -19,7 +19,7 @@ var GlobalTopics *topics = newTopics()
 
 type topics struct {
 	topics map[string]*Topic
-	mu     sync.Mutex
+	mu     sync.RWMutex
 }
 
 func newTopics() *topics {
@@ -29,8 +29,8 @@ func newTopics() *topics {
 }
 
 func (ts *topics) Get(key string) (*Topic, bool) {
-	ts.mu.Lock()
-	defer ts.mu.Unlock()
+	ts.mu.RLock()
+	defer ts.mu.RUnlock()
 	t, ok := ts.topics[key]
 	return t, ok
 }
@@ -58,7 +58,7 @@ type Topic struct {
 	name          string
 	store         Datastore
 	subscriptions map[string]Subscription
-	mu            sync.Mutex
+	mu            sync.RWMutex
 }
 
 // Create topic, if not exist already topic name in GlobalTopics
@@ -114,9 +114,8 @@ func (t *Topic) AddSubscription(s Subscription) error {
 
 // Message store backend storage and delivery to Subscription
 func (t *Topic) Publish(data []byte, attributes map[string]string) error {
-	// TODO: improve use to sync.RWMutex, because write to t.subscriptions only AddSubscription()
-	t.mu.Lock()
-	defer t.mu.Unlock()
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 
 	m := NewMessage(makeMessageID(), *t, data, attributes, t.subscriptions)
 	err := t.store.Set(*m)
@@ -125,7 +124,6 @@ func (t *Topic) Publish(data []byte, attributes map[string]string) error {
 	}
 
 	for _, s := range t.subscriptions {
-		// TODO: need pointer?
 		s.Subscribe(m)
 	}
 	return nil
