@@ -1,10 +1,11 @@
 package queue
 
 import (
+	"fmt"
+	"strings"
 	"sync"
 	"time"
 
-	"github.com/k0kubun/pp"
 	"github.com/satori/go.uuid"
 )
 
@@ -70,32 +71,34 @@ func (m *Message) Deliver(subID string) {
 	// TODO: need DeliveredAt in each Subscriptions?
 	if m.States.deliver(subID) {
 		m.DeliveredAt = time.Now()
-		pp.Println("update time")
-		pp.Println(m)
 	}
 }
 
 func (m *Message) Readable(id string, timeout time.Duration) bool {
-	pp.Println(m)
 	state, ok := m.States.get(id)
-	if !ok {
+	if !ok || state == stateAck {
 		return false
 	}
 
-	if state == stateWait {
-		return true
-	}
 	// not readable between deliver and ack
 	if state == stateDeliver {
 		return time.Now().Sub(m.DeliveredAt) > timeout
 	}
-	return false
+	return true
 }
 
 // states repsents Subscriptions and Ack map.
 type states struct {
 	list map[string]messageState
 	mu   sync.RWMutex
+}
+
+func (s *states) String() string {
+	strs := make([]string, 0)
+	for k, v := range s.list {
+		strs = append(strs, fmt.Sprintf("%s:%v", k, v))
+	}
+	return strings.Join(strs, ", ")
 }
 
 func (s *states) ack(id string) bool {
@@ -114,14 +117,11 @@ func (s *states) deliver(id string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	pp.Println(id)
 	state, ok := s.list[id]
 	if !ok || state != stateWait {
-		pp.Println("not deliver")
 		return false
 	}
 	s.list[id] = stateDeliver
-	pp.Println("done deliver")
 	return true
 }
 

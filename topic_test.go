@@ -3,8 +3,6 @@ package queue
 import (
 	"reflect"
 	"testing"
-
-	"github.com/k0kubun/pp"
 )
 
 func TestNewTopic(t *testing.T) {
@@ -36,7 +34,6 @@ func TestNewTopic(t *testing.T) {
 		}
 		if !reflect.DeepEqual(GlobalTopics, c.expectTopics) {
 			t.Errorf("%#d: want %v, got %v", i, c.expectTopics, GlobalTopics)
-			pp.Println(GlobalTopics, "\n", c.expectTopics)
 		}
 	}
 }

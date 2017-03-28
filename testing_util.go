@@ -59,6 +59,15 @@ func (h *testHelper) dummyMessage(t *testing.T, id string) *Message {
 	}
 }
 
+func (h *testHelper) dummyMessageWithState(t *testing.T, id string, state map[string]messageState) *Message {
+	return &Message{
+		ID: id,
+		States: &states{
+			list: state,
+		},
+	}
+}
+
 func isExistMessageID(src []*Message, subID []string) bool {
 	srcMap := make(map[string]bool)
 	for _, m := range src {

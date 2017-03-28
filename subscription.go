@@ -4,8 +4,6 @@ import (
 	"errors"
 	"sync"
 	"time"
-
-	"github.com/k0kubun/pp"
 )
 
 // Subscription errors
@@ -56,7 +54,6 @@ func (s *Subscription) Pull(size int) ([]*Message, error) {
 	}
 	for _, m := range messages {
 		m.Deliver(s.name)
-		pp.Println("in Subscription", m)
 	}
 
 	return messages, nil
@@ -94,7 +91,7 @@ func (s *Subscription) SetPush(endpoint string, attribute map[string]string) err
 // MessageList is message slice as queue
 type MessageList struct {
 	list []*Message
-	mu   sync.Mutex
+	mu   sync.RWMutex
 }
 
 func newMessageList() *MessageList {
@@ -112,8 +109,8 @@ func (m *MessageList) Append(message *Message) {
 
 // GetRange returns readable message
 func (m *MessageList) GetRange(sub *Subscription, size int) ([]*Message, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 
 	maxLen := len(m.list)
 	if maxLen == 0 {
@@ -125,41 +122,38 @@ func (m *MessageList) GetRange(sub *Subscription, size int) ([]*Message, error) 
 		size = maxLen
 	}
 
-	// pick messages and reappend nonReadable messages
-	readable, nonReadable := m.collectMessage(sub, size)
-	m.list = m.list[len(readable)+len(nonReadable):]
-	for _, reAdd := range nonReadable {
-		m.list = append(m.list, reAdd)
+	readable := m.collectMessage(sub, size)
+	if len(readable) == 0 {
+		return nil, ErrEmptyMessage
 	}
 	return readable, nil
 }
 
 // collect readable and non readable messages
-func (m *MessageList) collectMessage(sub *Subscription, size int) (readable []*Message, nonReadable []*Message) {
-	readable = make([]*Message, 0)
-	nonReadable = make([]*Message, 0)
+func (m *MessageList) collectMessage(sub *Subscription, size int) []*Message {
+	msgs := make([]*Message, 0)
 
 	for _, v := range m.list {
-		if len(readable) > size {
-			return readable, nonReadable
+		if len(msgs) > size {
+			return msgs
 		}
 		if v.Readable(sub.name, sub.ackTimeout) {
-			readable = append(readable, v)
-		} else {
-			nonReadable = append(nonReadable, v)
+			msgs = append(msgs, v)
 		}
 	}
-	return readable, nonReadable
+	return msgs
 }
 
+// Ack is change message state and remove message
 func (m *MessageList) Ack(subID, messID string) {
-	// TODO: too slow
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	for _, v := range m.list {
+	for i, v := range m.list {
 		if v.ID == messID {
 			v.Ack(subID)
+			// remove ack message
+			m.list = append(m.list[:i], m.list[(i+1):]...)
 			return
 		}
 	}

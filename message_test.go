@@ -3,6 +3,7 @@ package queue
 import (
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestModifyState(t *testing.T) {
@@ -52,93 +53,55 @@ func TestModifyState(t *testing.T) {
 	}
 }
 
-func _TestGetRange(t *testing.T) {
+func TestReadable(t *testing.T) {
+	baseMsg := Message{
+		States: &states{
+			list: map[string]messageState{
+				"A": stateWait,
+				"B": stateDeliver,
+				"C": stateAck,
+			},
+		},
+	}
+
 	cases := []struct {
-		baseList   *MessageList
-		inputSizes []int
-		expectIDs  [][]string
-		expectList *MessageList
-		expectErr  []error
+		wait      time.Duration
+		inputID   string
+		inputTime time.Duration
+		expect    bool
 	}{
 		{
-			helper.dummyMessageList(t,
-				helper.dummyMessage(t, "a"),
-				helper.dummyMessage(t, "b"),
-				helper.dummyMessage(t, "c"),
-				helper.dummyMessage(t, "d"),
-			),
-			[]int{2, 1},
-			[][]string{
-				[]string{"a", "b"},
-				[]string{"c"},
-			},
-			helper.dummyMessageList(t,
-				helper.dummyMessage(t, "d"),
-			),
-			[]error{nil, nil},
+			0,
+			"A",
+			10 * time.Millisecond,
+			true,
 		},
 		{
-			helper.dummyMessageList(t,
-				helper.dummyMessage(t, "a"),
-			),
-			[]int{2, 1},
-			[][]string{
-				[]string{"a"},
-				[]string{},
-			},
-			helper.dummyMessageList(t),
-			[]error{
-				nil,
-				ErrEmptyMessage,
-			},
+			0,
+			"B",
+			10 * time.Millisecond,
+			false,
+		},
+		{
+			20 * time.Millisecond,
+			"B",
+			10 * time.Millisecond,
+			true,
+		},
+		{
+			20 * time.Millisecond,
+			"C",
+			10 * time.Millisecond,
+			false,
 		},
 	}
 	for i, c := range cases {
-		// call GetRange many times
-		// TODO: impl
-		// for i2, size := range c.inputSizes {
-		//   got, err := c.baseList.GetRange("", size)
-		//   if !isExistMessageID(got, c.expectIDs[i2]) {
-		//     t.Errorf("#%d-%#d: want %v, got %v", i, i2, c.expectIDs[i2], got)
-		//   }
-		//   if err != c.expectErr[i2] {
-		//     t.Errorf("#%d: want %v, got %v", i, c.expectErr, err)
-		//   }
-		// }
-		// check the remaining slice
-		if !reflect.DeepEqual(c.baseList, c.expectList) {
-			t.Errorf("#%d: want %v, got %v", i, c.expectList, c.baseList)
+		msg := baseMsg
+		msg.DeliveredAt = time.Now()
+		time.Sleep(c.wait)
+		got := msg.Readable(c.inputID, c.inputTime)
+		if got != c.expect {
+			t.Error("#%d: want %v, got %v", i, c.expect, got)
 		}
 	}
-}
-
-// TODO: impl
-func _TestMessageAppendAndGetRange(t *testing.T) {
-	// list := &MessageList{
-	//   list: make([]*Message, 0),
-	// }
-	//
-	// // get over len size
-	// list.Append(helper.dummyMessage(t, "a"))
-	// list.Append(helper.dummyMessage(t, "b"))
-	// got, err := list.GetRange("", 3)
-	// if err != nil {
-	//   t.Errorf("want no error, got %v", err)
-	// }
-	// want := []string{"a", "b"}
-	// if !isExistMessageID(got, want) {
-	//   t.Errorf("want %v, got %v", want, got)
-	// }
-	//
-	// // get after append
-	// list.Append(helper.dummyMessage(t, "a"))
-	// list.Append(helper.dummyMessage(t, "c"))
-	// got, err = list.GetRange("", 3)
-	// if err != nil {
-	//   t.Errorf("want no error, got %v", err)
-	// }
-	// want = []string{"a", "c"}
-	// if !isExistMessageID(got, want) {
-	//   t.Errorf("want %v, got %v", want, got)
-	// }
 }
