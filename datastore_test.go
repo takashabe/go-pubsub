@@ -59,10 +59,7 @@ func TestGet(t *testing.T) {
 		},
 	}
 	for i, c := range cases {
-		got, err := baseStore.Get(c.input)
-		if errors.Cause(err) != c.expectErr {
-			t.Errorf("#%d: want %v, got %v", i, c.expectErr, err)
-		}
+		got := baseStore.Get(c.input)
 		if !reflect.DeepEqual(got, c.expectMsg) {
 			t.Errorf("#%d: want %v, got %v", i, c.expectMsg, got)
 		}

@@ -16,8 +16,9 @@ var (
 // Datastore is behavior like Key-Value store
 type Datastore interface {
 	Set(key, value interface{}) error
-	Get(key interface{}) (interface{}, error)
+	Get(key interface{}) interface{}
 	Delete(key interface{}) error
+	Keys() []interface{}
 }
 
 // Load backend datastore from cnofiguration json file.
@@ -56,15 +57,11 @@ func (m *Memory) Set(key, value interface{}) error {
 }
 
 // Get item
-func (m *Memory) Get(key interface{}) (interface{}, error) {
+func (m *Memory) Get(key interface{}) interface{} {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	item, ok := m.store[key]
-	if !ok {
-		return nil, errors.Wrapf(ErrNotFoundMessage, fmt.Sprintf("key=%s", key))
-	}
-	return item, nil
+	return m.store[key]
 }
 
 // Delete item
@@ -74,4 +71,16 @@ func (m *Memory) Delete(key interface{}) error {
 
 	delete(m.store, key)
 	return nil
+}
+
+// Get key list
+func (m *Memory) Keys() []interface{} {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	keys := make([]interface{}, 0, len(m.store))
+	for key, _ := range m.store {
+		keys = append(keys, key)
+	}
+	return keys
 }
