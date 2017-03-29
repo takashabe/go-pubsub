@@ -18,39 +18,36 @@ var (
 var GlobalTopics *topics = newTopics()
 
 type topics struct {
+	store  Datastore
 	topics map[string]*Topic
 	mu     sync.RWMutex
 }
 
 func newTopics() *topics {
 	return &topics{
+		store:  NewMemory(),
 		topics: make(map[string]*Topic),
 	}
 }
 
-func (ts *topics) Get(key string) (*Topic, bool) {
-	ts.mu.RLock()
-	defer ts.mu.RUnlock()
-	t, ok := ts.topics[key]
-	return t, ok
+func (ts *topics) Get(key string) (Topic, bool) {
+	t := ts.store.Get(key)
+	return t, t == nil
 }
 
-func (ts *topics) List() map[string]*Topic {
+// TODO: fix it
+func (ts *topics) List() map[string]Topic {
 	ts.mu.Lock()
 	defer ts.mu.Unlock()
 	return ts.topics
 }
 
-func (ts *topics) Set(topic *Topic) {
-	ts.mu.Lock()
-	defer ts.mu.Unlock()
-	ts.topics[topic.name] = topic
+func (ts *topics) Set(topic Topic) error {
+	return ts.store.Set(topic.name, topic)
 }
 
-func (ts *topics) Delete(key string) {
-	ts.mu.Lock()
-	defer ts.mu.Unlock()
-	delete(ts.topics, key)
+func (ts *topics) Delete(key string) error {
+	return ts.store.Delete(key)
 }
 
 // Topic object
