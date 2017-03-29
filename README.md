@@ -24,7 +24,6 @@ _But go-message-queue is message queue, not pub/sub model. To be a simple!!_
   * ref [docs](https://cloud.google.com/pubsub/docs/reference/rest/)
 * (option) MessgaePack API
 * (option) gRPC API
-  * this cloud pub/sub default?
 
 ### components
 
@@ -79,3 +78,17 @@ _When do not specify created component(topic, subscription), Default component u
 | modify ack config  | POST:   `/subscription/{name}/ack/modify`  | modify ack timeout                                                                        |
 | modify push config | POST:   `/subscription/{name}/push/modify` | modify push config                                                                        |
 | list               | GET:    `/subscription/list`               | get subscripction list                                                                    |
+
+### Datastore
+
+#### features
+
+* select in some backend datastore
+* in memory, Redis, MySQL support
+
+#### desgin
+
+* datastore behavior like key-value store
+* when need redundancy, use Redis or MySQL
+  * in memory future support
+* Save component is Topic, Subscription and Message
