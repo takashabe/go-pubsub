@@ -12,6 +12,7 @@ var (
 	ErrAlreadyExistTopic        = errors.New("already exist topic")
 	ErrAlreadyExistSubscription = errors.New("already exist subscription")
 	ErrNotFoundTopic            = errors.New("not found topic")
+	ErrInvalidTopic             = errors.New("invalid topic")
 )
 
 // Global variable Topic map
@@ -25,24 +26,32 @@ type topics struct {
 
 func newTopics() *topics {
 	return &topics{
-		store:  NewMemory(),
-		topics: make(map[string]*Topic),
+		store: NewMemory(),
 	}
 }
 
-func (ts *topics) Get(key string) (Topic, bool) {
+func (ts *topics) Get(key string) (*Topic, bool) {
 	t := ts.store.Get(key)
-	return t, t == nil
+	if v, ok := t.(*Topic); ok {
+		return v, true
+	}
+	return nil, false
 }
 
-// TODO: fix it
-func (ts *topics) List() map[string]Topic {
-	ts.mu.Lock()
-	defer ts.mu.Unlock()
-	return ts.topics
+func (ts *topics) List() ([]*Topic, error) {
+	values := ts.store.Dump()
+	res := make([]*Topic, 0, len(values))
+	for _, v := range values {
+		if vt, ok := v.(*Topic); ok {
+			res = append(res, vt)
+		} else {
+			return nil, ErrInvalidTopic
+		}
+	}
+	return res, nil
 }
 
-func (ts *topics) Set(topic Topic) error {
+func (ts *topics) Set(topic *Topic) error {
 	return ts.store.Set(topic.name, topic)
 }
 
@@ -84,12 +93,8 @@ func GetTopic(name string) (*Topic, error) {
 }
 
 // Return topic list
-func ListTopic() (map[string]*Topic, error) {
-	list := GlobalTopics.List()
-	if len(list) == 0 {
-		return nil, ErrNotFoundTopic
-	}
-	return list, nil
+func ListTopic() ([]*Topic, error) {
+	return GlobalTopics.List()
 }
 
 // Delete topic object at GlobalTopics

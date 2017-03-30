@@ -7,19 +7,19 @@ import (
 
 func TestNewTopic(t *testing.T) {
 	cases := []struct {
-		inputs       []string
-		expectErr    error
-		expectTopics *topics
+		inputs            []string
+		expectErr         error
+		expectExistTopics []string
 	}{
 		{
 			[]string{"a", "b"},
 			nil,
-			helper.dummyTopics(t, "a", "b"),
+			[]string{"a", "b"},
 		},
 		{
 			[]string{"a", "a"},
 			ErrAlreadyExistTopic,
-			helper.dummyTopics(t, "a"),
+			[]string{"a"},
 		},
 	}
 	for i, c := range cases {
@@ -27,13 +27,23 @@ func TestNewTopic(t *testing.T) {
 		var err error
 		for _, s := range c.inputs {
 			// expect last input return value equal expectErr
-			_, err = NewTopic(s, newTestDatastore())
+			_, err = NewTopic(s, NewMemory())
 		}
 		if err != c.expectErr {
 			t.Errorf("%#d: want %v, got %v", i, c.expectErr, err)
 		}
-		if !reflect.DeepEqual(GlobalTopics, c.expectTopics) {
-			t.Errorf("%#d: want %v, got %v", i, c.expectTopics, GlobalTopics)
+
+		list, err := GlobalTopics.List()
+		if err != nil {
+			t.Fatalf("%#d: want no error, got %v", i, err)
+		}
+		if len(list) != len(c.expectExistTopics) {
+			t.Fatalf("%#d: want %d, got %d", len(c.expectExistTopics), len(list))
+		}
+		for i2, s := range c.expectExistTopics {
+			if _, ok := GlobalTopics.Get(s); !ok {
+				t.Errorf("#%d-%d: want exist Topic %s, but not exist", i, i2, s)
+			}
 		}
 	}
 }

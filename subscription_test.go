@@ -195,8 +195,8 @@ func TestPullAndAck(t *testing.T) {
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
 	}
-	for id, topic := range topics {
-		topic.Publish([]byte(fmt.Sprintf("%s-test", id)), nil)
+	for _, topic := range topics {
+		topic.Publish([]byte(fmt.Sprintf("%s-test", topic.name)), nil)
 	}
 	// want only Topic "a"
 	if want := []string{"a-test"}; !isExistMessageData(sub.messages.list, want) {
@@ -221,7 +221,11 @@ func TestPullAndAck(t *testing.T) {
 	}
 
 	// pull and none send ack, retry pull
-	topics["a"].Publish([]byte("test"), nil)
+	aTopic, err := GetTopic("a")
+	if err != nil {
+		t.Fatalf("want no error, got %v", err)
+	}
+	aTopic.Publish([]byte("test"), nil)
 	message, err = sub.Pull(1)
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)

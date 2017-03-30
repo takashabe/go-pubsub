@@ -18,7 +18,7 @@ type Datastore interface {
 	Set(key, value interface{}) error
 	Get(key interface{}) interface{}
 	Delete(key interface{}) error
-	Keys() []interface{}
+	Dump() map[interface{}]interface{}
 }
 
 // Load backend datastore from cnofiguration json file.
@@ -73,14 +73,10 @@ func (m *Memory) Delete(key interface{}) error {
 	return nil
 }
 
-// Get key list
-func (m *Memory) Keys() []interface{} {
+// Dump store values
+func (m *Memory) Dump() map[interface{}]interface{} {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	keys := make([]interface{}, 0, len(m.store))
-	for key, _ := range m.store {
-		keys = append(keys, key)
-	}
-	return keys
+	return m.store
 }

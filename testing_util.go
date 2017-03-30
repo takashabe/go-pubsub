@@ -116,6 +116,6 @@ func (d *testDatastore) Delete(key interface{}) error {
 	return nil
 }
 
-func (d *testDatastore) Keys() []interface{} {
+func (d *testDatastore) Dump() map[interface{}]interface{} {
 	return nil
 }
