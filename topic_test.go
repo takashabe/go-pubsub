@@ -73,33 +73,6 @@ func TestGetTopic(t *testing.T) {
 	}
 }
 
-func TestDelete(t *testing.T) {
-	cases := []struct {
-		baseTopics *topics
-		input      *Topic
-		expect     *topics
-	}{
-		{
-			helper.dummyTopics(t, "a", "b"),
-			helper.dummyTopic(t, "a"),
-			helper.dummyTopics(t, "b"),
-		},
-		{
-			helper.dummyTopics(t, "a", "b"),
-			helper.dummyTopic(t, "c"),
-			helper.dummyTopics(t, "a", "b"),
-		},
-	}
-	for i, c := range cases {
-		GlobalTopics = c.baseTopics
-		// delete depends topic.name
-		c.input.Delete()
-		if !reflect.DeepEqual(GlobalTopics, c.expect) {
-			t.Errorf("%#d: want %v, got %v", i, c.expect, GlobalTopics)
-		}
-	}
-}
-
 // TODO: integration datastore and subscription
 func TestPublish(t *testing.T) {
 	cases := []struct {

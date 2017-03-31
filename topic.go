@@ -2,7 +2,6 @@ package queue
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/pkg/errors"
 )
@@ -18,47 +17,7 @@ var (
 )
 
 // Global variable Topic map
-var GlobalTopics *topics = newTopics()
-
-type topics struct {
-	store Datastore
-	mu    sync.RWMutex
-}
-
-func newTopics() *topics {
-	return &topics{
-		store: NewMemory(),
-	}
-}
-
-func (ts *topics) Get(key string) (*Topic, bool) {
-	t := ts.store.Get(key)
-	if v, ok := t.(*Topic); ok {
-		return v, true
-	}
-	return nil, false
-}
-
-func (ts *topics) List() ([]*Topic, error) {
-	values := ts.store.Dump()
-	res := make([]*Topic, 0, len(values))
-	for _, v := range values {
-		if vt, ok := v.(*Topic); ok {
-			res = append(res, vt)
-		} else {
-			return nil, ErrInvalidTopic
-		}
-	}
-	return res, nil
-}
-
-func (ts *topics) Set(topic *Topic) error {
-	return ts.store.Set(topic.name, topic)
-}
-
-func (ts *topics) Delete(key string) error {
-	return ts.store.Delete(key)
-}
+var GlobalTopics *DatastoreTopic = new(DatastoreTopic)
 
 // Topic object
 type Topic struct {

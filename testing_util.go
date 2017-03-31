@@ -7,11 +7,11 @@ type testHelper struct{}
 var helper = testHelper{}
 
 func (h *testHelper) setupGlobal() {
-	GlobalTopics = newTopics()
+	GlobalTopics = NewDatastoreTopic()
 }
 
 func (h *testHelper) setupGlobalAndSetTopics(t *testing.T, names ...string) {
-	GlobalTopics = newTopics()
+	GlobalTopics = NewDatastoreTopic()
 	for _, v := range names {
 		GlobalTopics.Set(h.dummyTopic(t, v))
 	}
@@ -24,8 +24,8 @@ func (h *testHelper) dummyTopic(t *testing.T, name string) *Topic {
 	}
 }
 
-func (h *testHelper) dummyTopics(t *testing.T, args ...string) *topics {
-	m := newTopics()
+func (h *testHelper) dummyTopics(t *testing.T, args ...string) *DatastoreTopic {
+	m := NewDatastoreTopic()
 	for _, a := range args {
 		m.Set(h.dummyTopic(t, a))
 	}
