@@ -46,7 +46,7 @@ func makeMessageID() string {
 	return uuid.NewV1().String()
 }
 
-func NewMessage(id string, topic Topic, data []byte, attr map[string]string, subs map[string]Subscription) *Message {
+func NewMessage(id string, topic Topic, data []byte, attr map[string]string, subs []Subscription) *Message {
 	m := &Message{
 		ID:         id,
 		Data:       data,

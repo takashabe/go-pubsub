@@ -18,7 +18,11 @@ func TestModifyState(t *testing.T) {
 	subB, _ := NewSubscription("subB", "topA", 100, "localhost", nil)
 	TopA.AddSubscription(*subA)
 	TopA.AddSubscription(*subB)
-	baseMsg := NewMessage("foo", *TopA, []byte("test"), nil, TopA.subscriptions)
+	topaSubscriptions, err := TopA.GetSubscriptions()
+	if err != nil {
+		t.Fatalf("failed to get subscriptions from topic")
+	}
+	baseMsg := NewMessage("foo", *TopA, []byte("test"), nil, topaSubscriptions)
 
 	cases := []struct {
 		inputSubID   []string

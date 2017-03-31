@@ -12,16 +12,17 @@ var (
 	ErrAlreadyExistTopic        = errors.New("already exist topic")
 	ErrAlreadyExistSubscription = errors.New("already exist subscription")
 	ErrNotFoundTopic            = errors.New("not found topic")
+	ErrNotHasSubscription       = errors.New("not has subscription")
 	ErrInvalidTopic             = errors.New("invalid topic")
+	ErrInvalidSubscription      = errors.New("invalid subscription")
 )
 
 // Global variable Topic map
 var GlobalTopics *topics = newTopics()
 
 type topics struct {
-	store  Datastore
-	topics map[string]*Topic
-	mu     sync.RWMutex
+	store Datastore
+	mu    sync.RWMutex
 }
 
 func newTopics() *topics {
@@ -61,22 +62,19 @@ func (ts *topics) Delete(key string) error {
 
 // Topic object
 type Topic struct {
-	name          string
-	store         Datastore
-	subscriptions map[string]Subscription
-	mu            sync.RWMutex
+	name string
+	sub  Datastore
 }
 
 // Create topic, if not exist already topic name in GlobalTopics
-func NewTopic(name string, store Datastore) (*Topic, error) {
+func NewTopic(name string) (*Topic, error) {
 	if _, ok := GlobalTopics.Get(name); ok {
 		return nil, ErrAlreadyExistTopic
 	}
 
 	t := &Topic{
-		name:          name,
-		store:         store,
-		subscriptions: make(map[string]Subscription),
+		name: name,
+		sub:  NewMemory(),
 	}
 	GlobalTopics.Set(t)
 	return t, nil
@@ -104,29 +102,46 @@ func (t *Topic) Delete() {
 
 // Register subscription
 func (t *Topic) AddSubscription(s Subscription) error {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	if _, ok := t.subscriptions[s.name]; ok {
+	if _, ok := t.sub.Get(s.name).(Subscription); ok {
 		return errors.Wrapf(ErrAlreadyExistSubscription, fmt.Sprintf("id=%s", s.name))
 	}
-	t.subscriptions[s.name] = s
-	return nil
+	return t.sub.Set(s.name, s)
 }
 
 // Message store backend storage and delivery to Subscription
 func (t *Topic) Publish(data []byte, attributes map[string]string) error {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-
-	m := NewMessage(makeMessageID(), *t, data, attributes, t.subscriptions)
-	err := t.store.Set(m.ID, m)
+	subList, err := t.GetSubscriptions()
 	if err != nil {
-		return errors.Wrapf(err, "failed store message")
+		return errors.Wrap(err, "failed GetSubscriptions")
 	}
+	m := NewMessage(makeMessageID(), *t, data, attributes, subList)
+	// TODO: save message to store
 
-	for _, s := range t.subscriptions {
+	for _, s := range subList {
 		s.Subscribe(m)
 	}
 	return nil
+}
+
+func (t *Topic) GetSubscription(key string) (Subscription, error) {
+	v := t.sub.Get(key)
+	if s, ok := v.(Subscription); !ok {
+		return Subscription{}, ErrNotHasSubscription
+	} else {
+		return s, nil
+	}
+}
+
+// GetSubscriptions returns topic dependent Subscription list
+func (t *Topic) GetSubscriptions() ([]Subscription, error) {
+	dump := t.sub.Dump()
+	subList := make([]Subscription, 0, len(dump))
+	for _, v := range dump {
+		if s, ok := v.(Subscription); ok {
+			subList = append(subList, s)
+		} else {
+			return nil, ErrInvalidSubscription
+		}
+	}
+	return subList, nil
 }

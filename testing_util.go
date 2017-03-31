@@ -19,9 +19,8 @@ func (h *testHelper) setupGlobalAndSetTopics(t *testing.T, names ...string) {
 
 func (h *testHelper) dummyTopic(t *testing.T, name string) *Topic {
 	return &Topic{
-		name:          name,
-		subscriptions: make(map[string]Subscription),
-		store:         newTestDatastore(),
+		name: name,
+		sub:  NewMemory(),
 	}
 }
 
@@ -96,26 +95,4 @@ func isExistMessageData(src []*Message, datas []string) bool {
 		}
 	}
 	return true
-}
-
-type testDatastore struct{}
-
-func newTestDatastore() *testDatastore {
-	return &testDatastore{}
-}
-
-func (d *testDatastore) Set(key, value interface{}) error {
-	return nil
-}
-
-func (d *testDatastore) Get(key interface{}) interface{} {
-	return nil
-}
-
-func (d *testDatastore) Delete(key interface{}) error {
-	return nil
-}
-
-func (d *testDatastore) Dump() map[interface{}]interface{} {
-	return nil
 }

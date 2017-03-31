@@ -27,7 +27,7 @@ func TestNewTopic(t *testing.T) {
 		var err error
 		for _, s := range c.inputs {
 			// expect last input return value equal expectErr
-			_, err = NewTopic(s, NewMemory())
+			_, err = NewTopic(s)
 		}
 		if err != c.expectErr {
 			t.Errorf("%#d: want %v, got %v", i, c.expectErr, err)
@@ -113,7 +113,6 @@ func TestPublish(t *testing.T) {
 	}
 	for i, c := range cases {
 		topic := helper.dummyTopic(t, "a")
-		topic.store = newTestDatastore()
 		got := topic.Publish(c.inputData, c.inputAttr)
 		if got != c.expectErr {
 			t.Errorf("%#d: want %v, got %v", i, c.expectErr, got)
