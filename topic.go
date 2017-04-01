@@ -13,7 +13,6 @@ var (
 	ErrNotFoundTopic            = errors.New("not found topic")
 	ErrNotHasSubscription       = errors.New("not has subscription")
 	ErrInvalidTopic             = errors.New("invalid topic")
-	ErrInvalidSubscription      = errors.New("invalid subscription")
 )
 
 // Global variable Topic map
@@ -22,7 +21,7 @@ var GlobalTopics *DatastoreTopic = new(DatastoreTopic)
 // Topic object
 type Topic struct {
 	name string
-	sub  Datastore
+	sub  *DatastoreSubscription
 }
 
 // Create topic, if not exist already topic name in GlobalTopics
@@ -33,7 +32,7 @@ func NewTopic(name string) (*Topic, error) {
 
 	t := &Topic{
 		name: name,
-		sub:  NewMemory(),
+		sub:  NewDatastoreSubscription(),
 	}
 	GlobalTopics.Set(t)
 	return t, nil
@@ -60,11 +59,11 @@ func (t *Topic) Delete() {
 }
 
 // Register subscription
-func (t *Topic) AddSubscription(s Subscription) error {
-	if _, ok := t.sub.Get(s.name).(Subscription); ok {
+func (t *Topic) AddSubscription(s *Subscription) error {
+	if _, err := t.sub.Get(s.name); err == nil {
 		return errors.Wrapf(ErrAlreadyExistSubscription, fmt.Sprintf("id=%s", s.name))
 	}
-	return t.sub.Set(s.name, s)
+	return t.sub.Set(s)
 }
 
 // Message store backend storage and delivery to Subscription
@@ -82,25 +81,12 @@ func (t *Topic) Publish(data []byte, attributes map[string]string) error {
 	return nil
 }
 
-func (t *Topic) GetSubscription(key string) (Subscription, error) {
-	v := t.sub.Get(key)
-	if s, ok := v.(Subscription); !ok {
-		return Subscription{}, ErrNotHasSubscription
-	} else {
-		return s, nil
-	}
+// GetSubscription return a topic dependent Subscription
+func (t *Topic) GetSubscription(key string) (*Subscription, error) {
+	return t.sub.Get(key)
 }
 
 // GetSubscriptions returns topic dependent Subscription list
-func (t *Topic) GetSubscriptions() ([]Subscription, error) {
-	dump := t.sub.Dump()
-	subList := make([]Subscription, 0, len(dump))
-	for _, v := range dump {
-		if s, ok := v.(Subscription); ok {
-			subList = append(subList, s)
-		} else {
-			return nil, ErrInvalidSubscription
-		}
-	}
-	return subList, nil
+func (t *Topic) GetSubscriptions() ([]*Subscription, error) {
+	return t.sub.List()
 }

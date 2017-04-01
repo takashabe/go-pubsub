@@ -16,8 +16,8 @@ func TestModifyState(t *testing.T) {
 	}
 	subA, _ := NewSubscription("subA", "topA", 100, "localhost", nil)
 	subB, _ := NewSubscription("subB", "topA", 100, "localhost", nil)
-	TopA.AddSubscription(*subA)
-	TopA.AddSubscription(*subB)
+	TopA.AddSubscription(subA)
+	TopA.AddSubscription(subB)
 	topaSubscriptions, err := TopA.GetSubscriptions()
 	if err != nil {
 		t.Fatalf("failed to get subscriptions from topic")

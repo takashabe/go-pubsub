@@ -8,7 +8,9 @@ import (
 
 // Subscription errors
 var (
-	ErrEmptyMessage = errors.New("empty message")
+	ErrEmptyMessage             = errors.New("empty message")
+	ErrNotFoundSubscription     = errors.New("not found subscription")
+	ErrNotMatchTypeSubscription = errors.New("not match type subscription")
 )
 
 type Subscription struct {
@@ -34,7 +36,7 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 	if err := s.SetPush(endpoint, attr); err != nil {
 		return nil, err
 	}
-	if err := topic.AddSubscription(*s); err != nil {
+	if err := topic.AddSubscription(s); err != nil {
 		return nil, err
 	}
 

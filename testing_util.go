@@ -20,7 +20,7 @@ func (h *testHelper) setupGlobalAndSetTopics(t *testing.T, names ...string) {
 func (h *testHelper) dummyTopic(t *testing.T, name string) *Topic {
 	return &Topic{
 		name: name,
-		sub:  NewMemory(),
+		sub:  NewDatastoreSubscription(),
 	}
 }
 
