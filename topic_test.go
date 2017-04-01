@@ -3,6 +3,8 @@ package queue
 import (
 	"reflect"
 	"testing"
+
+	"github.com/pkg/errors"
 )
 
 func TestNewTopic(t *testing.T) {
@@ -41,8 +43,8 @@ func TestNewTopic(t *testing.T) {
 			t.Fatalf("%#d: want %d, got %d", len(c.expectExistTopics), len(list))
 		}
 		for i2, s := range c.expectExistTopics {
-			if _, ok := GlobalTopics.Get(s); !ok {
-				t.Errorf("#%d-%d: want exist Topic %s, but not exist", i, i2, s)
+			if _, err = GlobalTopics.Get(s); err != nil {
+				t.Errorf("#%d-%d: key %s want no error, got %v", i, i2, s, err)
 			}
 		}
 	}
@@ -64,7 +66,7 @@ func TestGetTopic(t *testing.T) {
 	}
 	for i, c := range cases {
 		got, err := GetTopic(c.input)
-		if err != c.expectErr {
+		if errors.Cause(err) != c.expectErr {
 			t.Errorf("%#d: want %v, got %v", i, c.expectErr, err)
 		}
 		if !reflect.DeepEqual(got, c.expectTopic) {

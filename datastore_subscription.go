@@ -16,7 +16,7 @@ func NewDatastoreSubscription() *DatastoreSubscription {
 func (ts *DatastoreSubscription) Get(key string) (*Subscription, error) {
 	t := ts.store.Get(key)
 	if t == nil {
-		return nil, errors.Wrapf(ErrNotFoundTopic, "key=%s", key)
+		return nil, errors.Wrapf(ErrNotFoundSubscription, "key=%s", key)
 	}
 	v, ok := t.(*Subscription)
 	if !ok {

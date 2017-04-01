@@ -1,12 +1,19 @@
 package queue
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/satori/go.uuid"
+)
+
+var (
+	// TODO: to generic errors, and specific comment in errors.Wrapf()
+	ErrNotFoundMessage     = errors.New("not found message")
+	ErrNotMatchTypeMessage = errors.New("not match type message")
 )
 
 type messageState int

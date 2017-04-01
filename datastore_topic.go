@@ -1,5 +1,7 @@
 package queue
 
+import "github.com/pkg/errors"
+
 type DatastoreTopic struct {
 	store Datastore
 }
@@ -11,12 +13,16 @@ func NewDatastoreTopic() *DatastoreTopic {
 	}
 }
 
-func (ts *DatastoreTopic) Get(key string) (*Topic, bool) {
+func (ts *DatastoreTopic) Get(key string) (*Topic, error) {
 	t := ts.store.Get(key)
-	if v, ok := t.(*Topic); ok {
-		return v, true
+	if t == nil {
+		return nil, errors.Wrapf(ErrNotFoundTopic, "key=%s", key)
 	}
-	return nil, false
+	v, ok := t.(*Topic)
+	if !ok {
+		return nil, errors.Wrapf(ErrNotMatchTypeTopic, "key=%s", key)
+	}
+	return v, nil
 }
 
 func (ts *DatastoreTopic) List() ([]*Topic, error) {

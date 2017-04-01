@@ -4,13 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"sync"
-
-	"github.com/pkg/errors"
-)
-
-// Datastore errors
-var (
-	ErrNotFoundMessage = errors.New("not found entry")
 )
 
 // Datastore is behavior like Key-Value store

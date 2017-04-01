@@ -13,6 +13,7 @@ var (
 	ErrNotFoundTopic            = errors.New("not found topic")
 	ErrNotHasSubscription       = errors.New("not has subscription")
 	ErrInvalidTopic             = errors.New("invalid topic")
+	ErrNotMatchTypeTopic        = errors.New("not match type topic")
 )
 
 // Global variable Topic map
@@ -26,7 +27,7 @@ type Topic struct {
 
 // Create topic, if not exist already topic name in GlobalTopics
 func NewTopic(name string) (*Topic, error) {
-	if _, ok := GlobalTopics.Get(name); ok {
+	if _, err := GlobalTopics.Get(name); err == nil {
 		return nil, ErrAlreadyExistTopic
 	}
 
@@ -40,9 +41,9 @@ func NewTopic(name string) (*Topic, error) {
 
 // Return topic object
 func GetTopic(name string) (*Topic, error) {
-	t, ok := GlobalTopics.Get(name)
-	if !ok {
-		return nil, ErrNotFoundTopic
+	t, err := GlobalTopics.Get(name)
+	if err != nil {
+		return nil, err
 	}
 
 	return t, nil
