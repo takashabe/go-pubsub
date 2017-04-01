@@ -16,6 +16,9 @@ var (
 	ErrNotMatchTypeMessage = errors.New("not match type message")
 )
 
+// globalMessage Global message key-value store object
+var globalMessage *DatastoreMessage = NewDatastoreMessage()
+
 type messageState int
 
 const (
