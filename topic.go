@@ -77,10 +77,6 @@ func (t *Topic) Publish(data []byte, attributes map[string]string) error {
 	if err := globalMessage.Set(m); err != nil {
 		return errors.Wrap(err, "failed set Message")
 	}
-
-	for _, s := range subList {
-		s.Subscribe(m)
-	}
 	return nil
 }
 

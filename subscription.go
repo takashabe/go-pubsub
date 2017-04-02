@@ -1,9 +1,10 @@
 package queue
 
 import (
-	"errors"
-	"sync"
+	"sort"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // Subscription errors
@@ -41,11 +42,6 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 	}
 
 	return s, nil
-}
-
-// Receive Message from Topic
-func (s *Subscription) Subscribe(m *Message) {
-	s.messages.Append(m)
 }
 
 // Deliver Message
@@ -90,73 +86,52 @@ func (s *Subscription) SetPush(endpoint string, attribute map[string]string) err
 	return nil
 }
 
-// MessageList is message slice as queue
+// MessageList Message slice behavior like queue
 type MessageList struct {
-	list []*Message
-	mu   sync.RWMutex
+	list *DatastoreMessage
 }
 
 func newMessageList() *MessageList {
 	return &MessageList{
-		list: make([]*Message, 0),
+		list: globalMessage,
 	}
-}
-
-// Append message to list
-func (m *MessageList) Append(message *Message) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.list = append(m.list, message)
 }
 
 // GetRange returns readable message
 func (m *MessageList) GetRange(sub *Subscription, size int) ([]*Message, error) {
-	m.mu.RLock()
-	defer m.mu.RUnlock()
-
-	maxLen := len(m.list)
+	maxLen := m.list.Size()
 	if maxLen == 0 {
 		return nil, ErrEmptyMessage
 	}
-
 	// non error, when request over size
 	if maxLen < size {
 		size = maxLen
 	}
 
-	readable := m.collectMessage(sub, size)
-	if len(readable) == 0 {
+	msgs, err := m.list.FindByReadable(sub.name, sub.ackTimeout, size)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get message dependent Subscription name=%s", sub.name)
+	}
+	if len(msgs) == 0 {
 		return nil, ErrEmptyMessage
 	}
-	return readable, nil
-}
 
-// collect readable and non readable messages
-func (m *MessageList) collectMessage(sub *Subscription, size int) []*Message {
-	msgs := make([]*Message, 0)
-
-	for _, v := range m.list {
-		if len(msgs) > size {
-			return msgs
-		}
-		if v.Readable(sub.name, sub.ackTimeout) {
-			msgs = append(msgs, v)
-		}
-	}
-	return msgs
+	sort.Sort(ByMessageID(msgs))
+	return msgs, nil
 }
 
 // Ack is change message state and remove message
-func (m *MessageList) Ack(subID, messID string) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
-	for i, v := range m.list {
-		if v.ID == messID {
-			v.Ack(subID)
-			// remove ack message
-			m.list = append(m.list[:i], m.list[(i+1):]...)
-			return
-		}
+func (m *MessageList) Ack(subID, messID string) error {
+	msg, err := m.list.Get(messID)
+	if err != nil {
+		return errors.Wrapf(err, "failed to ack message key=%s, subscription=%s", messID, subID)
 	}
+	msg.Ack(subID)
+	if err := msg.Save(); err != nil {
+		return err
+	}
+	if err := m.list.Delete(messID); err != nil {
+		return err
+	}
+	return nil
 }

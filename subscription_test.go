@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"reflect"
+	"sort"
 	"testing"
 	"time"
 
@@ -73,14 +74,22 @@ func TestNewSubscription(t *testing.T) {
 
 func TestGetRange(t *testing.T) {
 	// Warning: not clean message list each testcases
-	msgWait := helper.dummyMessageWithState(t, "wait", map[string]messageState{"A": stateWait})
-	msgDeliver1 := helper.dummyMessageWithState(t, "deliver1", map[string]messageState{"A": stateDeliver})
-	msgDeliver2 := helper.dummyMessageWithState(t, "deliver2", map[string]messageState{"A": stateDeliver})
-	msgAck := helper.dummyMessageWithState(t, "ack", map[string]messageState{"A": stateAck})
-	baseMsgList := MessageList{
-		list: []*Message{
-			msgWait, msgDeliver1, msgDeliver2, msgAck,
-		},
+	helper.setupGlobal()
+	msgArgs := []struct {
+		id    string
+		staet messageState
+	}{
+		{"wait", stateWait},
+		{"deliver1", stateDeliver},
+		{"deliver2", stateDeliver},
+		{"ack", stateAck},
+	}
+	baseMsg := make(map[string]*Message)
+	for i, a := range msgArgs {
+		baseMsg[a.id] = helper.dummyMessageWithState(t, a.id, map[string]messageState{"A": a.staet})
+		if err := baseMsg[a.id].Save(); err != nil {
+			t.Fatalf("#%d: failed msg save: err=%v", i, err)
+		}
 	}
 
 	cases := []struct {
@@ -94,91 +103,104 @@ func TestGetRange(t *testing.T) {
 		{
 			&Subscription{
 				name:       "A",
-				messages:   &baseMsgList,
+				messages:   newMessageList(),
 				ackTimeout: 0 * time.Millisecond,
 			},
 			4,
 			0 * time.Millisecond,
 			0 * time.Millisecond,
-			[]*Message{msgWait, msgDeliver1, msgDeliver2},
+			[]*Message{baseMsg["wait"], baseMsg["deliver1"], baseMsg["deliver2"]},
 			nil,
 		},
 		{
-			// timeout
 			&Subscription{
 				name:       "A",
-				messages:   &baseMsgList,
-				ackTimeout: 1000 * time.Millisecond,
+				messages:   newMessageList(),
+				ackTimeout: 1000 * time.Millisecond, // timeout
 			},
 			2,
 			0 * time.Millisecond,
 			0 * time.Millisecond,
-			[]*Message{msgWait},
+			[]*Message{baseMsg["wait"]},
 			nil,
 		},
 		{
 			&Subscription{
 				name:       "A",
-				messages:   &baseMsgList,
+				messages:   newMessageList(),
 				ackTimeout: 0 * time.Millisecond,
 			},
 			2,
 			0,
 			1000 * time.Millisecond, // deliver at future
-			[]*Message{msgWait, msgDeliver1},
+			[]*Message{baseMsg["wait"], baseMsg["deliver1"]},
 			nil,
 		},
 	}
 	for i, c := range cases {
 		// msgDeliver set DeliveredAt
-		msgDeliver1.DeliveredAt = time.Now()
-		msgDeliver2.DeliveredAt = time.Now().Add(c.addTime)
+		baseMsg["deliver1"].DeliveredAt = time.Now()
+		baseMsg["deliver2"].DeliveredAt = time.Now().Add(c.addTime)
 
 		time.Sleep(c.wait)
-		got, err := baseMsgList.GetRange(c.inputSub, c.inputSize)
+		got, err := c.inputSub.messages.GetRange(c.inputSub, c.inputSize)
 		if err != c.expectErr {
-			t.Errorf("%#d: want %v, got %v", i, c.expectErr, err)
+			t.Errorf("#%d: want %v, got %v", i, c.expectErr, err)
 		}
-		if !reflect.DeepEqual(got, c.expectMsg) {
-			t.Errorf("%#d: want %v, got %#v", i, c.expectMsg, got)
+		want := c.expectMsg
+		sort.Sort(ByMessageID(want))
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("#%d: want %v, got %#v", i, want, got)
 		}
 	}
 }
 
 func TestGetRangeWithAck(t *testing.T) {
-	msgWait := helper.dummyMessageWithState(t, "wait", map[string]messageState{"A": stateWait})
-	msgDeliver1 := helper.dummyMessageWithState(t, "deliver1", map[string]messageState{"A": stateDeliver})
-	msgDeliver2 := helper.dummyMessageWithState(t, "deliver2", map[string]messageState{"A": stateDeliver})
-	msgAck := helper.dummyMessageWithState(t, "ack", map[string]messageState{"A": stateAck})
-	baseMsgList := MessageList{
-		list: []*Message{
-			msgWait, msgDeliver1, msgDeliver2, msgAck,
-		},
+	helper.setupGlobal()
+	msgArgs := []struct {
+		id    string
+		staet messageState
+	}{
+		{"wait", stateWait},
+		{"deliver1", stateDeliver},
+		{"deliver2", stateDeliver},
+		{"ack", stateAck},
 	}
-	msgDeliver1.DeliveredAt = time.Now()
-	msgDeliver2.DeliveredAt = time.Now()
+	baseMsg := make(map[string]*Message)
+	for i, a := range msgArgs {
+		baseMsg[a.id] = helper.dummyMessageWithState(t, a.id, map[string]messageState{"A": a.staet})
+		if err := baseMsg[a.id].Save(); err != nil {
+			t.Fatalf("#%d: failed msg save: err=%v", i, err)
+		}
+	}
+	baseMsg["deliver1"].DeliveredAt = time.Now()
+	baseMsg["deliver2"].DeliveredAt = time.Now()
 
 	// all get
 	sub := &Subscription{
 		name:       "A",
-		messages:   &baseMsgList,
+		messages:   newMessageList(),
 		ackTimeout: 0 * time.Millisecond,
 	}
-	got, err := baseMsgList.GetRange(sub, len(baseMsgList.list))
+	got, err := sub.messages.GetRange(sub, sub.messages.list.Size())
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
 	}
-	if want := []*Message{msgWait, msgDeliver1, msgDeliver2}; !reflect.DeepEqual(got, want) {
+	want := []*Message{baseMsg["wait"], baseMsg["deliver1"], baseMsg["deliver2"]}
+	sort.Sort(ByMessageID(want))
+	if !reflect.DeepEqual(got, want) {
 		t.Errorf("want %v, got %#v", want, got)
 	}
 
 	// some ack
-	msgDeliver1.Ack(sub.name)
-	got, err = baseMsgList.GetRange(sub, len(baseMsgList.list))
+	baseMsg["deliver1"].Ack(sub.name)
+	got, err = sub.messages.GetRange(sub, sub.messages.list.Size())
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
 	}
-	if want := []*Message{msgWait, msgDeliver2}; !reflect.DeepEqual(got, want) {
+	want = []*Message{baseMsg["wait"], baseMsg["deliver2"]}
+	sort.Sort(ByMessageID(want))
+	if !reflect.DeepEqual(got, want) {
 		t.Errorf("want %v, got %#v", want, got)
 	}
 }
@@ -199,8 +221,12 @@ func TestPullAndAck(t *testing.T) {
 		topic.Publish([]byte(fmt.Sprintf("%s-test", topic.name)), nil)
 	}
 	// want only Topic "a"
-	if want := []string{"a-test"}; !isExistMessageData(sub.messages.list, want) {
-		t.Errorf("want exist %v in MessageList, got %v", want, sub.messages.list)
+	if got, err := sub.messages.GetRange(sub, 2); err == nil {
+		if want := []string{"a-test"}; !isExistMessageData(got, want) {
+			t.Errorf("want exist %v in MessageList, got %v", want, got)
+		}
+	} else {
+		t.Fatalf("failed get message. err=%v", err)
 	}
 
 	// pull and ack

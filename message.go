@@ -68,9 +68,13 @@ func NewMessage(id string, topic Topic, data []byte, attr map[string]string, sub
 		PublishedAt: time.Now(),
 	}
 	for _, sub := range subs {
-		m.States.add(sub.name)
+		m.AddSubscription(sub.name)
 	}
 	return m
+}
+
+func (m *Message) AddSubscription(name string) {
+	m.States.add(name)
 }
 
 func (m *Message) Ack(subID string) {
@@ -95,6 +99,10 @@ func (m *Message) Readable(id string, timeout time.Duration) bool {
 		return time.Now().Sub(m.DeliveredAt) > timeout
 	}
 	return true
+}
+
+func (m *Message) Save() error {
+	return globalMessage.Set(m)
 }
 
 // states repsents Subscriptions and Ack map.
@@ -149,3 +157,10 @@ func (s *states) get(id string) (messageState, bool) {
 	state, ok := s.list[id]
 	return state, ok
 }
+
+// ByMessageID implements sort.Interface for []*Message based on the ID
+type ByMessageID []*Message
+
+func (a ByMessageID) Len() int           { return len(a) }
+func (a ByMessageID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByMessageID) Less(i, j int) bool { return a[i].ID < a[j].ID }

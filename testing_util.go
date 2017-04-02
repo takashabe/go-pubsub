@@ -8,10 +8,11 @@ var helper = testHelper{}
 
 func (h *testHelper) setupGlobal() {
 	GlobalTopics = NewDatastoreTopic()
+	globalMessage = NewDatastoreMessage()
 }
 
 func (h *testHelper) setupGlobalAndSetTopics(t *testing.T, names ...string) {
-	GlobalTopics = NewDatastoreTopic()
+	h.setupGlobal()
 	for _, v := range names {
 		GlobalTopics.Set(h.dummyTopic(t, v))
 	}
@@ -44,10 +45,7 @@ func (h *testHelper) dummyAcks(t *testing.T, ids ...string) *states {
 
 func (h *testHelper) dummyMessageList(t *testing.T, ms ...*Message) *MessageList {
 	list := &MessageList{
-		list: make([]*Message, 0),
-	}
-	for _, m := range ms {
-		list.Append(m)
+		list: globalMessage,
 	}
 	return list
 }

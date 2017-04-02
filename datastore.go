@@ -73,3 +73,6 @@ func (m *Memory) Dump() map[interface{}]interface{} {
 
 	return m.store
 }
+
+// TODO: impl datastore
+type MySQL struct{}

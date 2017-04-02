@@ -58,6 +58,7 @@ func TestModifyState(t *testing.T) {
 }
 
 func TestReadable(t *testing.T) {
+	helper.setupGlobal()
 	baseMsg := Message{
 		States: &states{
 			list: map[string]messageState{
