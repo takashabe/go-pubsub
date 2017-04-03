@@ -35,7 +35,7 @@ func TestNewTopic(t *testing.T) {
 			t.Errorf("%#d: want %v, got %v", i, c.expectErr, err)
 		}
 
-		list, err := GlobalTopics.List()
+		list, err := globalTopics.List()
 		if err != nil {
 			t.Fatalf("%#d: want no error, got %v", i, err)
 		}
@@ -43,7 +43,7 @@ func TestNewTopic(t *testing.T) {
 			t.Fatalf("%#d: want %d, got %d", len(c.expectExistTopics), len(list))
 		}
 		for i2, s := range c.expectExistTopics {
-			if _, err = GlobalTopics.Get(s); err != nil {
+			if _, err = globalTopics.Get(s); err != nil {
 				t.Errorf("#%d-%d: key %s want no error, got %v", i, i2, s, err)
 			}
 		}
@@ -53,8 +53,8 @@ func TestNewTopic(t *testing.T) {
 func TestGetTopic(t *testing.T) {
 	// make test topics
 	helper.setupGlobal()
-	GlobalTopics.Set(helper.dummyTopic(t, "a"))
-	GlobalTopics.Set(helper.dummyTopic(t, "b"))
+	globalTopics.Set(helper.dummyTopic(t, "a"))
+	globalTopics.Set(helper.dummyTopic(t, "b"))
 
 	cases := []struct {
 		input       string

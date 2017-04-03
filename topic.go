@@ -16,8 +16,8 @@ var (
 	ErrNotMatchTypeTopic        = errors.New("not match type topic")
 )
 
-// Global variable Topic map
-var GlobalTopics *DatastoreTopic = new(DatastoreTopic)
+// globalTopics global Topic map
+var globalTopics *DatastoreTopic = new(DatastoreTopic)
 
 // Topic object
 type Topic struct {
@@ -27,7 +27,7 @@ type Topic struct {
 
 // Create topic, if not exist already topic name in GlobalTopics
 func NewTopic(name string) (*Topic, error) {
-	if _, err := GlobalTopics.Get(name); err == nil {
+	if _, err := globalTopics.Get(name); err == nil {
 		return nil, ErrAlreadyExistTopic
 	}
 
@@ -35,13 +35,13 @@ func NewTopic(name string) (*Topic, error) {
 		name: name,
 		sub:  NewDatastoreSubscription(),
 	}
-	GlobalTopics.Set(t)
+	globalTopics.Set(t)
 	return t, nil
 }
 
 // Return topic object
 func GetTopic(name string) (*Topic, error) {
-	t, err := GlobalTopics.Get(name)
+	t, err := globalTopics.Get(name)
 	if err != nil {
 		return nil, err
 	}
@@ -51,12 +51,12 @@ func GetTopic(name string) (*Topic, error) {
 
 // Return topic list
 func ListTopic() ([]*Topic, error) {
-	return GlobalTopics.List()
+	return globalTopics.List()
 }
 
 // Delete topic object at GlobalTopics
 func (t *Topic) Delete() {
-	GlobalTopics.Delete(t.name)
+	globalTopics.Delete(t.name)
 }
 
 // Register subscription

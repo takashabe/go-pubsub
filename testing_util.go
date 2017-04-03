@@ -7,14 +7,14 @@ type testHelper struct{}
 var helper = testHelper{}
 
 func (h *testHelper) setupGlobal() {
-	GlobalTopics = NewDatastoreTopic()
+	globalTopics = NewDatastoreTopic()
 	globalMessage = NewDatastoreMessage()
 }
 
 func (h *testHelper) setupGlobalAndSetTopics(t *testing.T, names ...string) {
 	h.setupGlobal()
 	for _, v := range names {
-		GlobalTopics.Set(h.dummyTopic(t, v))
+		globalTopics.Set(h.dummyTopic(t, v))
 	}
 }
 
