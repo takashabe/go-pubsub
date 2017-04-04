@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// globalTopics global Topic map
+// globalTopics global Topic datastore
 var globalTopics *DatastoreTopic = new(DatastoreTopic)
 
 // Topic object
@@ -17,7 +17,7 @@ type Topic struct {
 
 // Create topic, if not exist already topic name in GlobalTopics
 func NewTopic(name string) (*Topic, error) {
-	if _, err := globalTopics.Get(name); err == nil {
+	if _, err := GetTopic(name); err == nil {
 		return nil, ErrAlreadyExistTopic
 	}
 
@@ -45,8 +45,8 @@ func ListTopic() ([]*Topic, error) {
 }
 
 // Delete topic object at GlobalTopics
-func (t *Topic) Delete() {
-	globalTopics.Delete(t.name)
+func (t *Topic) Delete() error {
+	return globalTopics.Delete(t.name)
 }
 
 // Register subscription
