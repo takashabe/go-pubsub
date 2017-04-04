@@ -7,6 +7,9 @@ import (
 	"github.com/pkg/errors"
 )
 
+// globalSubscription global subscription datastore
+var globalSubscription *DatastoreSubscription = new(DatastoreSubscription)
+
 type Subscription struct {
 	name       string
 	topic      *Topic
@@ -15,8 +18,12 @@ type Subscription struct {
 	push       *Push
 }
 
-// Create Subscription
+// Create Subscription, if not exist already same name Subscription
 func NewSubscription(name, topicName string, timeout int64, endpoint string, attr map[string]string) (*Subscription, error) {
+	if _, err := GetSubscription(name); err == nil {
+		return nil, ErrAlreadyExistSubscription
+	}
+
 	topic, err := GetTopic(topicName)
 	if err != nil {
 		return nil, err
@@ -35,6 +42,21 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 	}
 
 	return s, nil
+}
+
+// GetSubscription return Subscription object
+func GetSubscription(name string) (*Subscription, error) {
+	return globalSubscription.Get(name)
+}
+
+// Delete is delete subscription at globalSubscription
+func (s *Subscription) Delete() error {
+	return globalSubscription.Delete(s.name)
+}
+
+// ListSubscription returns subscription list from globalSubscription
+func ListSubscription() ([]*Subscription, error) {
+	return globalSubscription.List()
 }
 
 // Deliver Message

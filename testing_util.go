@@ -9,6 +9,7 @@ var helper = testHelper{}
 func (h *testHelper) setupGlobal() {
 	globalTopics = NewDatastoreTopic()
 	globalMessage = NewDatastoreMessage()
+	globalSubscription = NewDatastoreSubscription()
 }
 
 func (h *testHelper) setupGlobalAndSetTopics(t *testing.T, names ...string) {

@@ -50,6 +50,11 @@ func TestNewSubscription(t *testing.T) {
 			expect1,
 			nil,
 		},
+		{ // same name Subscription
+			"A", "a", -1, "localhost:8080", map[string]string{"key": "value"},
+			nil,
+			ErrAlreadyExistSubscription,
+		},
 		{
 			"A", "b", -1, "localhost:8080", map[string]string{"key": "value"},
 			nil,
@@ -68,6 +73,40 @@ func TestNewSubscription(t *testing.T) {
 		}
 		if !reflect.DeepEqual(got, c.expectObj) {
 			t.Errorf("%#d: want %#v, got %#v", i, c.expectObj, got)
+		}
+	}
+}
+
+func TestDeleteSubscription(t *testing.T) {
+	helper.setupGlobal()
+	suba := &Subscription{name: "A"}
+	subb := &Subscription{name: "B"}
+	globalSubscription.Set(suba)
+	globalSubscription.Set(subb)
+
+	cases := []struct {
+		input          *Subscription
+		expectSubNames []string
+	}{
+		{suba, []string{"B"}},
+		{suba, []string{"B"}}, // already deleted
+		{subb, []string{}},
+	}
+	for i, c := range cases {
+		err := c.input.Delete()
+		if err != nil {
+			t.Errorf("#%d: want no error, got %v", i, err)
+		}
+		names := []string{}
+		if list, err := ListSubscription(); err != nil {
+			t.Fatalf("#%d: want no error, got %v", i, err)
+		} else {
+			for _, s := range list {
+				names = append(names, s.name)
+			}
+		}
+		if !reflect.DeepEqual(names, c.expectSubNames) {
+			t.Errorf("#%d: want %v, got %v", i, c.expectSubNames, names)
 		}
 	}
 }
