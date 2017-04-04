@@ -1,14 +1,6 @@
 package queue
 
-import (
-	"errors"
-	"net/url"
-)
-
-// Errors about push
-var (
-	ErrInvalidEndpoint = errors.New("invalid endpoint URL format")
-)
+import "net/url"
 
 // Push represent push message in Subscription
 type Push struct {

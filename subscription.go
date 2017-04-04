@@ -7,13 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Subscription errors
-var (
-	ErrEmptyMessage             = errors.New("empty message")
-	ErrNotFoundSubscription     = errors.New("not found subscription")
-	ErrNotMatchTypeSubscription = errors.New("not match type subscription")
-)
-
 type Subscription struct {
 	name       string
 	topic      *Topic

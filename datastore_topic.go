@@ -32,7 +32,7 @@ func (ts *DatastoreTopic) List() ([]*Topic, error) {
 		if vt, ok := v.(*Topic); ok {
 			res = append(res, vt)
 		} else {
-			return nil, ErrInvalidTopic
+			return nil, ErrNotMatchTypeTopic
 		}
 	}
 	return res, nil

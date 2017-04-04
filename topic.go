@@ -6,16 +6,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Topic errors
-var (
-	ErrAlreadyExistTopic        = errors.New("already exist topic")
-	ErrAlreadyExistSubscription = errors.New("already exist subscription")
-	ErrNotFoundTopic            = errors.New("not found topic")
-	ErrNotHasSubscription       = errors.New("not has subscription")
-	ErrInvalidTopic             = errors.New("invalid topic")
-	ErrNotMatchTypeTopic        = errors.New("not match type topic")
-)
-
 // globalTopics global Topic map
 var globalTopics *DatastoreTopic = new(DatastoreTopic)
 

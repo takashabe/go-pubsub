@@ -74,6 +74,6 @@ func (m *DatastoreMessage) FindByReadable(name string, timeout time.Duration, si
 		return dst, nil
 	// TODO: impl case *MySQL:
 	default:
-		return nil, errors.New("not support operation")
+		return nil, ErrNotSupportOperation
 	}
 }
