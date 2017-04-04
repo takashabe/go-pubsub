@@ -1,4 +1,4 @@
-package queue
+package models
 
 import "github.com/pkg/errors"
 
