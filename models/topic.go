@@ -7,7 +7,7 @@ import (
 )
 
 // globalTopics global Topic datastore
-var globalTopics *DatastoreTopic = new(DatastoreTopic)
+var globalTopics *DatastoreTopic = NewDatastoreTopic()
 
 // Topic object
 type Topic struct {

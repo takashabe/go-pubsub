@@ -8,7 +8,7 @@ import (
 )
 
 // globalSubscription global subscription datastore
-var globalSubscription *DatastoreSubscription = new(DatastoreSubscription)
+var globalSubscription *DatastoreSubscription = NewDatastoreSubscription()
 
 type Subscription struct {
 	name       string
