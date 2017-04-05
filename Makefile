@@ -1,2 +1,2 @@
 test:
-	go test -v
+	GO_ROUTER_ENABLE_LOGGING=1 GO_MESSAGE_QUEUE_DEBUG=1 go test -v
