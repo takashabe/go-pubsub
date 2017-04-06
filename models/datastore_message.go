@@ -13,7 +13,7 @@ type DatastoreMessage struct {
 func NewDatastoreMessage() *DatastoreMessage {
 	// TODO: flexible datastore source
 	return &DatastoreMessage{
-		store: NewMemory(),
+		store: NewMemory(nil),
 	}
 }
 

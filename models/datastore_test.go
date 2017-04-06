@@ -25,7 +25,7 @@ func TestSet(t *testing.T) {
 		},
 	}
 	for i, c := range cases {
-		m := NewMemory()
+		m := NewMemory(nil)
 		for _, v := range c.inputMsgs {
 			m.Set(v.ID, v)
 		}

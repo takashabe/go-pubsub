@@ -9,7 +9,7 @@ type DatastoreSubscription struct {
 func NewDatastoreSubscription() *DatastoreSubscription {
 	// TODO: flexible datastore source
 	return &DatastoreSubscription{
-		store: NewMemory(),
+		store: NewMemory(nil),
 	}
 }
 

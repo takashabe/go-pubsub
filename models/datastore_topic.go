@@ -9,7 +9,7 @@ type DatastoreTopic struct {
 func NewDatastoreTopic() *DatastoreTopic {
 	// TODO: flexible datastore source
 	return &DatastoreTopic{
-		store: NewMemory(),
+		store: NewMemory(nil),
 	}
 }
 

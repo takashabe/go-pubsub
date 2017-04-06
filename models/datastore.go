@@ -6,6 +6,8 @@ import (
 	"sync"
 )
 
+type Config struct{}
+
 // Datastore is behavior like Key-Value store
 type Datastore interface {
 	Set(key, value interface{}) error
@@ -34,7 +36,7 @@ type Memory struct {
 }
 
 // Create memory object
-func NewMemory() *Memory {
+func NewMemory(cfg *Config) *Memory {
 	return &Memory{
 		store: make(map[interface{}]interface{}),
 	}
