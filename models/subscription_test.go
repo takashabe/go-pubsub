@@ -257,7 +257,7 @@ func TestPullAndAck(t *testing.T) {
 		t.Fatalf("want no error, got %v", err)
 	}
 	for _, topic := range topics {
-		topic.Publish([]byte(fmt.Sprintf("%s-test", topic.name)), nil)
+		topic.Publish([]byte(fmt.Sprintf("%s-test", topic.Name)), nil)
 	}
 	// want only Topic "a"
 	if got, err := sub.messages.GetRange(sub, 2); err == nil {

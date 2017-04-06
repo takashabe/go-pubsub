@@ -13,9 +13,19 @@ import (
 
 // PrintDebugf behaves like log.Printf only in the debug env
 func PrintDebugf(format string, args ...interface{}) {
-	if env := os.Getenv("QUEUE-DEBUG"); len(env) != 0 {
+	if env := os.Getenv("GO_MESSAGE_QUEUE_DEBUG"); len(env) != 0 {
 		log.Printf("[DEBUG] "+format+"\n", args...)
 	}
+}
+
+// ErrorResponse is Error response template
+type ErrorResponse struct {
+	Message string `json:"reason"`
+	Error   error  `json:"-"`
+}
+
+func (e *ErrorResponse) String() string {
+	return fmt.Sprintf("reason: %s, error: %v", e.Message, e.Error)
 }
 
 // Respond is response write to ResponseWriter
@@ -26,6 +36,14 @@ func Respond(w http.ResponseWriter, code int, src interface{}) {
 	switch s := src.(type) {
 	case string:
 		body = []byte(s)
+	case ErrorResponse:
+		// avoid infinite loop
+		if body, err = json.Marshal(src); err != nil {
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("failed to parse json"))
+			return
+		}
 	default:
 		if body, err = json.Marshal(src); err != nil {
 			Error(w, http.StatusInternalServerError, err, "failed to parse json")
@@ -38,9 +56,13 @@ func Respond(w http.ResponseWriter, code int, src interface{}) {
 
 // Error is wrapped Respond when error response
 func Error(w http.ResponseWriter, code int, err error, msg string) {
-	PrintDebugf("%s, %v", msg, err)
+	e := &ErrorResponse{
+		Message: msg,
+		Error:   err,
+	}
+	PrintDebugf("%v", e)
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	Respond(w, code, fmt.Sprintf("{ reason: %s }", msg))
+	Respond(w, code, e)
 }
 
 // Json is wrapped Respond when success response
@@ -86,18 +108,21 @@ func (s *TopicServer) Delete(w http.ResponseWriter, r *http.Request, id string) 
 	Json(w, http.StatusNoContent, t)
 }
 
-func main() {
+func routes() *router.Router {
 	r := router.NewRouter()
 	s := TopicServer{}
 
-	topicRoot := "topic"
+	topicRoot := "/topic"
 	r.Get(topicRoot+"/get/:id", s.Get)
-	r.Put(topicRoot+"/create/:id", s.Get)
-	r.Delete(topicRoot+"/delete/:id", s.Get)
+	r.Put(topicRoot+"/create/:id", s.Create)
+	r.Delete(topicRoot+"/delete/:id", s.Delete)
 
-	subscriptionRoot := "subscription"
+	subscriptionRoot := "/subscription"
 	r.Get(subscriptionRoot+"/get", nil)
+	return r
+}
 
-	PrintDebugf("starting server...")
-	log.Fatal(http.ListenAndServe("localhost:8080", r))
+func main() {
+	log.Println("starting server...")
+	log.Fatal(http.ListenAndServe("localhost:8080", routes()))
 }

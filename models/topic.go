@@ -11,8 +11,8 @@ var globalTopics *DatastoreTopic = NewDatastoreTopic()
 
 // Topic object
 type Topic struct {
-	name string
-	sub  *DatastoreSubscription
+	Name string                 `json:"name"`
+	Sub  *DatastoreSubscription `json:"-"`
 }
 
 // Create topic, if not exist already topic name in GlobalTopics
@@ -22,8 +22,8 @@ func NewTopic(name string) (*Topic, error) {
 	}
 
 	t := &Topic{
-		name: name,
-		sub:  NewDatastoreSubscription(),
+		Name: name,
+		Sub:  NewDatastoreSubscription(),
 	}
 	globalTopics.Set(t)
 	return t, nil
@@ -46,15 +46,15 @@ func ListTopic() ([]*Topic, error) {
 
 // Delete topic object at GlobalTopics
 func (t *Topic) Delete() error {
-	return globalTopics.Delete(t.name)
+	return globalTopics.Delete(t.Name)
 }
 
 // Register subscription
 func (t *Topic) AddSubscription(s *Subscription) error {
-	if _, err := t.sub.Get(s.name); err == nil {
+	if _, err := t.Sub.Get(s.name); err == nil {
 		return errors.Wrapf(ErrAlreadyExistSubscription, fmt.Sprintf("id=%s", s.name))
 	}
-	return t.sub.Set(s)
+	return t.Sub.Set(s)
 }
 
 // Message store backend storage and delivery to Subscription
@@ -72,10 +72,10 @@ func (t *Topic) Publish(data []byte, attributes map[string]string) error {
 
 // GetSubscription return a topic dependent Subscription
 func (t *Topic) GetSubscription(key string) (*Subscription, error) {
-	return t.sub.Get(key)
+	return t.Sub.Get(key)
 }
 
 // GetSubscriptions returns topic dependent Subscription list
 func (t *Topic) GetSubscriptions() ([]*Subscription, error) {
-	return t.sub.List()
+	return t.Sub.List()
 }

@@ -39,7 +39,7 @@ func (ts *DatastoreTopic) List() ([]*Topic, error) {
 }
 
 func (ts *DatastoreTopic) Set(topic *Topic) error {
-	return ts.store.Set(topic.name, topic)
+	return ts.store.Set(topic.Name, topic)
 }
 
 func (ts *DatastoreTopic) Delete(key string) error {
