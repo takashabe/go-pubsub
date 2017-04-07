@@ -6,7 +6,24 @@ import (
 	"sync"
 )
 
-type Config struct{}
+// Config is connect to datastore parameters
+type Config struct {
+	Driver   string
+	Endpoint string
+
+	// username and password must be set by env
+	UsernameEnv string
+	PasswordEnv string
+}
+
+// LoadConfigFromFile read config file and create config object
+func LoadConfigFromFile(driver string) *Config {
+	_, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return nil, nil
+}
 
 // Datastore is behavior like Key-Value store
 type Datastore interface {
