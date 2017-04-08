@@ -64,7 +64,7 @@ func (t *Topic) Publish(data []byte, attributes map[string]string) error {
 		return errors.Wrap(err, "failed GetSubscriptions")
 	}
 	m := NewMessage(makeMessageID(), *t, data, attributes, subList)
-	if err := globalMessage.Set(m); err != nil {
+	if err := m.Save(); err != nil {
 		return errors.Wrap(err, "failed set Message")
 	}
 	return nil
