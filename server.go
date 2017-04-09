@@ -1,4 +1,4 @@
-package queue
+package main
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/pkg/errors"
 	"github.com/takashabe/go-message-queue/models"
 	"github.com/takashabe/go-router"
 )
@@ -122,7 +123,34 @@ func routes() *router.Router {
 	return r
 }
 
-func main() {
+type Server struct {
+	cfg *models.Config
+}
+
+func NewServer(path string) (*Server, error) {
+	c, err := models.LoadConfigFromFile(path)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to load config")
+	}
+	return &Server{
+		cfg: c,
+	}, nil
+}
+
+func (s *Server) InitDatastore() error {
+	if err := models.InitDatastoreTopic(s.cfg); err != nil {
+		return errors.Wrap(err, "failed to init datastore topic")
+	}
+	if err := models.InitDatastoreSubscription(s.cfg); err != nil {
+		return errors.Wrap(err, "failed to init datastore subscription")
+	}
+	if err := models.InitDatastoreMessage(s.cfg); err != nil {
+		return errors.Wrap(err, "failed to init datastore message")
+	}
+	return nil
+}
+
+func (s *Server) Run(port int) error {
 	log.Println("starting server...")
-	log.Fatal(http.ListenAndServe("localhost:8080", routes()))
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), routes())
 }

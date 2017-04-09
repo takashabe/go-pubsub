@@ -1,4 +1,4 @@
-package queue
+package main
 
 import (
 	"io/ioutil"
@@ -17,7 +17,18 @@ func dummyClient(t *testing.T) *http.Client {
 	}
 }
 
+func setupServer(t *testing.T) {
+	s, err := NewServer("testdata/config.yaml")
+	if err != nil {
+		t.Fatalf("failed to NewServer, err=%v", err)
+	}
+	if err := s.InitDatastore(); err != nil {
+		t.Fatalf("failed to InitDatastore, err=%v", err)
+	}
+}
+
 func TestCreateAndGetTopic(t *testing.T) {
+	setupServer(t)
 	ts := httptest.NewServer(routes())
 	defer ts.Close()
 
