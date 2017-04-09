@@ -18,9 +18,14 @@ func NewTopic(name string) (*Topic, error) {
 		return nil, ErrAlreadyExistTopic
 	}
 
+	// TODO: fix me. dont require specific datastore
+	d, err := NewDatastoreSubscription(&Config{Driver: "memory"})
+	if err != nil {
+		return nil, err
+	}
 	t := &Topic{
 		Name: name,
-		Sub:  NewDatastoreSubscription(),
+		Sub:  d,
 	}
 	globalTopics.Set(t)
 	return t, nil
