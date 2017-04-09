@@ -6,15 +6,37 @@ import (
 	"github.com/pkg/errors"
 )
 
+// globalMessage Global message key-value store object
+var globalMessage *DatastoreMessage
+
+// DatastoreMessage is adapter between actual datastore and datastore client
 type DatastoreMessage struct {
 	store Datastore
 }
 
-func NewDatastoreMessage() *DatastoreMessage {
-	// TODO: flexible datastore source
-	return &DatastoreMessage{
-		store: NewMemory(nil),
+// NewDatastoreMessage create DatastoreTopic object
+func NewDatastoreMessage(cfg *Config) (*DatastoreMessage, error) {
+	d, err := LoadDatastore(cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to load datastore")
 	}
+	return &DatastoreMessage{
+		store: d,
+	}, nil
+}
+
+// InitDatastoreMessage initialize global datastore object
+func InitDatastoreMessage(cfg *Config) error {
+	if globalMessage != nil {
+		return nil
+	}
+
+	d, err := NewDatastoreMessage(cfg)
+	if err != nil {
+		return err
+	}
+	globalMessage = d
+	return nil
 }
 
 func (m *DatastoreMessage) Get(key string) (*Message, error) {

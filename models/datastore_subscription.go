@@ -2,15 +2,37 @@ package models
 
 import "github.com/pkg/errors"
 
+// globalSubscription global subscription datastore
+var globalSubscription *DatastoreSubscription
+
+// DatastoreSubscription is adapter between actual datastore and datastore client
 type DatastoreSubscription struct {
 	store Datastore
 }
 
-func NewDatastoreSubscription() *DatastoreSubscription {
-	// TODO: flexible datastore source
-	return &DatastoreSubscription{
-		store: NewMemory(nil),
+// NewDatastoreSubscription create DatastoreSubscription object
+func NewDatastoreSubscription(cfg *Config) (*DatastoreSubscription, error) {
+	d, err := LoadDatastore(cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to load datastore")
 	}
+	return &DatastoreSubscription{
+		store: d,
+	}, nil
+}
+
+// InitDatastoreSubscription initialize global datastore object
+func InitDatastoreSubscription(cfg *Config) error {
+	if globalSubscription != nil {
+		return nil
+	}
+
+	d, err := NewDatastoreSubscription(cfg)
+	if err != nil {
+		return err
+	}
+	globalSubscription = d
+	return nil
 }
 
 func (ts *DatastoreSubscription) Get(key string) (*Subscription, error) {

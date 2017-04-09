@@ -6,9 +6,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// globalTopics global Topic datastore
-var globalTopics *DatastoreTopic = NewDatastoreTopic()
-
 // Topic object
 type Topic struct {
 	Name string                 `json:"name"`

@@ -2,15 +2,37 @@ package models
 
 import "github.com/pkg/errors"
 
+// globalTopics global Topic datastore
+var globalTopics *DatastoreTopic
+
+// DatastoreTopic is adapter between actual datastore and datastore client
 type DatastoreTopic struct {
 	store Datastore
 }
 
-func NewDatastoreTopic() *DatastoreTopic {
-	// TODO: flexible datastore source
-	return &DatastoreTopic{
-		store: NewMemory(nil),
+// NewDatastoreTopic create DatastoreTopic object
+func NewDatastoreTopic(cfg *Config) (*DatastoreTopic, error) {
+	d, err := LoadDatastore(cfg)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to load datastore")
 	}
+	return &DatastoreTopic{
+		store: d,
+	}, nil
+}
+
+// InitDatastoreTopic initialize global datastore object
+func InitDatastoreTopic(cfg *Config) error {
+	if globalTopics != nil {
+		return nil
+	}
+
+	d, err := NewDatastoreTopic(cfg)
+	if err != nil {
+		return err
+	}
+	globalTopics = d
+	return nil
 }
 
 func (ts *DatastoreTopic) Get(key string) (*Topic, error) {

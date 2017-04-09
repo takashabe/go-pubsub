@@ -9,9 +9,6 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-// globalMessage Global message key-value store object
-var globalMessage *DatastoreMessage = NewDatastoreMessage()
-
 type messageState int
 
 const (

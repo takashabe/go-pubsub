@@ -7,9 +7,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// globalSubscription global subscription datastore
-var globalSubscription *DatastoreSubscription = NewDatastoreSubscription()
-
 type Subscription struct {
 	name       string
 	topic      *Topic
