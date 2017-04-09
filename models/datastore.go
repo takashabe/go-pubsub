@@ -16,12 +16,14 @@ type Config struct {
 }
 
 // LoadConfigFromFile read config file and create config object
-func LoadConfigFromFile(driver string, path string) (*Config, error) {
+func LoadConfigFromFile(path string) (*Config, error) {
 	_, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+
+	// TODO: impl read yaml and mapping struct
+	return &Config{Driver: "memory"}, nil
 }
 
 // Datastore is behavior like Key-Value store
