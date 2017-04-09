@@ -78,7 +78,7 @@ func TestNewSubscription(t *testing.T) {
 }
 
 func TestDeleteSubscription(t *testing.T) {
-	helper.setupGlobal()
+	helper.setupGlobal(t)
 	suba := &Subscription{name: "A"}
 	subb := &Subscription{name: "B"}
 	globalSubscription.Set(suba)
@@ -113,7 +113,7 @@ func TestDeleteSubscription(t *testing.T) {
 
 func TestGetRange(t *testing.T) {
 	// Warning: not clean message list each testcases
-	helper.setupGlobal()
+	helper.setupGlobal(t)
 	msgArgs := []struct {
 		id    string
 		staet messageState
@@ -195,7 +195,7 @@ func TestGetRange(t *testing.T) {
 }
 
 func TestGetRangeWithAck(t *testing.T) {
-	helper.setupGlobal()
+	helper.setupGlobal(t)
 	msgArgs := []struct {
 		id    string
 		staet messageState

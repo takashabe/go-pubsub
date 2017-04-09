@@ -25,7 +25,7 @@ func TestNewTopic(t *testing.T) {
 		},
 	}
 	for i, c := range cases {
-		helper.setupGlobal()
+		helper.setupGlobal(t)
 		var err error
 		for _, s := range c.inputs {
 			// expect last input return value equal expectErr
@@ -52,7 +52,7 @@ func TestNewTopic(t *testing.T) {
 
 func TestGetTopic(t *testing.T) {
 	// make test topics
-	helper.setupGlobal()
+	helper.setupGlobal(t)
 	globalTopics.Set(helper.dummyTopic(t, "a"))
 	globalTopics.Set(helper.dummyTopic(t, "b"))
 

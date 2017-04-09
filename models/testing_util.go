@@ -2,32 +2,52 @@ package models
 
 import "testing"
 
-type testHelper struct{}
+type testHelper struct {
+	dummyConfig *Config
+}
 
-var helper = testHelper{}
+var helper = testHelper{
+	dummyConfig: &Config{Driver: "memory"},
+}
 
-func (h *testHelper) setupGlobal() {
-	globalTopics = NewDatastoreTopic()
-	globalMessage = NewDatastoreMessage()
-	globalSubscription = NewDatastoreSubscription()
+func (h *testHelper) setupGlobal(t *testing.T) {
+	if d, err := NewDatastoreTopic(h.dummyConfig); err != nil {
+		t.Fatal(err)
+	} else {
+		globalTopics = d
+	}
+	if d, err := NewDatastoreSubscription(h.dummyConfig); err != nil {
+		t.Fatal(err)
+	} else {
+		globalSubscription = d
+	}
+	if d, err := NewDatastoreMessage(h.dummyConfig); err != nil {
+		t.Fatal(err)
+	} else {
+		globalMessage = d
+	}
 }
 
 func (h *testHelper) setupGlobalAndSetTopics(t *testing.T, names ...string) {
-	h.setupGlobal()
+	h.setupGlobal(t)
 	for _, v := range names {
 		globalTopics.Set(h.dummyTopic(t, v))
 	}
 }
 
 func (h *testHelper) dummyTopic(t *testing.T, name string) *Topic {
+	s, err := NewDatastoreSubscription(h.dummyConfig)
+	if err != nil {
+		t.Fatalf("failed to create datastore subscription, name=%s, error=%v", name, err)
+	}
 	return &Topic{
 		Name: name,
-		Sub:  NewDatastoreSubscription(),
+		Sub:  s,
 	}
 }
 
 func (h *testHelper) dummyTopics(t *testing.T, args ...string) *DatastoreTopic {
-	m := NewDatastoreTopic()
+	m, _ := NewDatastoreTopic(nil)
 	for _, a := range args {
 		m.Set(h.dummyTopic(t, a))
 	}
