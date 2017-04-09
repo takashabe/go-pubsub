@@ -27,7 +27,9 @@ func NewTopic(name string) (*Topic, error) {
 		Name: name,
 		Sub:  d,
 	}
-	globalTopics.Set(t)
+	if err := t.Save(); err != nil {
+		return nil, errors.Wrapf(err, "failed to save topic, name=%s", name)
+	}
 	return t, nil
 }
 
@@ -80,4 +82,8 @@ func (t *Topic) GetSubscription(key string) (*Subscription, error) {
 // GetSubscriptions returns topic dependent Subscription list
 func (t *Topic) GetSubscriptions() ([]*Subscription, error) {
 	return t.Sub.List()
+}
+
+func (t *Topic) Save() error {
+	return globalTopics.Set(t)
 }
