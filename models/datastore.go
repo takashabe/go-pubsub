@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"io/ioutil"
 	"sync"
 )
@@ -17,7 +16,7 @@ type Config struct {
 }
 
 // LoadConfigFromFile read config file and create config object
-func LoadConfigFromFile(driver string) *Config {
+func LoadConfigFromFile(driver string, path string) (*Config, error) {
 	_, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -34,16 +33,15 @@ type Datastore interface {
 }
 
 // Load backend datastore from cnofiguration json file.
-func LoadDatastore(path string) (Datastore, error) {
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
+func LoadDatastore(cfg *Config) (Datastore, error) {
+	switch cfg.Driver {
+	case "memory":
+		return NewMemory(cfg), nil
+	case "mysql":
+		return NewMySQL(cfg)
+	default:
+		return NewMemory(cfg), nil
 	}
-
-	// TODO: loading json file and create datastore object
-	fmt.Println(string(data))
-
-	return nil, nil
 }
 
 // Datastore driver at "in memory"
@@ -95,3 +93,9 @@ func (m *Memory) Dump() map[interface{}]interface{} {
 
 // TODO: impl datastore
 type MySQL struct{}
+
+func NewMySQL(cfg *Config) (*MySQL, error)         { return nil, nil }
+func (m *MySQL) Set(key, value interface{}) error  { return nil }
+func (m *MySQL) Get(key interface{}) interface{}   { return nil }
+func (m *MySQL) Delete(key interface{}) error      { return nil }
+func (m *MySQL) Dump() map[interface{}]interface{} { return nil }
