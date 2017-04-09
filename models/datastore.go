@@ -51,7 +51,7 @@ type Memory struct {
 }
 
 // Create memory object
-func NewMemory(cfg *Config) *Memory {
+func NewMemory(_ *Config) *Memory {
 	return &Memory{
 		store: make(map[interface{}]interface{}),
 	}
