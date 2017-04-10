@@ -16,7 +16,7 @@ type Subscription struct {
 }
 
 // Create Subscription, if not exist already same name Subscription
-func NewSubscription(name, topicName string, timeout int, endpoint string, attr map[string]string) (*Subscription, error) {
+func NewSubscription(name, topicName string, timeout int64, endpoint string, attr map[string]string) (*Subscription, error) {
 	if _, err := GetSubscription(name); err == nil {
 		return nil, ErrAlreadyExistSubscription
 	}
@@ -80,11 +80,11 @@ func (s *Subscription) Ack(ids ...string) {
 }
 
 // Set Ack timeout, arg time expect millisecond.
-func (s *Subscription) SetAckTimeout(timeout int) {
+func (s *Subscription) SetAckTimeout(timeout int64) {
 	if timeout < 0 {
 		timeout = 0
 	}
-	s.AckTimeout = time.Duration(timeout) * time.Millisecond
+	s.AckTimeout = time.Duration(timeout) * time.Second
 }
 
 // Set push endpoint with attributes, only one can be set as push endpoint.

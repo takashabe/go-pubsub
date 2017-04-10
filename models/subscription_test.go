@@ -38,7 +38,7 @@ func TestNewSubscription(t *testing.T) {
 	cases := []struct {
 		name      string
 		topicName string
-		timeout   int
+		timeout   int64
 		endpoint  string
 		attr      map[string]string
 		expectObj *Subscription
@@ -247,10 +247,11 @@ func TestPullAndAck(t *testing.T) {
 	helper.setupGlobalAndSetTopics(t, "a", "b")
 
 	// make Subscription and Topic
-	sub, err := NewSubscription("A", "a", 100, "", nil)
+	sub, err := NewSubscription("A", "a", 0, "", nil)
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
 	}
+	sub.AckTimeout = 100 * time.Millisecond // faster for test
 	topics, err := ListTopic()
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
