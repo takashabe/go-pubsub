@@ -54,3 +54,12 @@ func (s *SubscriptionServer) Create(w http.ResponseWriter, r *http.Request, id s
 	}
 	Json(w, http.StatusCreated, subscriptionToResource(sub))
 }
+
+func (s *SubscriptionServer) Get(w http.ResponseWriter, r *http.Request, id string) {
+	sub, err := models.GetSubscription(id)
+	if err != nil {
+		Error(w, http.StatusNotFound, err, "not found subscription")
+		return
+	}
+	Json(w, http.StatusOK, subscriptionToResource(sub))
+}

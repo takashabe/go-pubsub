@@ -92,3 +92,45 @@ func TestCreateSubscription(t *testing.T) {
 		}
 	}
 }
+
+func TestGetSubscription(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	setupDummyTopicAndSub(t, ts)
+
+	cases := []struct {
+		input      string
+		expectCode int
+		expectBody []byte
+	}{
+		{
+			"A",
+			http.StatusOK,
+			[]byte(`{"topic":"a","push_config":{"endpoint":"","attributes":null},"ack_deadline_seconds":10}`),
+		},
+		{
+			"C",
+			http.StatusNotFound,
+			[]byte(`{"reason":"not found subscription"}`),
+		},
+	}
+	for i, c := range cases {
+		client := dummyClient(t)
+		res, err := client.Get(fmt.Sprintf("%s/subscription/get/%s", ts.URL, c.input))
+		if err != nil {
+			t.Fatalf("#%d: failed to send request", i)
+		}
+		defer res.Body.Close()
+
+		if got := res.StatusCode; got != c.expectCode {
+			t.Errorf("#%d: want %d, got %d", i, c.expectCode, got)
+		}
+		got, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			t.Fatalf("#%d: failed to read body, got err %v", i, err)
+		}
+		if !reflect.DeepEqual(got, c.expectBody) {
+			t.Errorf("#%d: want %s, got %s", i, c.expectBody, got)
+		}
+	}
+}
