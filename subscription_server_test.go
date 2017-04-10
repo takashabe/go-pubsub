@@ -181,3 +181,33 @@ func TestDeleteSubscription(t *testing.T) {
 		}
 	}
 }
+
+func TestListSubscription(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	setupDummyTopicAndSub(t, ts)
+
+	client := dummyClient(t)
+	res, err := client.Get(fmt.Sprintf("%s/subscription/list", ts.URL))
+	if err != nil {
+		t.Fatalf("failed to send request, got err %v", err)
+	}
+	defer res.Body.Close()
+
+	wantCode := http.StatusOK
+	if got := res.StatusCode; got != wantCode {
+		t.Errorf("want %d, got %d", wantCode, got)
+	}
+	// want sub names
+	wantNames := []string{"A", "B"}
+	var subs []ResourceSubscription
+	if err := json.NewDecoder(res.Body).Decode(&subs); err != nil {
+		body, _ := ioutil.ReadAll(res.Body)
+		t.Fatalf("failed to decode response body, body=%v", body)
+	}
+	for i, n := range wantNames {
+		if subs[i].Name != n {
+			t.Errorf("#%d: want %s, got %s, got sub %v", i, n, subs[i].Name, subs[i])
+		}
+	}
+}

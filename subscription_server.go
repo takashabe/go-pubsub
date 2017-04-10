@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/takashabe/go-message-queue/models"
@@ -65,6 +66,21 @@ func (s *SubscriptionServer) Get(w http.ResponseWriter, r *http.Request, id stri
 		return
 	}
 	Json(w, http.StatusOK, subscriptionToResource(sub))
+}
+
+// List is gets subscription list
+func (s *SubscriptionServer) List(w http.ResponseWriter, r *http.Request) {
+	subs, err := models.ListSubscription()
+	if err != nil {
+		Error(w, http.StatusNotFound, err, "not found subscription")
+		return
+	}
+	sort.Sort(models.BySubscriptionName(subs))
+	resourceSubs := make([]ResourceSubscription, 0)
+	for _, sub := range subs {
+		resourceSubs = append(resourceSubs, subscriptionToResource(sub))
+	}
+	Json(w, http.StatusOK, resourceSubs)
 }
 
 // Delete is delete subscription
