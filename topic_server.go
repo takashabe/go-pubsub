@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/k0kubun/pp"
 	"github.com/takashabe/go-message-queue/models"
 )
 
@@ -112,7 +111,5 @@ func (s *TopicServer) Publish(w http.ResponseWriter, r *http.Request, id string)
 		}
 		pubIDs = append(pubIDs, id)
 	}
-	pp.Println(datas)
-	pp.Println(pubIDs)
 	Json(w, http.StatusOK, ResponsePublish{MessageIDs: pubIDs})
 }
