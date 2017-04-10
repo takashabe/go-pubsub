@@ -84,6 +84,7 @@ func (t *Topic) GetSubscriptions() ([]*Subscription, error) {
 	return t.Sub.List()
 }
 
+// Save is save to datastore
 func (t *Topic) Save() error {
 	return globalTopics.Set(t)
 }

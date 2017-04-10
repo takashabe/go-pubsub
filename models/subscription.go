@@ -98,6 +98,11 @@ func (s *Subscription) SetPush(endpoint string, attribute map[string]string) err
 	return nil
 }
 
+// Save is save to datastore
+func (s *Subscription) Save() error {
+	return globalSubscription.Set(s)
+}
+
 // MessageList Message slice behavior like queue
 type MessageList struct {
 	list *DatastoreMessage
