@@ -164,7 +164,7 @@ func TestListTopic(t *testing.T) {
 	if got := res.StatusCode; got != want {
 		t.Errorf("want %d, got %d", want, got)
 	}
-	want = []byte(`[{"name":"a"},{"name":"b"}]`)
+	want = []byte(`[{"name":"a"},{"name":"b"},{"name":"c"}]`)
 	if got, _ := ioutil.ReadAll(res.Body); !reflect.DeepEqual(got, want) {
 		t.Errorf("want %s, got %s", want, got)
 	}
