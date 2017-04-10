@@ -57,7 +57,7 @@ func (ts *DatastoreSubscription) List() ([]*Subscription, error) {
 }
 
 func (ts *DatastoreSubscription) Set(sub *Subscription) error {
-	return ts.store.Set(sub.name, sub)
+	return ts.store.Set(sub.Name, sub)
 }
 
 func (ts *DatastoreSubscription) Delete(key string) error {

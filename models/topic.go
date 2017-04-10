@@ -55,8 +55,8 @@ func (t *Topic) Delete() error {
 
 // Register subscription
 func (t *Topic) AddSubscription(s *Subscription) error {
-	if _, err := t.Sub.Get(s.name); err == nil {
-		return errors.Wrapf(ErrAlreadyExistSubscription, fmt.Sprintf("id=%s", s.name))
+	if _, err := t.Sub.Get(s.Name); err == nil {
+		return errors.Wrapf(ErrAlreadyExistSubscription, fmt.Sprintf("id=%s", s.Name))
 	}
 	return t.Sub.Set(s)
 }

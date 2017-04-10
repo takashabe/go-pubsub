@@ -23,18 +23,18 @@ func TestNewSubscription(t *testing.T) {
 	helper.setupGlobalAndSetTopics(t, "a")
 
 	expect1 := &Subscription{
-		name:       "A",
-		topic:      helper.dummyTopic(t, "a"),
-		messages:   newMessageList(),
-		ackTimeout: 0,
-		push: &Push{
-			endpoint: testUrl(t, "localhost:8080"),
-			attributes: &Attributes{
+		Name:       "A",
+		Topic:      helper.dummyTopic(t, "a"),
+		Messages:   newMessageList(),
+		AckTimeout: 0,
+		Push: &Push{
+			Endpoint: testUrl(t, "localhost:8080"),
+			Attributes: &Attributes{
 				attr: map[string]string{"key": "value"},
 			},
 		},
 	}
-	expect1.topic.AddSubscription(expect1)
+	expect1.Topic.AddSubscription(expect1)
 
 	cases := []struct {
 		name      string
@@ -79,8 +79,8 @@ func TestNewSubscription(t *testing.T) {
 
 func TestDeleteSubscription(t *testing.T) {
 	helper.setupGlobal(t)
-	suba := &Subscription{name: "A"}
-	subb := &Subscription{name: "B"}
+	suba := &Subscription{Name: "A"}
+	subb := &Subscription{Name: "B"}
 	globalSubscription.Set(suba)
 	globalSubscription.Set(subb)
 
@@ -102,7 +102,7 @@ func TestDeleteSubscription(t *testing.T) {
 			t.Fatalf("#%d: want no error, got %v", i, err)
 		} else {
 			for _, s := range list {
-				names = append(names, s.name)
+				names = append(names, s.Name)
 			}
 		}
 		if !reflect.DeepEqual(names, c.expectSubNames) {
@@ -141,9 +141,9 @@ func TestGetRange(t *testing.T) {
 	}{
 		{
 			&Subscription{
-				name:       "A",
-				messages:   newMessageList(),
-				ackTimeout: 0 * time.Millisecond,
+				Name:       "A",
+				Messages:   newMessageList(),
+				AckTimeout: 0 * time.Millisecond,
 			},
 			4,
 			0 * time.Millisecond,
@@ -153,9 +153,9 @@ func TestGetRange(t *testing.T) {
 		},
 		{
 			&Subscription{
-				name:       "A",
-				messages:   newMessageList(),
-				ackTimeout: 1000 * time.Millisecond, // timeout
+				Name:       "A",
+				Messages:   newMessageList(),
+				AckTimeout: 1000 * time.Millisecond, // timeout
 			},
 			2,
 			0 * time.Millisecond,
@@ -165,9 +165,9 @@ func TestGetRange(t *testing.T) {
 		},
 		{
 			&Subscription{
-				name:       "A",
-				messages:   newMessageList(),
-				ackTimeout: 0 * time.Millisecond,
+				Name:       "A",
+				Messages:   newMessageList(),
+				AckTimeout: 0 * time.Millisecond,
 			},
 			2,
 			0,
@@ -182,7 +182,7 @@ func TestGetRange(t *testing.T) {
 		baseMsg["deliver2"].DeliveredAt = time.Now().Add(c.addTime)
 
 		time.Sleep(c.wait)
-		got, err := c.inputSub.messages.GetRange(c.inputSub, c.inputSize)
+		got, err := c.inputSub.Messages.GetRange(c.inputSub, c.inputSize)
 		if err != c.expectErr {
 			t.Errorf("#%d: want %v, got %v", i, c.expectErr, err)
 		}
@@ -217,11 +217,11 @@ func TestGetRangeWithAck(t *testing.T) {
 
 	// all get
 	sub := &Subscription{
-		name:       "A",
-		messages:   newMessageList(),
-		ackTimeout: 0 * time.Millisecond,
+		Name:       "A",
+		Messages:   newMessageList(),
+		AckTimeout: 0 * time.Millisecond,
 	}
-	got, err := sub.messages.GetRange(sub, sub.messages.list.Size())
+	got, err := sub.Messages.GetRange(sub, sub.Messages.list.Size())
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
 	}
@@ -232,8 +232,8 @@ func TestGetRangeWithAck(t *testing.T) {
 	}
 
 	// some ack
-	baseMsg["deliver1"].Ack(sub.name)
-	got, err = sub.messages.GetRange(sub, sub.messages.list.Size())
+	baseMsg["deliver1"].Ack(sub.Name)
+	got, err = sub.Messages.GetRange(sub, sub.Messages.list.Size())
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
 	}
@@ -260,7 +260,7 @@ func TestPullAndAck(t *testing.T) {
 		topic.Publish([]byte(fmt.Sprintf("%s-test", topic.Name)), nil)
 	}
 	// want only Topic "a"
-	if got, err := sub.messages.GetRange(sub, 2); err == nil {
+	if got, err := sub.Messages.GetRange(sub, 2); err == nil {
 		if want := []string{"a-test"}; !isExistMessageData(got, want) {
 			t.Errorf("want exist %v in MessageList, got %v", want, got)
 		}

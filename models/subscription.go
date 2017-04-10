@@ -8,11 +8,11 @@ import (
 )
 
 type Subscription struct {
-	name       string
-	topic      *Topic
-	messages   *MessageList
-	ackTimeout time.Duration
-	push       *Push
+	Name       string        `json:"name"`
+	Topic      *Topic        `json:"-"`
+	Messages   *MessageList  `json:"-"`
+	AckTimeout time.Duration `json:"ack_deadline_seconds"`
+	Push       *Push         `json:"push_config"`
 }
 
 // Create Subscription, if not exist already same name Subscription
@@ -26,9 +26,9 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 		return nil, err
 	}
 	s := &Subscription{
-		name:     name,
-		topic:    topic,
-		messages: newMessageList(),
+		Name:     name,
+		Topic:    topic,
+		Messages: newMessageList(),
 	}
 	s.SetAckTimeout(timeout)
 	if err := s.SetPush(endpoint, attr); err != nil {
@@ -48,7 +48,7 @@ func GetSubscription(name string) (*Subscription, error) {
 
 // Delete is delete subscription at globalSubscription
 func (s *Subscription) Delete() error {
-	return globalSubscription.Delete(s.name)
+	return globalSubscription.Delete(s.Name)
 }
 
 // ListSubscription returns subscription list from globalSubscription
@@ -58,12 +58,12 @@ func ListSubscription() ([]*Subscription, error) {
 
 // Deliver Message
 func (s *Subscription) Pull(size int) ([]*Message, error) {
-	messages, err := s.messages.GetRange(s, size)
+	messages, err := s.Messages.GetRange(s, size)
 	if err != nil {
 		return nil, err
 	}
 	for _, m := range messages {
-		m.Deliver(s.name)
+		m.Deliver(s.Name)
 	}
 
 	return messages, nil
@@ -72,7 +72,7 @@ func (s *Subscription) Pull(size int) ([]*Message, error) {
 // Succeed Message delivery. remove sent Message.
 func (s *Subscription) Ack(ids ...string) {
 	for _, id := range ids {
-		s.messages.Ack(s.name, id)
+		s.Messages.Ack(s.Name, id)
 	}
 }
 
@@ -81,7 +81,7 @@ func (s *Subscription) SetAckTimeout(timeout int64) {
 	if timeout < 0 {
 		timeout = 0
 	}
-	s.ackTimeout = time.Duration(timeout) * time.Millisecond
+	s.AckTimeout = time.Duration(timeout) * time.Millisecond
 }
 
 // Set push endpoint with attributes, only one can be set as push endpoint.
@@ -94,7 +94,7 @@ func (s *Subscription) SetPush(endpoint string, attribute map[string]string) err
 	if err != nil {
 		return err
 	}
-	s.push = p
+	s.Push = p
 	return nil
 }
 
@@ -120,9 +120,9 @@ func (m *MessageList) GetRange(sub *Subscription, size int) ([]*Message, error) 
 		size = maxLen
 	}
 
-	msgs, err := m.list.FindByReadable(sub.name, sub.ackTimeout, size)
+	msgs, err := m.list.FindByReadable(sub.Name, sub.AckTimeout, size)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get message dependent Subscription name=%s", sub.name)
+		return nil, errors.Wrapf(err, "failed to get message dependent Subscription name=%s", sub.Name)
 	}
 	if len(msgs) == 0 {
 		return nil, ErrEmptyMessage

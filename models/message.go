@@ -58,7 +58,7 @@ func NewMessage(id string, topic Topic, data []byte, attr map[string]string, sub
 		PublishedAt: time.Now(),
 	}
 	for _, sub := range subs {
-		m.AddSubscription(sub.name)
+		m.AddSubscription(sub.Name)
 	}
 	return m
 }
