@@ -51,6 +51,7 @@ func GetSubscription(name string) (*Subscription, error) {
 
 // Delete is delete subscription at globalSubscription
 func (s *Subscription) Delete() error {
+	s.Topic.DeleteSubscription(s.Name)
 	return globalSubscription.Delete(s.Name)
 }
 

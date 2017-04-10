@@ -84,6 +84,14 @@ func (t *Topic) GetSubscriptions() ([]*Subscription, error) {
 	return t.Sub.List()
 }
 
+// DeleteSubscription is delete depends subscription
+func (t *Topic) DeleteSubscription(name string) error {
+	if err := t.Sub.Delete(name); err != nil {
+		return err
+	}
+	return t.Save()
+}
+
 // Save is save to datastore
 func (t *Topic) Save() error {
 	return globalTopics.Set(t)

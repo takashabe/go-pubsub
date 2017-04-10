@@ -78,18 +78,19 @@ func TestNewSubscription(t *testing.T) {
 
 func TestDeleteSubscription(t *testing.T) {
 	helper.setupGlobal(t)
-	suba := &Subscription{Name: "A"}
-	subb := &Subscription{Name: "B"}
-	globalSubscription.Set(suba)
-	globalSubscription.Set(subb)
+	topicA := helper.dummyTopic(t, "a")
+	subA := &Subscription{Name: "A", Topic: topicA}
+	subB := &Subscription{Name: "B", Topic: topicA}
+	globalSubscription.Set(subA)
+	globalSubscription.Set(subB)
 
 	cases := []struct {
 		input          *Subscription
 		expectSubNames []string
 	}{
-		{suba, []string{"B"}},
-		{suba, []string{"B"}}, // already deleted
-		{subb, []string{}},
+		{subA, []string{"B"}},
+		{subA, []string{"B"}}, // already deleted
+		{subB, []string{}},
 	}
 	for i, c := range cases {
 		err := c.input.Delete()
