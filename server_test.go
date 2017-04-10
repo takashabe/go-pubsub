@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -201,6 +203,62 @@ func TestListTopicSubscription(t *testing.T) {
 		}
 		if got, _ := ioutil.ReadAll(res.Body); !reflect.DeepEqual(got, c.expectBody) {
 			t.Errorf("#%d: want %s, got %s", i, c.expectBody, got)
+		}
+	}
+}
+
+func TestPublish(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	setupDummyTopics(t, ts)
+
+	cases := []struct {
+		input          interface{}
+		expectCode     int
+		expectMsgCount int
+	}{
+		{
+			PublishDatas{
+				Messages: []PublishData{
+					PublishData{Data: []byte(`test1`), Attr: nil},
+					PublishData{Data: []byte(`test2`), Attr: map[string]string{"1": "2"}},
+				},
+			},
+			http.StatusOK,
+			2,
+		},
+		{
+			"",
+			http.StatusNotFound,
+			0,
+		},
+	}
+	for i, c := range cases {
+		client := dummyClient(t)
+		b, err := json.Marshal(c.input)
+		if err != nil {
+			t.Fatal("failed to encode to json")
+		}
+		req, err := http.NewRequest("POST", fmt.Sprintf("%s/topic/a/publish", ts.URL), bytes.NewBuffer(b))
+		if err != nil {
+			t.Fatal("failed to create request")
+		}
+		res, err := client.Do(req)
+		if err != nil {
+			t.Fatal("failed to send request")
+		}
+		defer res.Body.Close()
+
+		if got := res.StatusCode; got != c.expectCode {
+			t.Errorf("#%d: want %d, got %d", i, c.expectCode, got)
+		}
+		var msgs ResponsePublish
+		if err := json.NewDecoder(res.Body).Decode(&msgs); err != nil {
+			body, _ := ioutil.ReadAll(res.Body)
+			t.Fatalf("#%d: failed to decode response body, body=%v", i, body)
+		}
+		if got := len(msgs.MessageIDs); got != c.expectMsgCount {
+			t.Errorf("#%d: want %d, got %d, got json %v", i, c.expectCode, got, msgs)
 		}
 	}
 }

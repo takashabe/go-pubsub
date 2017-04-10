@@ -61,17 +61,17 @@ func (t *Topic) AddSubscription(s *Subscription) error {
 	return t.Sub.Set(s)
 }
 
-// Message store backend storage and delivery to Subscription
-func (t *Topic) Publish(data []byte, attributes map[string]string) error {
+// Publish is Message save and deliver to subscription, and return message id
+func (t *Topic) Publish(data []byte, attributes map[string]string) (string, error) {
 	subList, err := t.GetSubscriptions()
 	if err != nil {
-		return errors.Wrap(err, "failed GetSubscriptions")
+		return "", errors.Wrap(err, "failed GetSubscriptions")
 	}
 	m := NewMessage(makeMessageID(), *t, data, attributes, subList)
 	if err := m.Save(); err != nil {
-		return errors.Wrap(err, "failed set Message")
+		return "", errors.Wrap(err, "failed set Message")
 	}
-	return nil
+	return m.ID, nil
 }
 
 // GetSubscription return a topic dependent Subscription
