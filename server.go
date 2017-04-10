@@ -88,6 +88,7 @@ func routes() *router.Router {
 	subscriptionRoot := "/subscription"
 	r.Get(subscriptionRoot+"/get/:id", ss.Get)
 	r.Put(subscriptionRoot+"/create/:id", ss.Create)
+	r.Delete(subscriptionRoot+"/delete/:id", ss.Delete)
 	return r
 }
 

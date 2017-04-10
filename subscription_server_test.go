@@ -134,3 +134,50 @@ func TestGetSubscription(t *testing.T) {
 		}
 	}
 }
+
+func TestDeleteSubscription(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	setupDummyTopicAndSub(t, ts)
+
+	cases := []struct {
+		input      string
+		expectCode int
+		expectBody []byte
+	}{
+		{
+			"A",
+			http.StatusNoContent,
+			[]byte(``),
+		},
+		{
+			"A",
+			http.StatusNotFound,
+			[]byte(`{"reason":"subscription already not exist"}`),
+		},
+	}
+	for i, c := range cases {
+		client := dummyClient(t)
+		req, err := http.NewRequest("DELETE",
+			fmt.Sprintf("%s/subscription/delete/%s", ts.URL, c.input), nil)
+		if err != nil {
+			t.Fatalf("#%d: failed to create request", i)
+		}
+		res, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("#%d: failed to send request", i)
+		}
+		defer res.Body.Close()
+
+		if got := res.StatusCode; got != c.expectCode {
+			t.Errorf("#%d: want %d, got %d", i, c.expectCode, got)
+		}
+		got, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			t.Fatalf("#%d: failed to read body, got err %v", i, err)
+		}
+		if !reflect.DeepEqual(got, c.expectBody) {
+			t.Errorf("#%d: want %s, got %s", i, c.expectBody, got)
+		}
+	}
+}

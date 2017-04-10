@@ -55,6 +55,7 @@ func (s *SubscriptionServer) Create(w http.ResponseWriter, r *http.Request, id s
 	Json(w, http.StatusCreated, subscriptionToResource(sub))
 }
 
+// Get is get already exist subscription
 func (s *SubscriptionServer) Get(w http.ResponseWriter, r *http.Request, id string) {
 	sub, err := models.GetSubscription(id)
 	if err != nil {
@@ -62,4 +63,18 @@ func (s *SubscriptionServer) Get(w http.ResponseWriter, r *http.Request, id stri
 		return
 	}
 	Json(w, http.StatusOK, subscriptionToResource(sub))
+}
+
+// Delete is delete subscription
+func (s *SubscriptionServer) Delete(w http.ResponseWriter, r *http.Request, id string) {
+	sub, err := models.GetSubscription(id)
+	if err != nil {
+		Error(w, http.StatusNotFound, err, "subscription already not exist")
+		return
+	}
+	if err := sub.Delete(); err != nil {
+		Error(w, http.StatusInternalServerError, err, "failed to delete subscription")
+		return
+	}
+	Json(w, http.StatusNoContent, "")
 }
