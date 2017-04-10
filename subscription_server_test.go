@@ -34,6 +34,25 @@ func TestCreateSubscription(t *testing.T) {
 			http.StatusCreated,
 			[]byte(`{"topic":"a","push_config":{"endpoint":"test","attributes":{"1":"2"}},"ack_deadline_seconds":10}`),
 		},
+		{
+			"A",
+			ResourceSubscription{
+				Topic: "a",
+				Push: PushConfig{
+					Endpoint: "test",
+					Attr:     map[string]string{"1": "2"},
+				},
+				AckTimeout: 10,
+			},
+			http.StatusNotFound,
+			[]byte(`{"reason":"failed to create subscription"}`),
+		},
+		{
+			"B",
+			"",
+			http.StatusNotFound,
+			[]byte(`{"reason":"failed to parsed request"}`),
+		},
 	}
 	for i, c := range cases {
 		client := dummyClient(t)

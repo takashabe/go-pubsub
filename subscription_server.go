@@ -46,7 +46,7 @@ func (s *SubscriptionServer) Create(w http.ResponseWriter, r *http.Request, id s
 	// create subscription
 	sub, err := models.NewSubscription(id, req.Topic, req.AckTimeout, req.Push.Endpoint, req.Push.Attr)
 	if err != nil {
-		Error(w, http.StatusNotFound, err, "failed to create topic")
+		Error(w, http.StatusNotFound, err, "failed to create subscription")
 		return
 	}
 	Json(w, http.StatusCreated, subscriptionToResource(sub))
