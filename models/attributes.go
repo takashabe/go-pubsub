@@ -8,17 +8,21 @@ type Attributes struct {
 	mu   sync.Mutex
 }
 
-func (a *Attributes) set(key, value string) {
+func (a *Attributes) Set(key, value string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.attr[key] = value
 }
 
-func (a *Attributes) get(key string) (string, bool) {
+func (a *Attributes) Get(key string) (string, bool) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	v, ok := a.attr[key]
 	return v, ok
+}
+
+func (a *Attributes) Dump() map[string]string {
+	return a.attr
 }
 
 func newAttributes(attr map[string]string) *Attributes {

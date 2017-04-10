@@ -4,8 +4,8 @@ import "net/url"
 
 // Push represent push message in Subscription
 type Push struct {
-	Endpoint   *url.URL    `json:"endpoint"`
-	Attributes *Attributes `json:"attributes"`
+	Endpoint   *url.URL
+	Attributes *Attributes
 }
 
 // Create Push object when valid URL
@@ -22,7 +22,7 @@ func NewPush(endpoint string, attributes map[string]string) (*Push, error) {
 		},
 	}
 	for k, v := range attributes {
-		p.Attributes.set(k, v)
+		p.Attributes.Set(k, v)
 	}
 	return p, nil
 }
