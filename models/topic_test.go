@@ -88,9 +88,9 @@ func TestPublish(t *testing.T) {
 	}
 	for i, c := range cases {
 		topic := helper.dummyTopic(t, "a")
-		got := topic.Publish(c.inputData, c.inputAttr)
-		if got != c.expectErr {
-			t.Errorf("%#d: want %v, got %v", i, c.expectErr, got)
+		_, err := topic.Publish(c.inputData, c.inputAttr)
+		if err != c.expectErr {
+			t.Errorf("%#d: want %v, got %v", i, c.expectErr, err)
 		}
 	}
 }
