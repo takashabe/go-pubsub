@@ -74,18 +74,20 @@ func Json(w http.ResponseWriter, code int, src interface{}) {
 
 func routes() *router.Router {
 	r := router.NewRouter()
-	s := TopicServer{}
 
+	ts := TopicServer{}
 	topicRoot := "/topic"
-	r.Get(topicRoot+"/get/:id", s.Get)
-	r.Get(topicRoot+"/list", s.List)
-	r.Get(topicRoot+"/:id/subscriptions", s.ListSubscription)
-	r.Put(topicRoot+"/create/:id", s.Create)
-	r.Delete(topicRoot+"/delete/:id", s.Delete)
-	r.Post(topicRoot+"/:id/publish", s.Publish)
+	r.Get(topicRoot+"/get/:id", ts.Get)
+	r.Get(topicRoot+"/list", ts.List)
+	r.Get(topicRoot+"/:id/subscriptions", ts.ListSubscription)
+	r.Put(topicRoot+"/create/:id", ts.Create)
+	r.Delete(topicRoot+"/delete/:id", ts.Delete)
+	r.Post(topicRoot+"/:id/publish", ts.Publish)
 
+	ss := SubscriptionServer{}
 	subscriptionRoot := "/subscription"
-	r.Get(subscriptionRoot+"/get", nil)
+	// r.Get(subscriptionRoot+"/get/:id", ss.Get)
+	r.Put(subscriptionRoot+"/create/:id", ss.Create)
 	return r
 }
 
