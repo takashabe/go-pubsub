@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -167,5 +168,39 @@ func TestListTopic(t *testing.T) {
 	want = []byte(`[{"name":"a"},{"name":"b"},{"name":"c"}]`)
 	if got, _ := ioutil.ReadAll(res.Body); !reflect.DeepEqual(got, want) {
 		t.Errorf("want %s, got %s", want, got)
+	}
+}
+
+func TestListTopicSubscription(t *testing.T) {
+	// TODO: implements test, after the subscription testing finished
+	ts := setupServer(t)
+	defer ts.Close()
+	setupDummyTopics(t, ts)
+
+	cases := []struct {
+		input      string
+		expectCode int
+		expectBody []byte
+	}{
+		{"a", http.StatusOK, []byte(`[]`)},
+	}
+	for i, c := range cases {
+		client := dummyClient(t)
+		req, err := http.NewRequest("GET", fmt.Sprintf("%s/topic/%s/subscriptions", ts.URL, c.input), nil)
+		if err != nil {
+			t.Fatal("failed to create request")
+		}
+		res, err := client.Do(req)
+		if err != nil {
+			t.Fatal("failed to send request")
+		}
+		defer res.Body.Close()
+
+		if got := res.StatusCode; got != c.expectCode {
+			t.Errorf("#%d: want %d, got %d", i, c.expectCode, got)
+		}
+		if got, _ := ioutil.ReadAll(res.Body); !reflect.DeepEqual(got, c.expectBody) {
+			t.Errorf("#%d: want %s, got %s", i, c.expectBody, got)
+		}
 	}
 }

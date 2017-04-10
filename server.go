@@ -107,6 +107,22 @@ func (s *TopicServer) List(w http.ResponseWriter, r *http.Request) {
 	Json(w, http.StatusOK, t)
 }
 
+// ListSubscription is gets topic depends subscription list
+func (s *TopicServer) ListSubscription(w http.ResponseWriter, r *http.Request, id string) {
+	t, err := models.GetTopic(id)
+	if err != nil {
+		Error(w, http.StatusNotFound, err, "not found topic")
+		return
+	}
+	sub, err := t.GetSubscriptions()
+	if err != nil {
+		Error(w, http.StatusNotFound, err, "not found subscription")
+		return
+	}
+	sort.Sort(models.BySubscriptionName(sub))
+	Json(w, http.StatusOK, sub)
+}
+
 // Delete is delete topic
 func (s *TopicServer) Delete(w http.ResponseWriter, r *http.Request, id string) {
 	t, err := models.GetTopic(id)
@@ -128,6 +144,7 @@ func routes() *router.Router {
 	topicRoot := "/topic"
 	r.Get(topicRoot+"/get/:id", s.Get)
 	r.Get(topicRoot+"/list", s.List)
+	r.Get(topicRoot+"/:id/subscriptions", s.ListSubscription)
 	r.Put(topicRoot+"/create/:id", s.Create)
 	r.Delete(topicRoot+"/delete/:id", s.Delete)
 

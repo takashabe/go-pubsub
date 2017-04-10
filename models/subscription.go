@@ -147,3 +147,10 @@ func (m *MessageList) Ack(subID, messID string) error {
 	}
 	return nil
 }
+
+// BySubscriptionName implements sort.Interface for []*Subscription based on the ID
+type BySubscriptionName []*Subscription
+
+func (a BySubscriptionName) Len() int           { return len(a) }
+func (a BySubscriptionName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a BySubscriptionName) Less(i, j int) bool { return a[i].Name < a[j].Name }
