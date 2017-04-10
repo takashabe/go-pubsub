@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 
 	"github.com/pkg/errors"
 	"github.com/takashabe/go-message-queue/models"
@@ -95,6 +96,17 @@ func (s *TopicServer) Get(w http.ResponseWriter, r *http.Request, id string) {
 	Json(w, http.StatusOK, t)
 }
 
+// List is gets topic list
+func (s *TopicServer) List(w http.ResponseWriter, r *http.Request) {
+	t, err := models.ListTopic()
+	if err != nil {
+		Error(w, http.StatusNotFound, err, "not found topic")
+		return
+	}
+	sort.Sort(models.ByTopicName(t))
+	Json(w, http.StatusOK, t)
+}
+
 // Delete is delete topic
 func (s *TopicServer) Delete(w http.ResponseWriter, r *http.Request, id string) {
 	t, err := models.GetTopic(id)
@@ -115,6 +127,7 @@ func routes() *router.Router {
 
 	topicRoot := "/topic"
 	r.Get(topicRoot+"/get/:id", s.Get)
+	r.Get(topicRoot+"/list", s.List)
 	r.Put(topicRoot+"/create/:id", s.Create)
 	r.Delete(topicRoot+"/delete/:id", s.Delete)
 

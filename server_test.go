@@ -139,3 +139,44 @@ func TestDelete(t *testing.T) {
 		}
 	}
 }
+
+func TestList(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+
+	// create base topics
+	client := dummyClient(t)
+	puts := []string{"a", "b"}
+	for i, p := range puts {
+		req, err := http.NewRequest("PUT", ts.URL+"/topic/create/"+p, nil)
+		if err != nil {
+			t.Fatalf("#%d: failed to create request", i)
+		}
+		res, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("#%d: failed to send request", i)
+		}
+		defer res.Body.Close()
+	}
+
+	// test list
+	req, err := http.NewRequest("GET", ts.URL+"/topic/list", nil)
+	if err != nil {
+		t.Fatal("failed to create request")
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		t.Fatal("failed to send request")
+	}
+	defer res.Body.Close()
+
+	var want interface{}
+	want = http.StatusOK
+	if got := res.StatusCode; got != want {
+		t.Errorf("want %d, got %d", want, got)
+	}
+	want = []byte(`[{"name":"a"},{"name":"b"}]`)
+	if got, _ := ioutil.ReadAll(res.Body); !reflect.DeepEqual(got, want) {
+		t.Errorf("want %s, got %s", want, got)
+	}
+}

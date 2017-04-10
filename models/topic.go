@@ -87,3 +87,10 @@ func (t *Topic) GetSubscriptions() ([]*Subscription, error) {
 func (t *Topic) Save() error {
 	return globalTopics.Set(t)
 }
+
+// ByTopicName implements sort.Interface for []*Topic based on the ID
+type ByTopicName []*Topic
+
+func (a ByTopicName) Len() int           { return len(a) }
+func (a ByTopicName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByTopicName) Less(i, j int) bool { return a[i].Name < a[j].Name }
