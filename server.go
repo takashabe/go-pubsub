@@ -106,7 +106,7 @@ func (s *TopicServer) Delete(w http.ResponseWriter, r *http.Request, id string) 
 		Error(w, http.StatusInternalServerError, err, "failed to delete topic")
 		return
 	}
-	Json(w, http.StatusNoContent, t)
+	Json(w, http.StatusNoContent, "")
 }
 
 func routes() *router.Router {
