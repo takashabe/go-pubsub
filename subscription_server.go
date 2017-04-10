@@ -24,12 +24,15 @@ type PushConfig struct {
 
 // subscriptionToResource is Subscription object convert to ResourceSubscription
 func subscriptionToResource(s *models.Subscription) ResourceSubscription {
+	pushConfig := PushConfig{}
+	if s.Push != nil {
+		pushConfig.Endpoint = s.Push.Endpoint.String()
+		pushConfig.Attr = s.Push.Attributes.Dump()
+	}
+
 	return ResourceSubscription{
-		Topic: s.Topic.Name,
-		Push: PushConfig{
-			Endpoint: s.Push.Endpoint.String(),
-			Attr:     s.Push.Attributes.Dump(),
-		},
+		Topic:      s.Topic.Name,
+		Push:       pushConfig,
 		AckTimeout: int64(s.AckTimeout / time.Second),
 	}
 }

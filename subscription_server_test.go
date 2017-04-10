@@ -49,6 +49,15 @@ func TestCreateSubscription(t *testing.T) {
 		},
 		{
 			"B",
+			ResourceSubscription{
+				Topic:      "a",
+				AckTimeout: 10,
+			},
+			http.StatusCreated,
+			[]byte(`{"topic":"a","push_config":{"endpoint":"","attributes":null},"ack_deadline_seconds":10}`),
+		},
+		{
+			"C",
 			"",
 			http.StatusNotFound,
 			[]byte(`{"reason":"failed to parsed request"}`),
