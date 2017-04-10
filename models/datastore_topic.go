@@ -23,10 +23,6 @@ func NewDatastoreTopic(cfg *Config) (*DatastoreTopic, error) {
 
 // InitDatastoreTopic initialize global datastore object
 func InitDatastoreTopic(cfg *Config) error {
-	if globalTopics != nil {
-		return nil
-	}
-
 	d, err := NewDatastoreTopic(cfg)
 	if err != nil {
 		return err

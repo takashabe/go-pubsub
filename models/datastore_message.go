@@ -27,10 +27,6 @@ func NewDatastoreMessage(cfg *Config) (*DatastoreMessage, error) {
 
 // InitDatastoreMessage initialize global datastore object
 func InitDatastoreMessage(cfg *Config) error {
-	if globalMessage != nil {
-		return nil
-	}
-
 	d, err := NewDatastoreMessage(cfg)
 	if err != nil {
 		return err
