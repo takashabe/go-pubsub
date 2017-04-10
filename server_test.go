@@ -45,14 +45,14 @@ func TestCreateAndGetTopic(t *testing.T) {
 		{
 			"A",
 			http.StatusCreated, http.StatusOK,
-			[]byte("{\"name\":\"A\"}"),
-			[]byte("{\"name\":\"A\"}"),
+			[]byte(`{"name":"A"}`),
+			[]byte(`{"name":"A"}`),
 		},
 		{
 			"A",
 			http.StatusNotFound, http.StatusOK,
-			[]byte("{\"reason\":\"failed to create topic\"}"),
-			[]byte("{\"name\":\"A\"}"),
+			[]byte(`{"reason":"failed to create topic"}`),
+			[]byte(`{"name":"A"}`),
 		},
 	}
 	for i, c := range cases {
@@ -118,7 +118,7 @@ func TestDelete(t *testing.T) {
 		expectBody []byte
 	}{
 		{"a", http.StatusNoContent, []byte("")},
-		{"a", http.StatusNotFound, []byte("{\"reason\":\"topic already not exist\"}")},
+		{"a", http.StatusNotFound, []byte(`{"reason":"topic already not exist"}`)},
 	}
 	for i, c := range cases {
 		req, err := http.NewRequest("DELETE", ts.URL+"/topic/delete/"+c.input, nil)
