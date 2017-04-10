@@ -31,6 +31,22 @@ func setupServer(t *testing.T) *httptest.Server {
 	return httptest.NewServer(routes())
 }
 
+func setupDummyTopics(t *testing.T, ts *httptest.Server) {
+	client := dummyClient(t)
+	puts := []string{"a", "b", "c"}
+	for i, p := range puts {
+		req, err := http.NewRequest("PUT", ts.URL+"/topic/create/"+p, nil)
+		if err != nil {
+			t.Fatalf("#%d: failed to create request", i)
+		}
+		res, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("#%d: failed to send request", i)
+		}
+		defer res.Body.Close()
+	}
+}
+
 func TestCreateAndGetTopic(t *testing.T) {
 	ts := setupServer(t)
 	defer ts.Close()
@@ -96,21 +112,7 @@ func TestCreateAndGetTopic(t *testing.T) {
 func TestDelete(t *testing.T) {
 	ts := setupServer(t)
 	defer ts.Close()
-
-	// create base topics
-	client := dummyClient(t)
-	puts := []string{"a", "b"}
-	for i, p := range puts {
-		req, err := http.NewRequest("PUT", ts.URL+"/topic/create/"+p, nil)
-		if err != nil {
-			t.Fatalf("#%d: failed to create request", i)
-		}
-		res, err := client.Do(req)
-		if err != nil {
-			t.Fatalf("#%d: failed to send request", i)
-		}
-		defer res.Body.Close()
-	}
+	setupDummyTopics(t, ts)
 
 	cases := []struct {
 		input      string
@@ -121,6 +123,7 @@ func TestDelete(t *testing.T) {
 		{"a", http.StatusNotFound, []byte(`{"reason":"topic already not exist"}`)},
 	}
 	for i, c := range cases {
+		client := dummyClient(t)
 		req, err := http.NewRequest("DELETE", ts.URL+"/topic/delete/"+c.input, nil)
 		if err != nil {
 			t.Fatalf("#%d: failed to create request", i)
@@ -140,26 +143,12 @@ func TestDelete(t *testing.T) {
 	}
 }
 
-func TestList(t *testing.T) {
+func TestListTopic(t *testing.T) {
 	ts := setupServer(t)
 	defer ts.Close()
+	setupDummyTopics(t, ts)
 
-	// create base topics
 	client := dummyClient(t)
-	puts := []string{"a", "b"}
-	for i, p := range puts {
-		req, err := http.NewRequest("PUT", ts.URL+"/topic/create/"+p, nil)
-		if err != nil {
-			t.Fatalf("#%d: failed to create request", i)
-		}
-		res, err := client.Do(req)
-		if err != nil {
-			t.Fatalf("#%d: failed to send request", i)
-		}
-		defer res.Body.Close()
-	}
-
-	// test list
 	req, err := http.NewRequest("GET", ts.URL+"/topic/list", nil)
 	if err != nil {
 		t.Fatal("failed to create request")
