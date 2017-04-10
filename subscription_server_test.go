@@ -32,7 +32,7 @@ func TestCreateSubscription(t *testing.T) {
 				AckTimeout: 10,
 			},
 			http.StatusCreated,
-			[]byte(`{"topic":"a","push_config":{"endpoint":"test","attributes":{"1":"2"}},"ack_deadline_seconds":10}`),
+			[]byte(`{"name":"A","topic":"a","push_config":{"endpoint":"test","attributes":{"1":"2"}},"ack_deadline_seconds":10}`),
 		},
 		{
 			"A",
@@ -54,7 +54,7 @@ func TestCreateSubscription(t *testing.T) {
 				AckTimeout: 10,
 			},
 			http.StatusCreated,
-			[]byte(`{"topic":"a","push_config":{"endpoint":"","attributes":null},"ack_deadline_seconds":10}`),
+			[]byte(`{"name":"B","topic":"a","push_config":{"endpoint":"","attributes":null},"ack_deadline_seconds":10}`),
 		},
 		{
 			"C",
@@ -106,7 +106,7 @@ func TestGetSubscription(t *testing.T) {
 		{
 			"A",
 			http.StatusOK,
-			[]byte(`{"topic":"a","push_config":{"endpoint":"","attributes":null},"ack_deadline_seconds":10}`),
+			[]byte(`{"name":"A","topic":"a","push_config":{"endpoint":"","attributes":null},"ack_deadline_seconds":10}`),
 		},
 		{
 			"C",

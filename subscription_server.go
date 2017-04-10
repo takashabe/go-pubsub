@@ -13,6 +13,7 @@ type SubscriptionServer struct{}
 
 // ResourceSubscription represent create subscription request and response data
 type ResourceSubscription struct {
+	Name       string     `json:"name"`
 	Topic      string     `json:"topic"`
 	Push       PushConfig `json:"push_config"`
 	AckTimeout int64      `json:"ack_deadline_seconds"`
@@ -31,6 +32,7 @@ func subscriptionToResource(s *models.Subscription) ResourceSubscription {
 	}
 
 	return ResourceSubscription{
+		Name:       s.Name,
 		Topic:      s.Topic.Name,
 		Push:       pushConfig,
 		AckTimeout: int64(s.AckTimeout / time.Second),
