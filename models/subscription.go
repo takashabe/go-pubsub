@@ -16,7 +16,7 @@ type Subscription struct {
 }
 
 // Create Subscription, if not exist already same name Subscription
-func NewSubscription(name, topicName string, timeout int64, endpoint string, attr map[string]string) (*Subscription, error) {
+func NewSubscription(name, topicName string, timeout int, endpoint string, attr map[string]string) (*Subscription, error) {
 	if _, err := GetSubscription(name); err == nil {
 		return nil, ErrAlreadyExistSubscription
 	}
@@ -32,6 +32,9 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 	}
 	s.SetAckTimeout(timeout)
 	if err := s.SetPush(endpoint, attr); err != nil {
+		return nil, err
+	}
+	if err := s.Save(); err != nil {
 		return nil, err
 	}
 	if err := topic.AddSubscription(s); err != nil {
@@ -77,7 +80,7 @@ func (s *Subscription) Ack(ids ...string) {
 }
 
 // Set Ack timeout, arg time expect millisecond.
-func (s *Subscription) SetAckTimeout(timeout int64) {
+func (s *Subscription) SetAckTimeout(timeout int) {
 	if timeout < 0 {
 		timeout = 0
 	}

@@ -21,7 +21,6 @@ func testUrl(t *testing.T, raw string) *url.URL {
 
 func TestNewSubscription(t *testing.T) {
 	helper.setupGlobalAndSetTopics(t, "a")
-
 	expect1 := &Subscription{
 		Name:       "A",
 		Topic:      helper.dummyTopic(t, "a"),
@@ -39,7 +38,7 @@ func TestNewSubscription(t *testing.T) {
 	cases := []struct {
 		name      string
 		topicName string
-		timeout   int64
+		timeout   int
 		endpoint  string
 		attr      map[string]string
 		expectObj *Subscription
@@ -56,12 +55,12 @@ func TestNewSubscription(t *testing.T) {
 			ErrAlreadyExistSubscription,
 		},
 		{
-			"A", "b", -1, "localhost:8080", map[string]string{"key": "value"},
+			"B", "b", -1, "localhost:8080", map[string]string{"key": "value"},
 			nil,
 			ErrNotFoundTopic,
 		},
 		{
-			"A", "a", -1, ":", map[string]string{"key": "value"},
+			"B", "a", -1, ":", map[string]string{"key": "value"},
 			nil,
 			ErrInvalidEndpoint,
 		},
