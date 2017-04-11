@@ -132,12 +132,11 @@ func TestGetRange(t *testing.T) {
 	}
 
 	cases := []struct {
-		inputSub  *Subscription
-		inputSize int
-		wait      time.Duration
-		addTime   time.Duration
-		expectMsg []*Message
-		expectErr error
+		inputSub   *Subscription
+		inputSize  int
+		wait       time.Duration
+		addTime    time.Duration
+		expectSize int
 	}{
 		{
 			&Subscription{
@@ -148,8 +147,7 @@ func TestGetRange(t *testing.T) {
 			2,
 			0 * time.Millisecond,
 			0 * time.Millisecond,
-			[]*Message{baseMsg["wait"], baseMsg["deliver1"]},
-			nil,
+			2,
 		},
 		{
 			&Subscription{
@@ -160,8 +158,7 @@ func TestGetRange(t *testing.T) {
 			5,
 			0 * time.Millisecond,
 			0 * time.Millisecond,
-			[]*Message{baseMsg["wait"], baseMsg["deliver1"], baseMsg["deliver2"]},
-			nil,
+			3,
 		},
 		{
 			&Subscription{
@@ -172,8 +169,7 @@ func TestGetRange(t *testing.T) {
 			2,
 			0 * time.Millisecond,
 			0 * time.Millisecond,
-			[]*Message{baseMsg["wait"]},
-			nil,
+			1,
 		},
 		{
 			&Subscription{
@@ -184,8 +180,7 @@ func TestGetRange(t *testing.T) {
 			2,
 			0,
 			1000 * time.Millisecond, // deliver at future
-			[]*Message{baseMsg["wait"], baseMsg["deliver1"]},
-			nil,
+			2,
 		},
 	}
 	for i, c := range cases {
@@ -195,13 +190,11 @@ func TestGetRange(t *testing.T) {
 
 		time.Sleep(c.wait)
 		got, err := c.inputSub.Messages.GetRange(c.inputSub, c.inputSize)
-		if err != c.expectErr {
-			t.Errorf("#%d: want %v, got %v", i, c.expectErr, err)
+		if err != nil {
+			t.Fatalf("#%d: failed to messgae get range", i)
 		}
-		want := c.expectMsg
-		sort.Sort(ByMessageID(want))
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("#%d: want %v, got %#v", i, want, got)
+		if len(got) != c.expectSize {
+			t.Errorf("#%d: message size want %d, got %d", i, c.expectSize, len(got))
 		}
 	}
 }
