@@ -89,6 +89,7 @@ func routes() *router.Router {
 	r.Get(subscriptionRoot+"/get/:id", ss.Get)
 	r.Get(subscriptionRoot+"/list", ss.List)
 	r.Put(subscriptionRoot+"/create/:id", ss.Create)
+	r.Post(subscriptionRoot+"/:id/pull", ss.Pull)
 	r.Delete(subscriptionRoot+"/delete/:id", ss.Delete)
 	return r
 }

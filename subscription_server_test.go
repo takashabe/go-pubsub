@@ -211,3 +211,62 @@ func TestListSubscription(t *testing.T) {
 		}
 	}
 }
+
+func TestPull(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	setupDummyTopicAndSub(t, ts)
+	dummyPublishMessage(t, ts)
+
+	cases := []struct {
+		inputName  string
+		inputBody  interface{}
+		expectCode int
+		expectSize int
+	}{
+		{
+			"A",
+			RequestPull{MaxMessages: 2},
+			http.StatusOK,
+			2,
+		},
+		{
+			"A",
+			RequestPull{MaxMessages: 3},
+			http.StatusOK,
+			1,
+		},
+		{
+			"A",
+			RequestPull{MaxMessages: 3},
+			http.StatusNotFound,
+			0,
+		},
+	}
+	for i, c := range cases {
+		var buf bytes.Buffer
+		if err := json.NewEncoder(&buf).Encode(c.inputBody); err != nil {
+			t.Fatal("#%d: failed to encode struct")
+		}
+		client := dummyClient(t)
+		res, err := client.Post(
+			fmt.Sprintf("%s/subscription/%s/pull", ts.URL, c.inputName),
+			"application/json", &buf)
+		if err != nil {
+			t.Fatalf("failed to send request, got err %v", err)
+		}
+		defer res.Body.Close()
+
+		if got := res.StatusCode; got != c.expectCode {
+			t.Errorf("#%d: want %d, got %d", i, c.expectCode, got)
+		}
+		var body ResponsePull
+		if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
+			actBody, _ := ioutil.ReadAll(res.Body)
+			t.Fatalf("#%d: failed decode to json, body %s", i, actBody)
+		}
+		if got := len(body.AckMessages); got != c.expectSize {
+			t.Fatalf("#%d: message len want %d, got %d", i, c.expectSize, got)
+		}
+	}
+}

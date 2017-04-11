@@ -91,3 +91,25 @@ func setupDummyTopicAndSub(t *testing.T, ts *httptest.Server) {
 		defer res.Body.Close()
 	}
 }
+
+func setupPublishMessages(t *testing.T, ts *httptest.Server, topicName string, pub PublishDatas) {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(pub); err != nil {
+		t.Fatalf("failed to encode PublishData")
+	}
+	client := dummyClient(t)
+	_, err := client.Post(fmt.Sprintf("%s/topic/%s/publish", ts.URL, topicName), "application/json", &buf)
+	if err != nil {
+		t.Fatal("failed to send request")
+	}
+}
+
+func dummyPublishMessage(t *testing.T, ts *httptest.Server) {
+	setupPublishMessages(t, ts, "a", PublishDatas{
+		Messages: []PublishData{
+			PublishData{Data: []byte(`test1`), Attr: nil},
+			PublishData{Data: []byte(`test2`), Attr: map[string]string{"1": "2"}},
+			PublishData{Data: []byte(`test3`), Attr: map[string]string{"2": "3"}},
+		},
+	})
+}

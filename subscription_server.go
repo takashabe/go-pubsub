@@ -83,6 +83,74 @@ func (s *SubscriptionServer) List(w http.ResponseWriter, r *http.Request) {
 	Json(w, http.StatusOK, resourceSubs)
 }
 
+// RequestPull is represents request json for Pull
+type RequestPull struct {
+	// TODO: ReturnImmediately bool
+	MaxMessages int
+}
+
+// ResponsePull is represents response json for Pull
+type ResponsePull struct {
+	AckMessages []ResourceAckMessage `json:"receive_messages"`
+}
+
+// represent response ack id and message json
+type ResourceAckMessage struct {
+	AckID   string          `json:"ack_id"`
+	Message ResourceMessage `json:"message"`
+}
+type ResourceMessage struct {
+	ID          string            `json:"message_id"`
+	Data        []byte            `json:"data"`
+	Attributes  map[string]string `json:"attributes"`
+	PublishedAt time.Time         `json:"published_at"`
+}
+
+// messageToResource is Message object convert to ResourceMessage
+func messageToResource(subID string, m *models.Message) ResourceAckMessage {
+	// TODO: not dependent subID, instead of use Message.AckID
+	msg := ResourceMessage{
+		ID:          m.ID,
+		Data:        m.Data,
+		Attributes:  m.Attributes.Dump(),
+		PublishedAt: m.PublishedAt,
+	}
+	return ResourceAckMessage{
+		AckID:   subID,
+		Message: msg,
+	}
+}
+
+// Pull is get some messages
+func (s *SubscriptionServer) Pull(w http.ResponseWriter, r *http.Request, id string) {
+	// TODO: response timing flag, "immediately" and "wait untile at least one message"
+	// parse request
+	var req RequestPull
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		Error(w, http.StatusNotFound, err, "failed to parsed request")
+		return
+	}
+
+	// pull messages
+	sub, err := models.GetSubscription(id)
+	if err != nil {
+		Error(w, http.StatusNotFound, err, "not found subscription")
+		return
+	}
+	msgs, err := sub.Pull(req.MaxMessages)
+	if err != nil {
+		Error(w, http.StatusNotFound, err, "not found message")
+		return
+	}
+	res := ResponsePull{
+		AckMessages: make([]ResourceAckMessage, 0, len(msgs)),
+	}
+	for _, m := range msgs {
+		res.AckMessages = append(res.AckMessages, messageToResource(sub.Name, m))
+	}
+	Json(w, http.StatusOK, res)
+}
+
 // Delete is delete subscription
 func (s *SubscriptionServer) Delete(w http.ResponseWriter, r *http.Request, id string) {
 	sub, err := models.GetSubscription(id)

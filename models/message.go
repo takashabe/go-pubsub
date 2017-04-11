@@ -68,6 +68,7 @@ func (m *Message) AddSubscription(name string) {
 }
 
 func (m *Message) Ack(subID string) {
+	// TODO: unique ackID is assigned by server when pull message
 	m.States.ack(subID)
 }
 
