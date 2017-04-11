@@ -70,7 +70,7 @@ func TestCreateSubscription(t *testing.T) {
 			t.Fatalf("#%d: failed to encode json", i)
 		}
 		req, err := http.NewRequest("PUT",
-			fmt.Sprintf("%s/subscription/create/%s", ts.URL, c.inputName), bytes.NewBuffer(b))
+			fmt.Sprintf("%s/subscription/%s", ts.URL, c.inputName), bytes.NewBuffer(b))
 		if err != nil {
 			t.Fatalf("#%d: failed to create request", i)
 		}
@@ -116,7 +116,7 @@ func TestGetSubscription(t *testing.T) {
 	}
 	for i, c := range cases {
 		client := dummyClient(t)
-		res, err := client.Get(fmt.Sprintf("%s/subscription/get/%s", ts.URL, c.input))
+		res, err := client.Get(fmt.Sprintf("%s/subscription/%s", ts.URL, c.input))
 		if err != nil {
 			t.Fatalf("#%d: failed to send request", i)
 		}
@@ -159,7 +159,7 @@ func TestDeleteSubscription(t *testing.T) {
 	for i, c := range cases {
 		client := dummyClient(t)
 		req, err := http.NewRequest("DELETE",
-			fmt.Sprintf("%s/subscription/delete/%s", ts.URL, c.input), nil)
+			fmt.Sprintf("%s/subscription/%s", ts.URL, c.input), nil)
 		if err != nil {
 			t.Fatalf("#%d: failed to create request", i)
 		}
@@ -188,7 +188,7 @@ func TestListSubscription(t *testing.T) {
 	setupDummyTopicAndSub(t, ts)
 
 	client := dummyClient(t)
-	res, err := client.Get(fmt.Sprintf("%s/subscription/list", ts.URL))
+	res, err := client.Get(fmt.Sprintf("%s/subscription/", ts.URL))
 	if err != nil {
 		t.Fatalf("failed to send request, got err %v", err)
 	}

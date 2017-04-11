@@ -77,20 +77,20 @@ func routes() *router.Router {
 
 	ts := TopicServer{}
 	topicRoot := "/topic"
-	r.Get(topicRoot+"/get/:id", ts.Get)
-	r.Get(topicRoot+"/list", ts.List)
+	r.Get(topicRoot+"/", ts.List)
+	r.Get(topicRoot+"/:id", ts.Get)
 	r.Get(topicRoot+"/:id/subscriptions", ts.ListSubscription)
-	r.Put(topicRoot+"/create/:id", ts.Create)
-	r.Delete(topicRoot+"/delete/:id", ts.Delete)
+	r.Put(topicRoot+"/:id", ts.Create)
 	r.Post(topicRoot+"/:id/publish", ts.Publish)
+	r.Delete(topicRoot+"/:id", ts.Delete)
 
 	ss := SubscriptionServer{}
 	subscriptionRoot := "/subscription"
-	r.Get(subscriptionRoot+"/get/:id", ss.Get)
-	r.Get(subscriptionRoot+"/list", ss.List)
-	r.Put(subscriptionRoot+"/create/:id", ss.Create)
+	r.Get(subscriptionRoot+"/", ss.List)
+	r.Get(subscriptionRoot+"/:id", ss.Get)
+	r.Put(subscriptionRoot+"/:id", ss.Create)
 	r.Post(subscriptionRoot+"/:id/pull", ss.Pull)
-	r.Delete(subscriptionRoot+"/delete/:id", ss.Delete)
+	r.Delete(subscriptionRoot+"/:id", ss.Delete)
 	return r
 }
 

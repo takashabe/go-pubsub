@@ -37,7 +37,7 @@ func TestCreateAndGetTopic(t *testing.T) {
 	for i, c := range cases {
 		// create
 		client := dummyClient(t)
-		create, err := http.NewRequest("PUT", ts.URL+"/topic/create/"+c.input, nil)
+		create, err := http.NewRequest("PUT", ts.URL+"/topic/"+c.input, nil)
 		if err != nil {
 			t.Fatalf("#%d: failed to create request, %v", i, err)
 		}
@@ -54,7 +54,7 @@ func TestCreateAndGetTopic(t *testing.T) {
 		}
 
 		// get
-		get, err := http.NewRequest("GET", ts.URL+"/topic/get/"+c.input, nil)
+		get, err := http.NewRequest("GET", ts.URL+"/topic/"+c.input, nil)
 		if err != nil {
 			t.Fatalf("#%d: failed to create request, %v", i, err)
 		}
@@ -87,7 +87,7 @@ func TestDelete(t *testing.T) {
 	}
 	for i, c := range cases {
 		client := dummyClient(t)
-		req, err := http.NewRequest("DELETE", ts.URL+"/topic/delete/"+c.input, nil)
+		req, err := http.NewRequest("DELETE", ts.URL+"/topic/"+c.input, nil)
 		if err != nil {
 			t.Fatalf("#%d: failed to create request", i)
 		}
@@ -112,7 +112,7 @@ func TestListTopic(t *testing.T) {
 	setupDummyTopics(t, ts)
 
 	client := dummyClient(t)
-	req, err := http.NewRequest("GET", ts.URL+"/topic/list", nil)
+	req, err := http.NewRequest("GET", ts.URL+"/topic/", nil)
 	if err != nil {
 		t.Fatal("failed to create request")
 	}

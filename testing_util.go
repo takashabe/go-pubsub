@@ -36,7 +36,7 @@ func setupDummyTopics(t *testing.T, ts *httptest.Server) {
 	client := dummyClient(t)
 	puts := []string{"a", "b", "c"}
 	for i, p := range puts {
-		req, err := http.NewRequest("PUT", ts.URL+"/topic/create/"+p, nil)
+		req, err := http.NewRequest("PUT", ts.URL+"/topic/"+p, nil)
 		if err != nil {
 			t.Fatalf("#%d: failed to create request", i)
 		}
@@ -80,7 +80,7 @@ func setupDummyTopicAndSub(t *testing.T, ts *httptest.Server) {
 			t.Fatalf("#%d: failed to encode json", i)
 		}
 		req, err := http.NewRequest("PUT",
-			fmt.Sprintf("%s/subscription/create/%s", ts.URL, r.name), bytes.NewBuffer(b))
+			fmt.Sprintf("%s/subscription/%s", ts.URL, r.name), bytes.NewBuffer(b))
 		if err != nil {
 			t.Fatalf("#%d: failed to create request", i)
 		}
