@@ -78,7 +78,7 @@ func (m *DatastoreMessage) FindByReadable(name string, timeout time.Duration, si
 		source := m.store.Dump()
 		dst := make([]*Message, 0)
 		for k, v := range source {
-			if len(dst) > size {
+			if len(dst) >= size {
 				return dst, nil
 			}
 			msg, ok := v.(*Message)
