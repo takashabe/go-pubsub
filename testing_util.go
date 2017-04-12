@@ -113,3 +113,20 @@ func dummyPublishMessage(t *testing.T, ts *httptest.Server) {
 		},
 	})
 }
+func pullMessage(t *testing.T, ts *httptest.Server, sub string, size int) *http.Response {
+	reqData := RequestPull{
+		MaxMessages: size,
+	}
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(reqData); err != nil {
+		t.Fatal("#%d: failed to encode struct")
+	}
+	client := dummyClient(t)
+	res, err := client.Post(
+		fmt.Sprintf("%s/subscription/%s/pull", ts.URL, sub),
+		"application/json", &buf)
+	if err != nil {
+		t.Fatalf("failed to send request, got err %v", err)
+	}
+	return res
+}

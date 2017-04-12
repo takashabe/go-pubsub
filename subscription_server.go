@@ -150,6 +150,30 @@ func (s *SubscriptionServer) Pull(w http.ResponseWriter, r *http.Request, id str
 	Json(w, http.StatusOK, res)
 }
 
+// RequestAck represent request ack API json
+type RequestAck struct {
+	AckIDs []string `json:"ack_ids"`
+}
+
+// Ack is setting ack state
+func (s *SubscriptionServer) Ack(w http.ResponseWriter, r *http.Request, id string) {
+	// parse request
+	var req RequestAck
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		Error(w, http.StatusNotFound, err, "failed to parsed request")
+		return
+	}
+
+	// ack message
+	sub, err := models.GetSubscription(id)
+	if err != nil {
+		Error(w, http.StatusNotFound, err, "not found subscription")
+		return
+	}
+	sub.Ack(req.AckIDs...)
+	Json(w, http.StatusOK, "")
+}
+
 // Delete is delete subscription
 func (s *SubscriptionServer) Delete(w http.ResponseWriter, r *http.Request, id string) {
 	sub, err := models.GetSubscription(id)

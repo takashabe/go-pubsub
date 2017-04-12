@@ -270,3 +270,49 @@ func TestPull(t *testing.T) {
 		}
 	}
 }
+
+// testing for ack response
+func TestAck(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	setupDummyTopicAndSub(t, ts)
+	dummyPublishMessage(t, ts)
+
+	// beforehand pull message
+	response := pullMessage(t, ts, "A", 1)
+	defer response.Body.Close()
+	var responsePull ResponsePull
+	if err := json.NewDecoder(response.Body).Decode(&responsePull); err != nil {
+		t.Fatalf("failed to beforehand encode json, got err %v", err)
+	}
+	ackIDs := make([]string, 0)
+	for _, r := range responsePull.AckMessages {
+		ackIDs = append(ackIDs, r.AckID)
+	}
+
+	cases := []struct {
+		inputBody  interface{}
+		expectCode int
+	}{
+		{RequestAck{AckIDs: ackIDs}, http.StatusOK},
+		{RequestAck{AckIDs: ackIDs}, http.StatusOK}, // request same ack id are non error
+		{"", http.StatusNotFound},
+	}
+	for i, c := range cases {
+		var buf bytes.Buffer
+		if err := json.NewEncoder(&buf).Encode(c.inputBody); err != nil {
+			t.Fatalf("#%d: failed to encode json, got err %v", i, err)
+		}
+		client := dummyClient(t)
+		res, err := client.Post(
+			fmt.Sprintf("%s/subscription/%s/ack", ts.URL, "A"),
+			"application/json", &buf)
+		if err != nil {
+			t.Fatalf("#%d: failed to send request, got err %v", i, err)
+		}
+		defer res.Body.Close()
+		if got := res.StatusCode; got != c.expectCode {
+			t.Errorf("#%d: code want %d, got %d", i, c.expectCode, got)
+		}
+	}
+}
