@@ -82,7 +82,7 @@ func (s *Subscription) Ack(ids ...string) {
 	}
 }
 
-// Set Ack timeout, arg time expect millisecond.
+// Set Ack timeout, arg time expect second.
 func (s *Subscription) SetAckTimeout(timeout int64) {
 	if timeout < 0 {
 		timeout = 0
