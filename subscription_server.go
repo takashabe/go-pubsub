@@ -107,8 +107,7 @@ type ResourceMessage struct {
 }
 
 // messageToResource is Message object convert to ResourceMessage
-func messageToResource(subID string, m *models.Message) ResourceAckMessage {
-	// TODO: not dependent subID, instead of use Message.AckID
+func messageToResource(m *models.Message) ResourceAckMessage {
 	msg := ResourceMessage{
 		ID:          m.ID,
 		Data:        m.Data,
@@ -116,7 +115,7 @@ func messageToResource(subID string, m *models.Message) ResourceAckMessage {
 		PublishedAt: m.PublishedAt,
 	}
 	return ResourceAckMessage{
-		AckID:   subID,
+		AckID:   m.ID,
 		Message: msg,
 	}
 }
@@ -146,7 +145,7 @@ func (s *SubscriptionServer) Pull(w http.ResponseWriter, r *http.Request, id str
 		AckMessages: make([]ResourceAckMessage, 0, len(msgs)),
 	}
 	for _, m := range msgs {
-		res.AckMessages = append(res.AckMessages, messageToResource(sub.Name, m))
+		res.AckMessages = append(res.AckMessages, messageToResource(m))
 	}
 	Json(w, http.StatusOK, res)
 }
