@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
+
+	"github.com/takashabe/go-message-queue/models"
 )
 
 func dummyClient(t *testing.T) *http.Client {
@@ -113,6 +116,20 @@ func dummyPublishMessage(t *testing.T, ts *httptest.Server) {
 		},
 	})
 }
+
+// warning: direct access to models package
+func hackCreateShortAckSubscription(t *testing.T) {
+	// require created topic "a"
+	s, err := models.NewSubscription("A", "a", 0, "", nil)
+	if err != nil {
+		t.Fatalf("failed to create subscription, got err %v", err)
+	}
+	s.AckTimeout = 100 * time.Millisecond
+	if err := s.Save(); err != nil {
+		t.Fatalf("failed to save subscription, got err %v", err)
+	}
+}
+
 func pullMessage(t *testing.T, ts *httptest.Server, sub string, size int) *http.Response {
 	reqData := RequestPull{
 		MaxMessages: size,

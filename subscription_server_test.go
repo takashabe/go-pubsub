@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestCreateSubscription(t *testing.T) {
@@ -314,5 +315,71 @@ func TestAck(t *testing.T) {
 		if got := res.StatusCode; got != c.expectCode {
 			t.Errorf("#%d: code want %d, got %d", i, c.expectCode, got)
 		}
+	}
+}
+
+// testing for ack timeout
+func TestPullAck(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	setupDummyTopics(t, ts)
+	hackCreateShortAckSubscription(t)
+	dummyPublishMessage(t, ts)
+
+	cases := []struct {
+		inputSize  int
+		expectSize int
+		expectCode int
+		isAck      bool
+		sleep      time.Duration
+	}{
+		{2, 2, http.StatusOK, false, 100 * time.Millisecond},
+		{2, 2, http.StatusOK, true, 100 * time.Millisecond},
+		{2, 1, http.StatusOK, true, 0 * time.Millisecond},
+		{2, 0, http.StatusNotFound, false, 0 * time.Millisecond},
+	}
+	for i, c := range cases {
+		// scenario: pull -> (ack) -> sleep -> pull ...
+		res := pullMessage(t, ts, "A", c.inputSize)
+		defer res.Body.Close()
+		if got := res.StatusCode; got != c.expectCode {
+			t.Errorf("#%d: code want %d, got %d", i, c.expectCode, got)
+		}
+		if c.expectCode != http.StatusOK {
+			continue
+		}
+
+		// check expect values
+		var body ResponsePull
+		if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
+			t.Fatalf("#%d: failed to decord response, got err %v", i, err)
+		}
+		if got := len(body.AckMessages); got != c.expectSize {
+			t.Errorf("#%d: message len want %d, got %d", i, c.expectSize, got)
+		}
+
+		// ack and sleep
+		if c.isAck {
+			ackIDs := make([]string, 0)
+			for _, m := range body.AckMessages {
+				ackIDs = append(ackIDs, m.AckID)
+			}
+			req := RequestAck{
+				AckIDs: ackIDs,
+			}
+
+			var buf bytes.Buffer
+			if err := json.NewEncoder(&buf).Encode(req); err != nil {
+				t.Errorf("#%d: failed to encode json, got err %v", i, err)
+			}
+			client := dummyClient(t)
+			_, err := client.Post(
+				fmt.Sprintf("%s/subscription/%s/ack", ts.URL, "A"),
+				"application/json", &buf)
+			if err != nil {
+				t.Fatalf("#%d: failed send ack request, got err %v", i, err)
+			}
+		}
+		time.Sleep(c.sleep)
 	}
 }
