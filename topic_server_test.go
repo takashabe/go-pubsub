@@ -134,17 +134,16 @@ func TestListTopic(t *testing.T) {
 }
 
 func TestListTopicSubscription(t *testing.T) {
-	// TODO: implements test, after the subscription testing finished
 	ts := setupServer(t)
 	defer ts.Close()
-	setupDummyTopics(t, ts)
+	setupDummyTopicAndSub(t, ts)
 
 	cases := []struct {
 		input      string
 		expectCode int
 		expectBody []byte
 	}{
-		{"a", http.StatusOK, []byte(`[]`)},
+		{"a", http.StatusOK, []byte(`{"subscriptions":["A","B"]}`)},
 	}
 	for i, c := range cases {
 		client := dummyClient(t)

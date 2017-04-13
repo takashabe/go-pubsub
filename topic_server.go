@@ -42,6 +42,11 @@ func (s *TopicServer) List(w http.ResponseWriter, r *http.Request) {
 	Json(w, http.StatusOK, t)
 }
 
+// ResponseListSubscription represent response json of ListSubscription
+type ResponseListSubscription struct {
+	SubscriptionNames []string `json:"subscriptions"`
+}
+
 // ListSubscription is gets topic depends subscription list
 func (s *TopicServer) ListSubscription(w http.ResponseWriter, r *http.Request, id string) {
 	t, err := models.GetTopic(id)
@@ -49,13 +54,19 @@ func (s *TopicServer) ListSubscription(w http.ResponseWriter, r *http.Request, i
 		Error(w, http.StatusNotFound, err, "not found topic")
 		return
 	}
-	sub, err := t.GetSubscriptions()
+	subs, err := t.GetSubscriptions()
 	if err != nil {
 		Error(w, http.StatusNotFound, err, "not found subscription")
 		return
 	}
-	sort.Sort(models.BySubscriptionName(sub))
-	Json(w, http.StatusOK, sub)
+	sort.Sort(models.BySubscriptionName(subs))
+	res := ResponseListSubscription{
+		SubscriptionNames: make([]string, 0, len(subs)),
+	}
+	for _, s := range subs {
+		res.SubscriptionNames = append(res.SubscriptionNames, s.Name)
+	}
+	Json(w, http.StatusOK, res)
 }
 
 // Delete is delete topic
