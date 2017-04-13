@@ -81,10 +81,21 @@ func (s *Subscription) Pull(size int) ([]*Message, error) {
 }
 
 // Succeed Message delivery. remove sent Message.
-func (s *Subscription) Ack(ids ...string) {
+func (s *Subscription) Ack(ids ...string) error {
+	// collect MessageID list dependent to AckID
+	msgIDs := make([]string, 0, len(ids))
 	for _, id := range ids {
+		msgID, ok := s.AckMessages.getMessageID(id)
+		if !ok {
+			return ErrNotFoundAckID
+		}
+		msgIDs = append(msgIDs, msgID)
+	}
+	// ack for message
+	for _, id := range msgIDs {
 		s.Messages.Ack(s.Name, id)
 	}
+	return nil
 }
 
 // Set Ack timeout, arg time expect second.
