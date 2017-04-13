@@ -92,8 +92,19 @@ func (m *Message) Readable(id string, timeout time.Duration) bool {
 	return true
 }
 
+// Save is save message to datastore
 func (m *Message) Save() error {
 	return globalMessage.Set(m)
+}
+
+// Delete is received all ack response message to delete
+func (m *Message) Delete() error {
+	for _, s := range m.States.dump() {
+		if s != stateAck {
+			return ErrNotYetReceivedAck
+		}
+	}
+	return globalMessage.Delete(m.ID)
 }
 
 // states repsents Subscriptions and Ack map.
@@ -147,6 +158,12 @@ func (s *states) get(id string) (messageState, bool) {
 
 	state, ok := s.list[id]
 	return state, ok
+}
+
+func (s states) dump() map[string]messageState {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.list
 }
 
 // ByMessageID implements sort.Interface for []*Message based on the ID

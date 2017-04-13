@@ -153,7 +153,11 @@ func (m *MessageList) Ack(subID, messID string) error {
 	if err := msg.Save(); err != nil {
 		return err
 	}
-	if err := m.list.Delete(messID); err != nil {
+	if err := msg.Delete(); err != nil {
+		// ignore error
+		if err == errors.Cause(ErrNotYetReceivedAck) {
+			return nil
+		}
 		return err
 	}
 	return nil

@@ -5,9 +5,12 @@ import "github.com/pkg/errors"
 var (
 	ErrNotSupportOperation      = errors.New("not support operation")
 	ErrInvalidEndpoint          = errors.New("invalid endpoint URL format")
-	ErrEmptyMessage             = errors.New("empty message")
 	ErrAlreadyExistTopic        = errors.New("already exist topic")
 	ErrAlreadyExistSubscription = errors.New("already exist subscription")
+
+	// message errors
+	ErrEmptyMessage      = errors.New("empty message")
+	ErrNotYetReceivedAck = errors.New("not yet received ack")
 
 	// datastore errors
 	ErrNotFoundMessage          = errors.New("not found message")
