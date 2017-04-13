@@ -145,6 +145,31 @@ func (s *SubscriptionServer) Ack(w http.ResponseWriter, r *http.Request, id stri
 	Json(w, http.StatusOK, "")
 }
 
+// RequestModifyAck represent request ModifyAck API json
+type RequestModifyAck struct {
+	AckIDs             []string `json:"ack_ids"`
+	AckDeadlineSeconds int64    `json:"ack_deadline_seconds"`
+}
+
+// ModifyAck is ack timeout setting already delivered message
+func (s *SubscriptionServer) ModifyAck(w http.ResponseWriter, r *http.Request, id string) {
+	// parse request
+	var req RequestModifyAck
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		Error(w, http.StatusNotFound, err, "failed to parsed request")
+		return
+	}
+
+	// modify ack
+	_, err := models.GetSubscription(id)
+	if err != nil {
+		Error(w, http.StatusNotFound, err, "not found subscription")
+		return
+	}
+	// TODO: must timeout field has by Message!!!
+	Json(w, http.StatusOK, "")
+}
+
 // Delete is delete subscription
 func (s *SubscriptionServer) Delete(w http.ResponseWriter, r *http.Request, id string) {
 	sub, err := models.GetSubscription(id)
