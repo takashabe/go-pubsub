@@ -1,6 +1,9 @@
 package models
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 // Attributes is string key-value map. optional for the message, push...
 type Attributes struct {
@@ -23,6 +26,10 @@ func (a *Attributes) Get(key string) (string, bool) {
 
 func (a *Attributes) Dump() map[string]string {
 	return a.attr
+}
+
+func (a *Attributes) String() string {
+	return fmt.Sprint(a.attr)
 }
 
 func newAttributes(attr map[string]string) *Attributes {

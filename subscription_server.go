@@ -91,33 +91,7 @@ type RequestPull struct {
 
 // ResponsePull is represents response json for Pull
 type ResponsePull struct {
-	AckMessages []ResourceAckMessage `json:"receive_messages"`
-}
-
-// represent response ack id and message json
-type ResourceAckMessage struct {
-	AckID   string          `json:"ack_id"`
-	Message ResourceMessage `json:"message"`
-}
-type ResourceMessage struct {
-	ID          string            `json:"message_id"`
-	Data        []byte            `json:"data"`
-	Attributes  map[string]string `json:"attributes"`
-	PublishedAt time.Time         `json:"published_at"`
-}
-
-// messageToResource is Message object convert to ResourceMessage
-func messageToResource(m *models.Message) ResourceAckMessage {
-	msg := ResourceMessage{
-		ID:          m.ID,
-		Data:        m.Data,
-		Attributes:  m.Attributes.Dump(),
-		PublishedAt: m.PublishedAt,
-	}
-	return ResourceAckMessage{
-		AckID:   m.ID,
-		Message: msg,
-	}
+	Messages []*models.PullMessage `json:"receive_messages"`
 }
 
 // Pull is get some messages
@@ -141,13 +115,7 @@ func (s *SubscriptionServer) Pull(w http.ResponseWriter, r *http.Request, id str
 		Error(w, http.StatusNotFound, err, "not found message")
 		return
 	}
-	res := ResponsePull{
-		AckMessages: make([]ResourceAckMessage, 0, len(msgs)),
-	}
-	for _, m := range msgs {
-		res.AckMessages = append(res.AckMessages, messageToResource(m))
-	}
-	Json(w, http.StatusOK, res)
+	Json(w, http.StatusOK, ResponsePull{Messages: msgs})
 }
 
 // RequestAck represent request ack API json
