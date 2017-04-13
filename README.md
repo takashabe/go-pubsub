@@ -62,7 +62,7 @@ _When do not specify created component(topic, subscription), Default component u
 | create             | PUT:    `/topic/{name}`               | create topic                                                                                   |
 | delete             | DELETE: `/topic/{name}`               | delete topic                                                                                   |
 | get                | GET:    `/topic/{name}`               | get topic detail                                                                               |
-| list               | GET:    `/topic/list`                 | get topic list                                                                                 |
+| list               | GET:    `/topic/`                     | get topic list                                                                                 |
 | list subscriptions | GET:    `/topic/{name}/subscriptions` | get toipc depends subscriptions                                                                |
 | publish            | POST:   `/topic/{name}/publish`       | create message<br/>save message to backend storage and deliver message to depends subscription |
 
@@ -77,7 +77,7 @@ _When do not specify created component(topic, subscription), Default component u
 | pull               | POST:   `/subscription/{name}/pull`        | get message                                                                               |
 | modify ack config  | POST:   `/subscription/{name}/ack/modify`  | modify ack timeout                                                                        |
 | modify push config | POST:   `/subscription/{name}/push/modify` | modify push config                                                                        |
-| list               | GET:    `/subscription/list`               | get subscripction list                                                                    |
+| list               | GET:    `/subscription/`                   | get subscripction list                                                                    |
 
 ### Datastore
 
