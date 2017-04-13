@@ -8,11 +8,12 @@ import (
 )
 
 type Subscription struct {
-	Name       string        `json:"name"`
-	Topic      *Topic        `json:"-"`
-	Messages   *MessageList  `json:"-"`
-	AckTimeout time.Duration `json:"ack_deadline_seconds"`
-	Push       *Push         `json:"push_config"`
+	Name        string        `json:"name"`
+	Topic       *Topic        `json:"-"`
+	Messages    *MessageList  `json:"-"`
+	AckMessages *AckMessages  `json:"-"`
+	AckTimeout  time.Duration `json:"ack_deadline_seconds"`
+	Push        *Push         `json:"push_config"`
 }
 
 // Create Subscription, if not exist already same name Subscription
@@ -26,9 +27,10 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 		return nil, err
 	}
 	s := &Subscription{
-		Name:     name,
-		Topic:    topic,
-		Messages: newMessageList(),
+		Name:        name,
+		Topic:       topic,
+		Messages:    newMessageList(),
+		AckMessages: newAckMessages(),
 	}
 	s.SetAckTimeout(timeout)
 	if err := s.SetPush(endpoint, attr); err != nil {
@@ -70,6 +72,9 @@ func (s *Subscription) Pull(size int) ([]*Message, error) {
 	}
 	for _, m := range messages {
 		m.Deliver(s.Name)
+		if err := s.AckMessages.setAckID(makeAckID(), m.ID); err != nil {
+			return nil, err
+		}
 	}
 
 	return messages, nil
@@ -161,6 +166,30 @@ func (m *MessageList) Ack(subID, messID string) error {
 		return err
 	}
 	return nil
+}
+
+// AckMessages is holds MessageID and AckID pairs
+type AckMessages struct {
+	list Datastore
+}
+
+func newAckMessages() *AckMessages {
+	return &AckMessages{
+		list: NewMemory(nil),
+	}
+}
+
+func (a *AckMessages) getMessageID(ackID string) (string, bool) {
+	for k, v := range a.list.Dump() {
+		if v == ackID {
+			return k.(string), true
+		}
+	}
+	return "", false
+}
+
+func (a *AckMessages) setAckID(ackID, msgID string) error {
+	return a.list.Set(msgID, ackID)
 }
 
 // BySubscriptionName implements sort.Interface for []*Subscription based on the ID
