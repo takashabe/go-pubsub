@@ -138,7 +138,10 @@ func (s *SubscriptionServer) Ack(w http.ResponseWriter, r *http.Request, id stri
 		Error(w, http.StatusNotFound, err, "not found subscription")
 		return
 	}
-	sub.Ack(req.AckIDs...)
+	if err := sub.Ack(req.AckIDs...); err != nil {
+		Error(w, http.StatusNotFound, err, "failed to ack message")
+		return
+	}
 	Json(w, http.StatusOK, "")
 }
 
