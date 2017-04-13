@@ -296,7 +296,7 @@ func TestAck(t *testing.T) {
 		expectCode int
 	}{
 		{RequestAck{AckIDs: ackIDs}, http.StatusOK},
-		{RequestAck{AckIDs: ackIDs}, http.StatusOK}, // request same ack id are non error
+		{RequestAck{AckIDs: ackIDs}, http.StatusNotFound}, // used ackID want error
 		{"", http.StatusNotFound},
 	}
 	for i, c := range cases {

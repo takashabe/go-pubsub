@@ -103,6 +103,7 @@ func (s *Subscription) Ack(ids ...string) error {
 	// ack for message
 	for _, id := range msgIDs {
 		s.Messages.Ack(s.Name, id)
+		s.AckMessages.delete(id)
 	}
 	return nil
 }
@@ -210,6 +211,10 @@ func (a *AckMessages) getMessageID(ackID string) (string, bool) {
 
 func (a *AckMessages) setAckID(ackID, msgID string) error {
 	return a.list.Set(msgID, ackID)
+}
+
+func (a *AckMessages) delete(id string) error {
+	return a.list.Delete(id)
 }
 
 // BySubscriptionName implements sort.Interface for []*Subscription based on the ID
