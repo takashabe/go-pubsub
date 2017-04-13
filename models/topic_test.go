@@ -75,7 +75,6 @@ func TestGetTopic(t *testing.T) {
 	}
 }
 
-// TODO: integration datastore and subscription
 func TestPublish(t *testing.T) {
 	cases := []struct {
 		inputData []byte

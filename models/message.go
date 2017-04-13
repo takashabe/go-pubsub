@@ -72,12 +72,10 @@ func (m *Message) AddSubscription(name string) {
 }
 
 func (m *Message) Ack(subID string) {
-	// TODO: unique ackID is assigned by server when pull message
 	m.States.ack(subID)
 }
 
 func (m *Message) Deliver(subID string) {
-	// TODO: need DeliveredAt in each Subscriptions?
 	if m.States.deliver(subID) {
 		m.DeliveredAt = time.Now()
 	}
