@@ -92,3 +92,4 @@ _When do not specify created component(topic, subscription), Default component u
 * when need redundancy, use Redis or MySQL
   * in memory future support
 * Save component is Topic, Subscription and Message
+* Message delete when all dependent subscription sent ack
