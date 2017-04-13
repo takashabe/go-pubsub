@@ -276,15 +276,17 @@ func TestPullAndAck(t *testing.T) {
 	}
 
 	// pull and ack
-	message, err := sub.Pull(1)
+	pullMsgs, err := sub.Pull(1)
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
 	}
-	for _, m := range message {
-		sub.Ack(m.ID)
+	for _, m := range pullMsgs {
+		if err := sub.Ack(m.AckID); err != nil {
+			t.Fatalf("failed to ack, got err %v", err)
+		}
 	}
-	if want := 1; len(message) != want {
-		t.Errorf("want len %d, got len %d", want, len(message))
+	if want := 1; len(pullMsgs) != want {
+		t.Errorf("want len %d, got len %d", want, len(pullMsgs))
 	}
 	// pull from empty
 	_, err = sub.Pull(1)
@@ -298,7 +300,7 @@ func TestPullAndAck(t *testing.T) {
 		t.Fatalf("want no error, got %v", err)
 	}
 	aTopic.Publish([]byte("test"), nil)
-	message, err = sub.Pull(1)
+	pullMsgs, err = sub.Pull(1)
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
 	}
@@ -316,12 +318,12 @@ func TestPullAndAck(t *testing.T) {
 				}
 			case <-after2:
 				// after ack timeout
-				message, err = sub.Pull(1)
+				pullMsgs, err = sub.Pull(1)
 				if err != nil {
 					t.Errorf("want no error, got %v", err)
 				}
-				if want := 1; len(message) != want {
-					t.Errorf("want len %d, got len %d", want, len(message))
+				if want := 1; len(pullMsgs) != want {
+					t.Errorf("want len %d, got len %d", want, len(pullMsgs))
 				}
 				return
 			}

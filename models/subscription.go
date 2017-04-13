@@ -64,20 +64,29 @@ func ListSubscription() ([]*Subscription, error) {
 	return globalSubscription.List()
 }
 
+// PullMessage represent Message and AckID pair
+type PullMessage struct {
+	AckID   string   `json:"ack_id"`
+	Message *Message `json:"message"`
+}
+
 // Deliver Message
-func (s *Subscription) Pull(size int) ([]*Message, error) {
+func (s *Subscription) Pull(size int) ([]*PullMessage, error) {
 	messages, err := s.Messages.GetRange(s, size)
 	if err != nil {
 		return nil, err
 	}
+
+	pullMsgs := make([]*PullMessage, 0, len(messages))
 	for _, m := range messages {
 		m.Deliver(s.Name)
-		if err := s.AckMessages.setAckID(makeAckID(), m.ID); err != nil {
+		ackID := makeAckID()
+		if err := s.AckMessages.setAckID(ackID, m.ID); err != nil {
 			return nil, err
 		}
+		pullMsgs = append(pullMsgs, &PullMessage{AckID: ackID, Message: m})
 	}
-
-	return messages, nil
+	return pullMsgs, nil
 }
 
 // Succeed Message delivery. remove sent Message.
