@@ -266,7 +266,7 @@ func TestPull(t *testing.T) {
 			actBody, _ := ioutil.ReadAll(res.Body)
 			t.Fatalf("#%d: failed decode to json, body %s", i, actBody)
 		}
-		if got := len(body.AckMessages); got != c.expectSize {
+		if got := len(body.Messages); got != c.expectSize {
 			t.Fatalf("#%d: message len want %d, got %d", i, c.expectSize, got)
 		}
 	}
@@ -287,7 +287,7 @@ func TestAck(t *testing.T) {
 		t.Fatalf("failed to beforehand encode json, got err %v", err)
 	}
 	ackIDs := make([]string, 0)
-	for _, r := range responsePull.AckMessages {
+	for _, r := range responsePull.Messages {
 		ackIDs = append(ackIDs, r.AckID)
 	}
 
@@ -354,14 +354,14 @@ func TestPullAck(t *testing.T) {
 		if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
 			t.Fatalf("#%d: failed to decord response, got err %v", i, err)
 		}
-		if got := len(body.AckMessages); got != c.expectSize {
+		if got := len(body.Messages); got != c.expectSize {
 			t.Errorf("#%d: message len want %d, got %d", i, c.expectSize, got)
 		}
 
 		// ack and sleep
 		if c.isAck {
 			ackIDs := make([]string, 0)
-			for _, m := range body.AckMessages {
+			for _, m := range body.Messages {
 				ackIDs = append(ackIDs, m.AckID)
 			}
 			req := RequestAck{
