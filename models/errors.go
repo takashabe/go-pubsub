@@ -3,10 +3,13 @@ package models
 import "github.com/pkg/errors"
 
 var (
-	ErrNotSupportOperation      = errors.New("not support operation")
-	ErrInvalidEndpoint          = errors.New("invalid endpoint URL format")
-	ErrAlreadyExistTopic        = errors.New("already exist topic")
+	// topic errors
+	ErrAlreadyExistTopic = errors.New("already exist topic")
+
+	// subscription errors
 	ErrAlreadyExistSubscription = errors.New("already exist subscription")
+	ErrNotFoundAckID            = errors.New("not found message dependent to ack id")
+	ErrInvalidEndpoint          = errors.New("invalid endpoint URL format")
 
 	// message errors
 	ErrEmptyMessage      = errors.New("empty message")
@@ -19,4 +22,5 @@ var (
 	ErrNotMatchTypeSubscription = errors.New("not match type subscription")
 	ErrNotFoundTopic            = errors.New("not found topic")
 	ErrNotMatchTypeTopic        = errors.New("not match type topic")
+	ErrNotSupportOperation      = errors.New("not support operation")
 )
