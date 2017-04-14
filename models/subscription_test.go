@@ -27,6 +27,7 @@ func TestNewSubscription(t *testing.T) {
 		MessageStatus:      make([]*MessageStatus, 0),
 		Messages:           newMessageList(),
 		AckMessages:        newAckMessages(),
+		DefaultAckDeadline: 0,
 		Push: &Push{
 			Endpoint: testUrl(t, "localhost:8080"),
 			Attributes: &Attributes{
@@ -141,9 +142,9 @@ func TestGetRange(t *testing.T) {
 	}{
 		{
 			&Subscription{
-				Name:       "A",
-				Messages:   newMessageList(),
-				AckTimeout: 0 * time.Millisecond,
+				Name:               "A",
+				Messages:           newMessageList(),
+				DefaultAckDeadline: 0 * time.Millisecond,
 			},
 			2,
 			0 * time.Millisecond,
@@ -152,9 +153,9 @@ func TestGetRange(t *testing.T) {
 		},
 		{
 			&Subscription{
-				Name:       "A",
-				Messages:   newMessageList(),
-				AckTimeout: 0 * time.Millisecond,
+				Name:               "A",
+				Messages:           newMessageList(),
+				DefaultAckDeadline: 0 * time.Millisecond,
 			},
 			5,
 			0 * time.Millisecond,
@@ -163,9 +164,9 @@ func TestGetRange(t *testing.T) {
 		},
 		{
 			&Subscription{
-				Name:       "A",
-				Messages:   newMessageList(),
-				AckTimeout: 1000 * time.Millisecond, // timeout
+				Name:               "A",
+				Messages:           newMessageList(),
+				DefaultAckDeadline: 1000 * time.Millisecond, // timeout
 			},
 			2,
 			0 * time.Millisecond,
@@ -174,9 +175,9 @@ func TestGetRange(t *testing.T) {
 		},
 		{
 			&Subscription{
-				Name:       "A",
-				Messages:   newMessageList(),
-				AckTimeout: 0 * time.Millisecond,
+				Name:               "A",
+				Messages:           newMessageList(),
+				DefaultAckDeadline: 0 * time.Millisecond,
 			},
 			2,
 			0,
@@ -223,9 +224,9 @@ func TestGetRangeWithAck(t *testing.T) {
 
 	// all get
 	sub := &Subscription{
-		Name:       "A",
-		Messages:   newMessageList(),
-		AckTimeout: 0 * time.Millisecond,
+		Name:               "A",
+		Messages:           newMessageList(),
+		DefaultAckDeadline: 0 * time.Millisecond,
 	}
 	got, err := sub.Messages.GetRange(sub, sub.Messages.list.Size())
 	if err != nil {
@@ -258,7 +259,7 @@ func TestPullAndAck(t *testing.T) {
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
 	}
-	sub.AckTimeout = 100 * time.Millisecond // faster for test
+	sub.DefaultAckDeadline = 100 * time.Millisecond // faster for test
 	topics, err := ListTopic()
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)

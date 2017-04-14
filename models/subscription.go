@@ -8,13 +8,13 @@ import (
 )
 
 type Subscription struct {
-	Name        string        `json:"name"`
-	Topic       *Topic        `json:"-"`
-	Messages    *MessageList  `json:"-"`
-	AckMessages *AckMessages  `json:"-"`
-	AckTimeout  time.Duration `json:"ack_deadline_seconds"`
-	Push        *Push         `json:"push_config"`
+	Name               string           `json:"name"`
+	Topic              *Topic           `json:"-"`
+	Messages           *MessageList     `json:"-"`
+	AckMessages        *AckMessages     `json:"-"`
+	DefaultAckDeadline time.Duration    `json:"ack_deadline_seconds"`
 	MessageStatus      []*MessageStatus `json:"-"`
+	Push               *Push            `json:"push_config"`
 }
 
 // Create Subscription, if not exist already same name Subscription
@@ -28,10 +28,10 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 		return nil, err
 	}
 	s := &Subscription{
-		Name:        name,
-		Topic:       topic,
-		Messages:    newMessageList(),
-		AckMessages: newAckMessages(),
+		Name:          name,
+		Topic:         topic,
+		Messages:      newMessageList(),
+		AckMessages:   newAckMessages(),
 		MessageStatus: make([]*MessageStatus, 0),
 	}
 	s.SetAckTimeout(timeout)
@@ -122,7 +122,7 @@ func (s *Subscription) SetAckTimeout(timeout int64) {
 	if timeout < 0 {
 		timeout = 0
 	}
-	s.AckTimeout = time.Duration(timeout) * time.Second
+	s.DefaultAckDeadline = time.Duration(timeout) * time.Second
 }
 
 // Set push endpoint with attributes, only one can be set as push endpoint.
@@ -166,7 +166,7 @@ func (m *MessageList) GetRange(sub *Subscription, size int) ([]*Message, error) 
 		size = maxLen
 	}
 
-	msgs, err := m.list.FindByReadable(sub.Name, sub.AckTimeout, size)
+	msgs, err := m.list.FindByReadable(sub.Name, sub.DefaultAckDeadline, size)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get message dependent Subscription name=%s", sub.Name)
 	}

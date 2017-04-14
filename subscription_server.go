@@ -36,7 +36,7 @@ func subscriptionToResource(s *models.Subscription) ResourceSubscription {
 		Name:       s.Name,
 		Topic:      s.Topic.Name,
 		Push:       pushConfig,
-		AckTimeout: int64(s.AckTimeout / time.Second),
+		AckTimeout: int64(s.DefaultAckDeadline / time.Second),
 	}
 }
 

@@ -124,7 +124,7 @@ func hackCreateShortAckSubscription(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create subscription, got err %v", err)
 	}
-	s.AckTimeout = 100 * time.Millisecond
+	s.DefaultAckDeadline = 100 * time.Millisecond
 	if err := s.Save(); err != nil {
 		t.Fatalf("failed to save subscription, got err %v", err)
 	}
