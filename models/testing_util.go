@@ -26,6 +26,7 @@ func (h *testHelper) setupGlobal(t *testing.T) {
 	} else {
 		globalMessage = d
 	}
+	globalConfig = h.dummyConfig
 }
 
 func (h *testHelper) setupGlobalAndSetTopics(t *testing.T, names ...string) {

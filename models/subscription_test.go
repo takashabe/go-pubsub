@@ -21,10 +21,14 @@ func testUrl(t *testing.T, raw string) *url.URL {
 
 func TestNewSubscription(t *testing.T) {
 	helper.setupGlobalAndSetTopics(t, "a")
+	ms, err := newMessageStatusStore(&Config{Driver: "memory"})
+	if err != nil {
+		t.Fatalf("failed to create MessageStatusStore, got err %v", err)
+	}
 	expect1 := &Subscription{
 		Name:               "A",
 		Topic:              helper.dummyTopic(t, "a"),
-		MessageStatus:      make([]*MessageStatus, 0),
+		MessageStatus:      ms,
 		Messages:           newMessageList(),
 		AckMessages:        newAckMessages(),
 		DefaultAckDeadline: 0,

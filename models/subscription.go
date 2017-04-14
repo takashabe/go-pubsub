@@ -8,13 +8,13 @@ import (
 )
 
 type Subscription struct {
-	Name               string           `json:"name"`
-	Topic              *Topic           `json:"-"`
-	Messages           *MessageList     `json:"-"`
-	AckMessages        *AckMessages     `json:"-"`
-	DefaultAckDeadline time.Duration    `json:"ack_deadline_seconds"`
-	MessageStatus      []*MessageStatus `json:"-"`
-	Push               *Push            `json:"push_config"`
+	Name               string              `json:"name"`
+	Topic              *Topic              `json:"-"`
+	Messages           *MessageList        `json:"-"`
+	AckMessages        *AckMessages        `json:"-"`
+	DefaultAckDeadline time.Duration       `json:"ack_deadline_seconds"`
+	MessageStatus      *MessageStatusStore `json:"-"`
+	Push               *Push               `json:"push_config"`
 }
 
 // Create Subscription, if not exist already same name Subscription
@@ -27,12 +27,16 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 	if err != nil {
 		return nil, err
 	}
+	ms, err := newMessageStatusStore(globalConfig)
+	if err != nil {
+		return nil, err
+	}
 	s := &Subscription{
 		Name:          name,
 		Topic:         topic,
 		Messages:      newMessageList(),
 		AckMessages:   newAckMessages(),
-		MessageStatus: make([]*MessageStatus, 0),
+		MessageStatus: ms,
 	}
 	s.SetAckTimeout(timeout)
 	if err := s.SetPush(endpoint, attr); err != nil {
@@ -68,8 +72,7 @@ func ListSubscription() ([]*Subscription, error) {
 
 // RegisterMessage associate Message to Subscription
 func (s *Subscription) RegisterMessage(msg *Message) error {
-	ms := newMessageStatus(msg.ID, s.DefaultAckDeadline)
-	s.MessageStatus = append(s.MessageStatus, ms)
+	s.MessageStatus.Set(newMessageStatus(msg.ID, s.DefaultAckDeadline))
 	return s.Save()
 }
 
@@ -226,12 +229,33 @@ func (a *AckMessages) delete(id string) error {
 	return a.list.Delete(id)
 }
 
+// MessageStatusStore is holds and adapter for MessageStatus
+type MessageStatusStore struct {
+	store *DatastoreMessageStatus
+}
+
+func newMessageStatusStore(cfg *Config) (*MessageStatusStore, error) {
+	d, err := NewDatastoreMessageStatus(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return &MessageStatusStore{
+		store: d,
+	}, nil
+}
+
+// Set MessageStatus save to backend store
+func (s *MessageStatusStore) Set(ms *MessageStatus) error {
+	return s.store.Set(ms)
+}
+
 // MessageStatus is holds params for Message
 type MessageStatus struct {
 	MessageID   string
 	AckID       string
 	AckDeadline time.Duration
 	AckState    messageState
+	DeliveredAt time.Time
 }
 
 func newMessageStatus(msgID string, deadline time.Duration) *MessageStatus {
@@ -240,6 +264,20 @@ func newMessageStatus(msgID string, deadline time.Duration) *MessageStatus {
 		AckID:       "",
 		AckDeadline: deadline,
 		AckState:    stateWait,
+	}
+}
+
+// Readable return whether the message can be read
+func (m *MessageStatus) Readable() bool {
+	switch m.AckState {
+	case stateAck:
+		return false
+	case stateDeliver:
+		return time.Now().Sub(m.DeliveredAt) > m.AckDeadline
+	case stateWait:
+		return true
+	default:
+		return false
 	}
 }
 
