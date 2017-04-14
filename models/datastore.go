@@ -5,6 +5,9 @@ import (
 	"sync"
 )
 
+// TODO: initialize config from Server
+var globalConfig *Config
+
 // Config is connect to datastore parameters
 type Config struct {
 	Driver   string
@@ -24,6 +27,11 @@ func LoadConfigFromFile(path string) (*Config, error) {
 
 	// TODO: impl read yaml and mapping struct
 	return &Config{Driver: "memory"}, nil
+}
+
+// SetGlobalConfig set global config
+func SetGlobalConfig(cfg *Config) {
+	globalConfig = cfg
 }
 
 // Datastore is behavior like Key-Value store
