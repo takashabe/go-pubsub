@@ -95,6 +95,7 @@ func routes() *router.Router {
 	return r
 }
 
+// Server is topic and subscription frontend server
 type Server struct {
 	cfg *models.Config
 }
@@ -110,13 +111,14 @@ func NewServer(path string) (*Server, error) {
 }
 
 func (s *Server) InitDatastore() error {
-	if err := models.InitDatastoreTopic(s.cfg); err != nil {
+	models.SetGlobalConfig(s.cfg)
+	if err := models.InitDatastoreTopic(); err != nil {
 		return errors.Wrap(err, "failed to init datastore topic")
 	}
-	if err := models.InitDatastoreSubscription(s.cfg); err != nil {
+	if err := models.InitDatastoreSubscription(); err != nil {
 		return errors.Wrap(err, "failed to init datastore subscription")
 	}
-	if err := models.InitDatastoreMessage(s.cfg); err != nil {
+	if err := models.InitDatastoreMessage(); err != nil {
 		return errors.Wrap(err, "failed to init datastore message")
 	}
 	return nil

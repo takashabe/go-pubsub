@@ -22,8 +22,8 @@ func NewDatastoreSubscription(cfg *Config) (*DatastoreSubscription, error) {
 }
 
 // InitDatastoreSubscription initialize global datastore object
-func InitDatastoreSubscription(cfg *Config) error {
-	d, err := NewDatastoreSubscription(cfg)
+func InitDatastoreSubscription() error {
+	d, err := NewDatastoreSubscription(globalConfig)
 	if err != nil {
 		return err
 	}
