@@ -67,9 +67,16 @@ func (t *Topic) Publish(data []byte, attributes map[string]string) (string, erro
 	if err != nil {
 		return "", errors.Wrap(err, "failed GetSubscriptions")
 	}
+
+	// TODO: need transaction
 	m := NewMessage(makeMessageID(), *t, data, attributes, subList)
 	if err := m.Save(); err != nil {
 		return "", errors.Wrap(err, "failed save Message")
+	}
+	for _, s := range subList {
+		if err := s.RegisterMessage(m); err != nil {
+			return "", err
+		}
 	}
 	return m.ID, nil
 }

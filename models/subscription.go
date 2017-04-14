@@ -66,6 +66,13 @@ func ListSubscription() ([]*Subscription, error) {
 	return globalSubscription.List()
 }
 
+// RegisterMessage associate Message to Subscription
+func (s *Subscription) RegisterMessage(msg *Message) error {
+	ms := newMessageStatus(msg.ID, s.DefaultAckDeadline)
+	s.MessageStatus = append(s.MessageStatus, ms)
+	return s.Save()
+}
+
 // PullMessage represent Message and AckID pair
 type PullMessage struct {
 	AckID   string   `json:"ack_id"`
