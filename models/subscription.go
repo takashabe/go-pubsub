@@ -14,6 +14,7 @@ type Subscription struct {
 	AckMessages *AckMessages  `json:"-"`
 	AckTimeout  time.Duration `json:"ack_deadline_seconds"`
 	Push        *Push         `json:"push_config"`
+	MessageStatus      []*MessageStatus `json:"-"`
 }
 
 // Create Subscription, if not exist already same name Subscription
@@ -31,6 +32,7 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 		Topic:       topic,
 		Messages:    newMessageList(),
 		AckMessages: newAckMessages(),
+		MessageStatus: make([]*MessageStatus, 0),
 	}
 	s.SetAckTimeout(timeout)
 	if err := s.SetPush(endpoint, attr); err != nil {
@@ -215,6 +217,23 @@ func (a *AckMessages) setAckID(ackID, msgID string) error {
 
 func (a *AckMessages) delete(id string) error {
 	return a.list.Delete(id)
+}
+
+// MessageStatus is holds params for Message
+type MessageStatus struct {
+	MessageID   string
+	AckID       string
+	AckDeadline time.Duration
+	AckState    messageState
+}
+
+func newMessageStatus(msgID string, deadline time.Duration) *MessageStatus {
+	return &MessageStatus{
+		MessageID:   msgID,
+		AckID:       "",
+		AckDeadline: deadline,
+		AckState:    stateWait,
+	}
 }
 
 // BySubscriptionName implements sort.Interface for []*Subscription based on the ID

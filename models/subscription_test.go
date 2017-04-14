@@ -22,11 +22,11 @@ func testUrl(t *testing.T, raw string) *url.URL {
 func TestNewSubscription(t *testing.T) {
 	helper.setupGlobalAndSetTopics(t, "a")
 	expect1 := &Subscription{
-		Name:        "A",
-		Topic:       helper.dummyTopic(t, "a"),
-		Messages:    newMessageList(),
-		AckMessages: newAckMessages(),
-		AckTimeout:  0,
+		Name:               "A",
+		Topic:              helper.dummyTopic(t, "a"),
+		MessageStatus:      make([]*MessageStatus, 0),
+		Messages:           newMessageList(),
+		AckMessages:        newAckMessages(),
 		Push: &Push{
 			Endpoint: testUrl(t, "localhost:8080"),
 			Attributes: &Attributes{
