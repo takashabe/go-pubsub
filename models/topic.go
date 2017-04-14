@@ -69,7 +69,7 @@ func (t *Topic) Publish(data []byte, attributes map[string]string) (string, erro
 	}
 	m := NewMessage(makeMessageID(), *t, data, attributes, subList)
 	if err := m.Save(); err != nil {
-		return "", errors.Wrap(err, "failed set Message")
+		return "", errors.Wrap(err, "failed save Message")
 	}
 	return m.ID, nil
 }
