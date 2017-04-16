@@ -74,6 +74,10 @@ func (m *DatastoreMessageStatus) Delete(key string) error {
 	return m.store.Delete(key)
 }
 
+func (m *DatastoreMessageStatus) Size() int {
+	return len(m.store.Dump())
+}
+
 // CollectByReadable return MessageStatus slice matched readable message
 func (m *DatastoreMessageStatus) CollectByReadableMessage(size int) ([]*Message, error) {
 	switch m.store.(type) {

@@ -249,13 +249,51 @@ func (s *MessageStatusStore) Set(ms *MessageStatus) error {
 	return s.store.Set(ms)
 }
 
+// GetRangeMessage return readable messages
+func (s *MessageStatusStore) GetRangeMessage(size int) ([]*Message, error) {
+	storeLength := s.store.Size()
+	if storeLength == 0 {
+		return nil, ErrEmptyMessage
+	}
+	if storeLength < size {
+		size = storeLength
+	}
+
+	msgs, err := s.store.CollectByReadableMessage(size)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get range messages")
+	}
+	if len(msgs) == 0 {
+		return nil, ErrEmptyMessage
+	}
+	sort.Sort(ByMessageID(msgs))
+	return msgs, nil
+}
+
+// Ack change state to ack for message
+func (s *MessageStatusStore) Ack(id string) error {
+	ms, err := s.store.FindByAckID(id)
+	if err != nil {
+		return ErrNotFoundMessageStatus
+	}
+	m, err := globalMessage.Get(ms.MessageID)
+	if err != nil {
+		return ErrNotFoundMessage
+	}
+	m.Ack(ms.SubscriptionID)
+	if err := m.Save(); err != nil {
+		return err
+	}
+}
+
 // MessageStatus is holds params for Message
 type MessageStatus struct {
-	MessageID   string
-	AckID       string
-	AckDeadline time.Duration
-	AckState    messageState
-	DeliveredAt time.Time
+	MessageID      string
+	SubscriptionID string
+	AckID          string
+	AckDeadline    time.Duration
+	AckState       messageState
+	DeliveredAt    time.Time
 }
 
 func newMessageStatus(msgID string, deadline time.Duration) *MessageStatus {
