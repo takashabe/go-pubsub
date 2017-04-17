@@ -33,13 +33,14 @@ func (s messageState) String() string {
 
 // Message is data object
 type Message struct {
-	ID          string
-	Topic       Topic
-	Data        []byte
-	Attributes  *Attributes
-	States      *states
-	PublishedAt time.Time
-	DeliveredAt time.Time
+	ID            string
+	Topic         Topic
+	Data          []byte
+	Attributes    *Attributes
+	States        *states
+	Subscriptions Datastore
+	PublishedAt   time.Time
+	DeliveredAt   time.Time
 }
 
 func makeMessageID() string {
@@ -59,7 +60,8 @@ func NewMessage(id string, topic Topic, data []byte, attr map[string]string, sub
 		States: &states{
 			list: make(map[string]messageState),
 		},
-		PublishedAt: time.Now(),
+		Subscriptions: NewMemory(nil),
+		PublishedAt:   time.Now(),
 	}
 	for _, sub := range subs {
 		m.AddSubscription(sub.Name)
@@ -69,10 +71,12 @@ func NewMessage(id string, topic Topic, data []byte, attr map[string]string, sub
 
 func (m *Message) AddSubscription(name string) {
 	m.States.add(name)
+	m.Subscriptions.Set(name, struct{}{})
 }
 
-func (m *Message) Ack(subID string) {
+func (m *Message) AckSubscription(subID string) error {
 	m.States.ack(subID)
+	return m.Subscriptions.Delete(subID)
 }
 
 func (m *Message) Deliver(subID string) {

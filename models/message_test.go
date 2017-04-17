@@ -39,7 +39,7 @@ func TestModifyState(t *testing.T) {
 		},
 		{
 			[]string{"subA", "subB"},
-			func(msg *Message, id string) { msg.Ack(id) },
+			func(msg *Message, id string) { msg.AckSubscription(id) },
 			map[string]messageState{
 				"subA": stateAck,
 				"subB": stateWait,

@@ -84,6 +84,7 @@ func (h *testHelper) dummyMessageWithState(t *testing.T, id string, state map[st
 		States: &states{
 			list: state,
 		},
+		Subscriptions: NewMemory(nil),
 	}
 }
 

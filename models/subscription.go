@@ -72,7 +72,7 @@ func ListSubscription() ([]*Subscription, error) {
 
 // RegisterMessage associate Message to Subscription
 func (s *Subscription) RegisterMessage(msg *Message) error {
-	s.MessageStatus.Set(newMessageStatus(msg.ID, s.DefaultAckDeadline))
+	s.MessageStatus.Set(newMessageStatus(msg.ID, s.Name, s.DefaultAckDeadline))
 	return s.Save()
 }
 
@@ -82,18 +82,17 @@ type PullMessage struct {
 	Message *Message `json:"message"`
 }
 
-// Deliver Message
+// Pull returns readable messages, and change message state
 func (s *Subscription) Pull(size int) ([]*PullMessage, error) {
-	messages, err := s.Messages.GetRange(s, size)
+	msgs, err := s.MessageStatus.GetRangeMessage(size)
 	if err != nil {
 		return nil, err
 	}
 
-	pullMsgs := make([]*PullMessage, 0, len(messages))
-	for _, m := range messages {
-		m.Deliver(s.Name)
+	pullMsgs := make([]*PullMessage, 0, len(msgs))
+	for _, m := range msgs {
 		ackID := makeAckID()
-		if err := s.AckMessages.setAckID(ackID, m.ID); err != nil {
+		if err := s.MessageStatus.Deliver(m.ID, ackID); err != nil {
 			return nil, err
 		}
 		pullMsgs = append(pullMsgs, &PullMessage{AckID: ackID, Message: m})
@@ -106,16 +105,17 @@ func (s *Subscription) Ack(ids ...string) error {
 	// collect MessageID list dependent to AckID
 	msgIDs := make([]string, 0, len(ids))
 	for _, id := range ids {
-		msgID, ok := s.AckMessages.getMessageID(id)
-		if !ok {
-			return ErrNotFoundAckID
+		ms, err := s.MessageStatus.FindByAckID(id)
+		if err != nil {
+			return err
 		}
-		msgIDs = append(msgIDs, msgID)
+		msgIDs = append(msgIDs, ms.MessageID)
 	}
 	// ack for message
 	for _, id := range msgIDs {
 		s.Messages.Ack(s.Name, id)
 		s.AckMessages.delete(id)
+		s.MessageStatus.Ack(id)
 	}
 	return nil
 }
@@ -187,7 +187,7 @@ func (m *MessageList) Ack(subID, messID string) error {
 	if err != nil {
 		return errors.Wrapf(err, "failed to ack message key=%s, subscription=%s", messID, subID)
 	}
-	msg.Ack(subID)
+	msg.AckSubscription(subID)
 	if err := msg.Save(); err != nil {
 		return err
 	}
@@ -249,6 +249,16 @@ func (s *MessageStatusStore) Set(ms *MessageStatus) error {
 	return s.store.Set(ms)
 }
 
+// FindByMessageID return MessageStatus matched MessageID
+func (s *MessageStatusStore) FindByMessageID(id string) (*MessageStatus, error) {
+	return s.store.FindByMessageID(id)
+}
+
+// FindByAckID return MessageStatus matched AckID
+func (s *MessageStatusStore) FindByAckID(id string) (*MessageStatus, error) {
+	return s.store.FindByAckID(id)
+}
+
 // GetRangeMessage return readable messages
 func (s *MessageStatusStore) GetRangeMessage(size int) ([]*Message, error) {
 	storeLength := s.store.Size()
@@ -270,6 +280,20 @@ func (s *MessageStatusStore) GetRangeMessage(size int) ([]*Message, error) {
 	return msgs, nil
 }
 
+func (s *MessageStatusStore) Deliver(msgID, ackID string) error {
+	ms, err := s.store.FindByMessageID(msgID)
+	if err != nil {
+		return ErrNotFoundMessageStatus
+	}
+	if ms.AckState == stateAck {
+		return ErrAlreadyReadMessage
+	}
+	ms.AckState = stateDeliver
+	ms.AckID = ackID
+	ms.DeliveredAt = time.Now()
+	return s.Set(ms)
+}
+
 // Ack change state to ack for message
 func (s *MessageStatusStore) Ack(id string) error {
 	ms, err := s.store.FindByAckID(id)
@@ -280,10 +304,11 @@ func (s *MessageStatusStore) Ack(id string) error {
 	if err != nil {
 		return ErrNotFoundMessage
 	}
-	m.Ack(ms.SubscriptionID)
+	m.AckSubscription(ms.SubscriptionID)
 	if err := m.Save(); err != nil {
 		return err
 	}
+	return nil
 }
 
 // MessageStatus is holds params for Message
@@ -296,12 +321,13 @@ type MessageStatus struct {
 	DeliveredAt    time.Time
 }
 
-func newMessageStatus(msgID string, deadline time.Duration) *MessageStatus {
+func newMessageStatus(msgID, subID string, deadline time.Duration) *MessageStatus {
 	return &MessageStatus{
-		MessageID:   msgID,
-		AckID:       "",
-		AckDeadline: deadline,
-		AckState:    stateWait,
+		MessageID:      msgID,
+		SubscriptionID: subID,
+		AckID:          "",
+		AckDeadline:    deadline,
+		AckState:       stateWait,
 	}
 }
 

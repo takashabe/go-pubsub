@@ -243,7 +243,7 @@ func TestGetRangeWithAck(t *testing.T) {
 	}
 
 	// some ack
-	baseMsg["deliver1"].Ack(sub.Name)
+	baseMsg["deliver1"].AckSubscription(sub.Name)
 	got, err = sub.Messages.GetRange(sub, sub.Messages.list.Size())
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
