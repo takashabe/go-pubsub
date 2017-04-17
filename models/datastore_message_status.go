@@ -95,12 +95,13 @@ func (m *DatastoreMessageStatus) CollectByReadableMessage(size int) ([]*Message,
 			if !ms.Readable() {
 				continue
 			}
-			if msg, err := globalMessage.Get(ms.MessageID); err != nil {
+			if msg, err := globalMessage.Get(ms.MessageID); err == nil {
 				dst = append(dst, msg)
 			}
 		}
 		return dst, nil
-	// TODO: impl case *MySQL:
+	case *MySQL:
+		return nil, ErrNotSupportOperation
 	default:
 		return nil, ErrNotSupportOperation
 	}
