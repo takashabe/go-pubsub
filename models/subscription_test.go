@@ -272,12 +272,12 @@ func TestPullAndAck(t *testing.T) {
 		topic.Publish([]byte(fmt.Sprintf("%s-test", topic.Name)), nil)
 	}
 	// want only Topic "a"
-	if got, err := sub.Messages.GetRange(sub, 2); err == nil {
-		if want := []string{"a-test"}; !isExistMessageData(got, want) {
-			t.Errorf("want exist %v in MessageList, got %v", want, got)
-		}
-	} else {
+	got, err := sub.Messages.GetRange(sub, 2)
+	if err != nil {
 		t.Fatalf("failed get message. err=%v", err)
+	}
+	if want := []string{"a-test"}; !isExistMessageData(got, want) {
+		t.Errorf("want exist %v in MessageList, got %v", want, got)
 	}
 
 	// pull and ack
