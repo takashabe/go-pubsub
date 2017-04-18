@@ -1,10 +1,6 @@
 package models
 
-import (
-	"time"
-
-	"github.com/pkg/errors"
-)
+import "github.com/pkg/errors"
 
 // globalMessage Global message key-value store object
 var globalMessage *DatastoreMessage
@@ -70,28 +66,4 @@ func (m *DatastoreMessage) Delete(key string) error {
 
 func (m *DatastoreMessage) Size() int {
 	return len(m.store.Dump())
-}
-
-func (m *DatastoreMessage) FindByReadable(name string, timeout time.Duration, size int) ([]*Message, error) {
-	switch m.store.(type) {
-	case *Memory:
-		source := m.store.Dump()
-		dst := make([]*Message, 0)
-		for k, v := range source {
-			if len(dst) >= size {
-				return dst, nil
-			}
-			msg, ok := v.(*Message)
-			if !ok {
-				return nil, errors.Wrapf(ErrNotMatchTypeMessage, "key=%s", k)
-			}
-			if msg.Readable(name, timeout) {
-				dst = append(dst, msg)
-			}
-		}
-		return dst, nil
-	// TODO: impl case *MySQL:
-	default:
-		return nil, ErrNotSupportOperation
-	}
 }

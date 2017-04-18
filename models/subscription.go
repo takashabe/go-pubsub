@@ -99,17 +99,10 @@ func (s *Subscription) Pull(size int) ([]*PullMessage, error) {
 // Succeed Message delivery. remove sent Message.
 func (s *Subscription) Ack(ids ...string) error {
 	// collect MessageID list dependent to AckID
-	msgIDs := make([]string, 0, len(ids))
 	for _, id := range ids {
-		ms, err := s.MessageStatus.FindByAckID(id)
-		if err != nil {
+		if err := s.MessageStatus.Ack(id); err != nil {
 			return err
 		}
-		msgIDs = append(msgIDs, ms.MessageID)
-	}
-	// ack for message
-	for _, id := range msgIDs {
-		s.MessageStatus.Ack(id)
 	}
 	return nil
 }
@@ -207,8 +200,8 @@ func (s *MessageStatusStore) Deliver(msgID, ackID string) error {
 }
 
 // Ack change state to ack for message
-func (s *MessageStatusStore) Ack(id string) error {
-	ms, err := s.store.FindByAckID(id)
+func (s *MessageStatusStore) Ack(ackID string) error {
+	ms, err := s.store.FindByAckID(ackID)
 	if err != nil {
 		return ErrNotFoundMessageStatus
 	}
@@ -219,6 +212,12 @@ func (s *MessageStatusStore) Ack(id string) error {
 	m.AckSubscription(ms.SubscriptionID)
 	if err := m.Save(); err != nil {
 		return err
+	}
+	s.store.Delete(m.ID)
+	if len(m.Subscriptions.Dump()) == 0 {
+		if err := m.Delete(); err != nil {
+			return err
+		}
 	}
 	return nil
 }

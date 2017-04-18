@@ -55,16 +55,6 @@ func (h *testHelper) dummyTopics(t *testing.T, args ...string) *DatastoreTopic {
 	return m
 }
 
-func (h *testHelper) dummyAcks(t *testing.T, ids ...string) *states {
-	a := &states{
-		list: make(map[string]messageState),
-	}
-	for _, id := range ids {
-		a.add(id)
-	}
-	return a
-}
-
 func (h *testHelper) dummyMessage(t *testing.T, id string) *Message {
 	return &Message{
 		ID: id,
@@ -73,10 +63,7 @@ func (h *testHelper) dummyMessage(t *testing.T, id string) *Message {
 
 func (h *testHelper) dummyMessageWithState(t *testing.T, id string, state map[string]messageState) *Message {
 	return &Message{
-		ID: id,
-		States: &states{
-			list: state,
-		},
+		ID:            id,
 		Subscriptions: NewMemory(nil),
 	}
 }
