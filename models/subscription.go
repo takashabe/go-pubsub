@@ -30,11 +30,11 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 		return nil, err
 	}
 	s := &Subscription{
-		Name:          name,
-		Topic:         topic,
-		MessageStatus: ms,
+		Name:               name,
+		Topic:              topic,
+		MessageStatus:      ms,
+		DefaultAckDeadline: convertAckDeadlineSeconds(timeout),
 	}
-	s.SetAckTimeout(timeout)
 	if err := s.SetPush(endpoint, attr); err != nil {
 		return nil, err
 	}
@@ -107,12 +107,14 @@ func (s *Subscription) Ack(ids ...string) error {
 	return nil
 }
 
-// Set Ack timeout, arg time expect second.
-func (s *Subscription) SetAckTimeout(timeout int64) {
-	if timeout < 0 {
-		timeout = 0
+// ModifyAckDeadline modify message ack deadline seconds
+func (s *Subscription) ModifyAckDeadline(id string, timeout int64) error {
+	ms, err := s.MessageStatus.FindByAckID(id)
+	if err != nil {
+		return err
 	}
-	s.DefaultAckDeadline = time.Duration(timeout) * time.Second
+	ms.AckDeadline = convertAckDeadlineSeconds(timeout)
+	return nil
 }
 
 // Set push endpoint with attributes, only one can be set as push endpoint.
@@ -127,6 +129,14 @@ func (s *Subscription) SetPush(endpoint string, attribute map[string]string) err
 	}
 	s.Push = p
 	return nil
+}
+
+// convertAckDeadlineSeconds convert timeout to seconds time.Duration
+func convertAckDeadlineSeconds(timeout int64) time.Duration {
+	if timeout < 0 {
+		timeout = 0
+	}
+	return time.Duration(timeout) * time.Second
 }
 
 // Save is save to datastore
