@@ -65,13 +65,6 @@ func (h *testHelper) dummyAcks(t *testing.T, ids ...string) *states {
 	return a
 }
 
-func (h *testHelper) dummyMessageList(t *testing.T, ms ...*Message) *MessageList {
-	list := &MessageList{
-		list: globalMessage,
-	}
-	return list
-}
-
 func (h *testHelper) dummyMessage(t *testing.T, id string) *Message {
 	return &Message{
 		ID: id,

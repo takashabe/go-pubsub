@@ -10,8 +10,6 @@ import (
 type Subscription struct {
 	Name               string              `json:"name"`
 	Topic              *Topic              `json:"-"`
-	Messages           *MessageList        `json:"-"`
-	AckMessages        *AckMessages        `json:"-"`
 	DefaultAckDeadline time.Duration       `json:"ack_deadline_seconds"`
 	MessageStatus      *MessageStatusStore `json:"-"`
 	Push               *Push               `json:"push_config"`
@@ -34,8 +32,6 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 	s := &Subscription{
 		Name:          name,
 		Topic:         topic,
-		Messages:      newMessageList(),
-		AckMessages:   newAckMessages(),
 		MessageStatus: ms,
 	}
 	s.SetAckTimeout(timeout)
@@ -113,8 +109,6 @@ func (s *Subscription) Ack(ids ...string) error {
 	}
 	// ack for message
 	for _, id := range msgIDs {
-		s.Messages.Ack(s.Name, id)
-		s.AckMessages.delete(id)
 		s.MessageStatus.Ack(id)
 	}
 	return nil
@@ -145,88 +139,6 @@ func (s *Subscription) SetPush(endpoint string, attribute map[string]string) err
 // Save is save to datastore
 func (s *Subscription) Save() error {
 	return globalSubscription.Set(s)
-}
-
-// MessageList Message slice behavior like queue
-type MessageList struct {
-	list *DatastoreMessage
-}
-
-func newMessageList() *MessageList {
-	return &MessageList{
-		list: globalMessage,
-	}
-}
-
-// GetRange returns readable message
-func (m *MessageList) GetRange(sub *Subscription, size int) ([]*Message, error) {
-	maxLen := m.list.Size()
-	if maxLen == 0 {
-		return nil, ErrEmptyMessage
-	}
-	// non error, when request over size
-	if maxLen < size {
-		size = maxLen
-	}
-
-	msgs, err := m.list.FindByReadable(sub.Name, sub.DefaultAckDeadline, size)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get message dependent Subscription name=%s", sub.Name)
-	}
-	if len(msgs) == 0 {
-		return nil, ErrEmptyMessage
-	}
-
-	sort.Sort(ByMessageID(msgs))
-	return msgs, nil
-}
-
-// Ack is change message state and remove message
-func (m *MessageList) Ack(subID, messID string) error {
-	msg, err := m.list.Get(messID)
-	if err != nil {
-		return errors.Wrapf(err, "failed to ack message key=%s, subscription=%s", messID, subID)
-	}
-	msg.AckSubscription(subID)
-	if err := msg.Save(); err != nil {
-		return err
-	}
-	if err := msg.Delete(); err != nil {
-		// ignore error
-		if err == errors.Cause(ErrNotYetReceivedAck) {
-			return nil
-		}
-		return err
-	}
-	return nil
-}
-
-// AckMessages is holds MessageID and AckID pairs
-type AckMessages struct {
-	list Datastore
-}
-
-func newAckMessages() *AckMessages {
-	return &AckMessages{
-		list: NewMemory(nil),
-	}
-}
-
-func (a *AckMessages) getMessageID(ackID string) (string, bool) {
-	for k, v := range a.list.Dump() {
-		if v == ackID {
-			return k.(string), true
-		}
-	}
-	return "", false
-}
-
-func (a *AckMessages) setAckID(ackID, msgID string) error {
-	return a.list.Set(msgID, ackID)
-}
-
-func (a *AckMessages) delete(id string) error {
-	return a.list.Delete(id)
 }
 
 // MessageStatusStore is holds and adapter for MessageStatus

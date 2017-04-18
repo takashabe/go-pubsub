@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/url"
 	"reflect"
-	"sort"
 	"testing"
 	"time"
 
@@ -29,8 +28,6 @@ func TestNewSubscription(t *testing.T) {
 		Name:               "A",
 		Topic:              helper.dummyTopic(t, "a"),
 		MessageStatus:      ms,
-		Messages:           newMessageList(),
-		AckMessages:        newAckMessages(),
 		DefaultAckDeadline: 0,
 		Push: &Push{
 			Endpoint: testUrl(t, "localhost:8080"),
@@ -117,144 +114,6 @@ func TestDeleteSubscription(t *testing.T) {
 	}
 }
 
-func TestGetRange(t *testing.T) {
-	// Warning: not clean message list each testcases
-	helper.setupGlobal(t)
-	msgArgs := []struct {
-		id    string
-		staet messageState
-	}{
-		{"wait", stateWait},
-		{"deliver1", stateDeliver},
-		{"deliver2", stateDeliver},
-		{"ack", stateAck},
-	}
-	baseMsg := make(map[string]*Message)
-	for i, a := range msgArgs {
-		baseMsg[a.id] = helper.dummyMessageWithState(t, a.id, map[string]messageState{"A": a.staet})
-		if err := baseMsg[a.id].Save(); err != nil {
-			t.Fatalf("#%d: failed msg save: err=%v", i, err)
-		}
-	}
-
-	cases := []struct {
-		inputSub   *Subscription
-		inputSize  int
-		wait       time.Duration
-		addTime    time.Duration
-		expectSize int
-	}{
-		{
-			&Subscription{
-				Name:               "A",
-				Messages:           newMessageList(),
-				DefaultAckDeadline: 0 * time.Millisecond,
-			},
-			2,
-			0 * time.Millisecond,
-			0 * time.Millisecond,
-			2,
-		},
-		{
-			&Subscription{
-				Name:               "A",
-				Messages:           newMessageList(),
-				DefaultAckDeadline: 0 * time.Millisecond,
-			},
-			5,
-			0 * time.Millisecond,
-			0 * time.Millisecond,
-			3,
-		},
-		{
-			&Subscription{
-				Name:               "A",
-				Messages:           newMessageList(),
-				DefaultAckDeadline: 1000 * time.Millisecond, // timeout
-			},
-			2,
-			0 * time.Millisecond,
-			0 * time.Millisecond,
-			1,
-		},
-		{
-			&Subscription{
-				Name:               "A",
-				Messages:           newMessageList(),
-				DefaultAckDeadline: 0 * time.Millisecond,
-			},
-			2,
-			0,
-			1000 * time.Millisecond, // deliver at future
-			2,
-		},
-	}
-	for i, c := range cases {
-		// msgDeliver set DeliveredAt
-		baseMsg["deliver1"].DeliveredAt = time.Now()
-		baseMsg["deliver2"].DeliveredAt = time.Now().Add(c.addTime)
-
-		time.Sleep(c.wait)
-		got, err := c.inputSub.Messages.GetRange(c.inputSub, c.inputSize)
-		if err != nil {
-			t.Fatalf("#%d: failed to messgae get range", i)
-		}
-		if len(got) != c.expectSize {
-			t.Errorf("#%d: message size want %d, got %d", i, c.expectSize, len(got))
-		}
-	}
-}
-
-func TestGetRangeWithAck(t *testing.T) {
-	helper.setupGlobal(t)
-	msgArgs := []struct {
-		id    string
-		staet messageState
-	}{
-		{"wait", stateWait},
-		{"deliver1", stateDeliver},
-		{"deliver2", stateDeliver},
-		{"ack", stateAck},
-	}
-	baseMsg := make(map[string]*Message)
-	for i, a := range msgArgs {
-		baseMsg[a.id] = helper.dummyMessageWithState(t, a.id, map[string]messageState{"A": a.staet})
-		if err := baseMsg[a.id].Save(); err != nil {
-			t.Fatalf("#%d: failed msg save: err=%v", i, err)
-		}
-	}
-	baseMsg["deliver1"].DeliveredAt = time.Now()
-	baseMsg["deliver2"].DeliveredAt = time.Now()
-
-	// all get
-	sub := &Subscription{
-		Name:               "A",
-		Messages:           newMessageList(),
-		DefaultAckDeadline: 0 * time.Millisecond,
-	}
-	got, err := sub.Messages.GetRange(sub, sub.Messages.list.Size())
-	if err != nil {
-		t.Fatalf("want no error, got %v", err)
-	}
-	want := []*Message{baseMsg["wait"], baseMsg["deliver1"], baseMsg["deliver2"]}
-	sort.Sort(ByMessageID(want))
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("want %v, got %#v", want, got)
-	}
-
-	// some ack
-	baseMsg["deliver1"].AckSubscription(sub.Name)
-	got, err = sub.Messages.GetRange(sub, sub.Messages.list.Size())
-	if err != nil {
-		t.Fatalf("want no error, got %v", err)
-	}
-	want = []*Message{baseMsg["wait"], baseMsg["deliver2"]}
-	sort.Sort(ByMessageID(want))
-	if !reflect.DeepEqual(got, want) {
-		t.Errorf("want %v, got %#v", want, got)
-	}
-}
-
 func TestPullAndAck(t *testing.T) {
 	helper.setupGlobalAndSetTopics(t, "a", "b")
 
@@ -272,7 +131,7 @@ func TestPullAndAck(t *testing.T) {
 		topic.Publish([]byte(fmt.Sprintf("%s-test", topic.Name)), nil)
 	}
 	// want only Topic "a"
-	got, err := sub.Messages.GetRange(sub, 2)
+	got, err := sub.MessageStatus.GetRangeMessage(2)
 	if err != nil {
 		t.Fatalf("failed get message. err=%v", err)
 	}
