@@ -161,12 +161,17 @@ func (s *SubscriptionServer) ModifyAck(w http.ResponseWriter, r *http.Request, i
 	}
 
 	// modify ack
-	_, err := models.GetSubscription(id)
+	sub, err := models.GetSubscription(id)
 	if err != nil {
 		Error(w, http.StatusNotFound, err, "not found subscription")
 		return
 	}
-	// TODO: must timeout field has by Message!!!
+	for _, ackID := range req.AckIDs {
+		if err := sub.ModifyAckDeadline(ackID, req.AckDeadlineSeconds); err != nil {
+			Error(w, http.StatusNotFound, err, "failed to modify ack deadline seconds")
+			return
+		}
+	}
 	Json(w, http.StatusOK, "")
 }
 
