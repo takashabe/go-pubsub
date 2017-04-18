@@ -383,3 +383,83 @@ func TestPullAck(t *testing.T) {
 		time.Sleep(c.sleep)
 	}
 }
+
+func TestModifyAck(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	setupDummyTopics(t, ts)
+	hackCreateShortAckSubscription(t)
+	setupPublishMessages(t, ts, "a", PublishDatas{
+		Messages: []PublishData{
+			PublishData{Data: []byte(`test`), Attr: nil},
+		},
+	})
+
+	decodePull := func(res *http.Response) ResponsePull {
+		defer res.Body.Close()
+		var buf ResponsePull
+		if err := json.NewDecoder(res.Body).Decode(&buf); err != nil {
+			t.Fatalf("failed to decode json, got err %v", err)
+		}
+		return buf
+	}
+
+	requestModifyAck := func(body RequestModifyAck) *http.Response {
+		var buf bytes.Buffer
+		if err := json.NewEncoder(&buf).Encode(body); err != nil {
+			t.Fatalf("failed to encode json, got err %v", err)
+		}
+		client := dummyClient(t)
+		res, err := client.Post(
+			fmt.Sprintf("%s/subscription/%s/ack/modify", ts.URL, "A"),
+			"application/json", &buf)
+		if err != nil {
+			t.Fatalf("failed to send request, got err %v", err)
+		}
+		return res
+	}
+
+	// pull and sleep hack short ack deadline
+	r1 := decodePull(pullMessage(t, ts, "A", 1))
+	time.Sleep(100 * time.Millisecond)
+
+	// change ackID after sleep
+	r2 := decodePull(pullMessage(t, ts, "A", 1))
+	if r1.Messages[0].AckID == r2.Messages[0].AckID {
+		t.Errorf("AckID want different, got AckID %s", r1.Messages[0].AckID)
+	}
+
+	// modify ack deadline
+	// WARNING: need send request modify ack, until hack short ack deadline
+	res := requestModifyAck(RequestModifyAck{
+		AckIDs:             []string{r2.Messages[0].AckID},
+		AckDeadlineSeconds: 1,
+	})
+	defer res.Body.Close()
+	if got := res.StatusCode; got != http.StatusOK {
+		t.Errorf("want status code %d, got %d", http.StatusOK, got)
+	}
+
+	// sleep hack short ack deadline, want no message
+	time.Sleep(100 * time.Millisecond)
+	if got := pullMessage(t, ts, "A", 1).StatusCode; got != http.StatusNotFound {
+		t.Errorf("want status code %d, got %d", http.StatusNotFound, got)
+	}
+
+	// sleep modify ack deadline, want change AckID
+	time.Sleep(1 * time.Second)
+	r3 := decodePull(pullMessage(t, ts, "A", 1))
+	if r2.Messages[0].AckID == r3.Messages[0].AckID {
+		t.Errorf("AckID want different, got AckID %s", r2.Messages[0].AckID)
+	}
+
+	// unknown AckID, want error
+	res = requestModifyAck(RequestModifyAck{
+		AckIDs:             []string{r3.Messages[0].AckID, "unknown"},
+		AckDeadlineSeconds: 1,
+	})
+	defer res.Body.Close()
+	if got := res.StatusCode; got != http.StatusNotFound {
+		t.Errorf("want status code %d, got %d", http.StatusNotFound, got)
+	}
+}

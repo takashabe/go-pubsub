@@ -114,7 +114,7 @@ func (s *Subscription) ModifyAckDeadline(id string, timeout int64) error {
 		return err
 	}
 	ms.AckDeadline = convertAckDeadlineSeconds(timeout)
-	return nil
+	return s.MessageStatus.SaveStatus(ms)
 }
 
 // Set push endpoint with attributes, only one can be set as push endpoint.
