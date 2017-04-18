@@ -68,7 +68,7 @@ func ListSubscription() ([]*Subscription, error) {
 
 // RegisterMessage associate Message to Subscription
 func (s *Subscription) RegisterMessage(msg *Message) error {
-	s.MessageStatus.Set(newMessageStatus(msg.ID, s.Name, s.DefaultAckDeadline))
+	s.MessageStatus.SaveStatus(newMessageStatus(msg.ID, s.Name, s.DefaultAckDeadline))
 	return s.Save()
 }
 
@@ -159,8 +159,8 @@ func newMessageStatusStore(cfg *Config) (*MessageStatusStore, error) {
 	}, nil
 }
 
-// Set MessageStatus save to backend store
-func (s *MessageStatusStore) Set(ms *MessageStatus) error {
+// SaveStatus MessageStatus save to backend store
+func (s *MessageStatusStore) SaveStatus(ms *MessageStatus) error {
 	return s.store.Set(ms)
 }
 
@@ -206,7 +206,7 @@ func (s *MessageStatusStore) Deliver(msgID, ackID string) error {
 	ms.AckState = stateDeliver
 	ms.AckID = ackID
 	ms.DeliveredAt = time.Now()
-	return s.Set(ms)
+	return s.SaveStatus(ms)
 }
 
 // Ack change state to ack for message
