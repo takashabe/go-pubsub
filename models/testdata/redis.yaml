@@ -1,0 +1,5 @@
+datastore:
+  driver: redis
+  env:
+    endpoint: localhost:6379
+    db: 0

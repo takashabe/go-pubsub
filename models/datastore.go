@@ -2,7 +2,12 @@ package models
 
 import (
 	"io/ioutil"
+	"log"
 	"sync"
+
+	"github.com/garyburd/redigo/redis"
+	"github.com/k0kubun/pp"
+	"github.com/pkg/errors"
 )
 
 // TODO: initialize config from Server
@@ -99,6 +104,56 @@ func (m *Memory) Dump() map[interface{}]interface{} {
 	defer m.mu.RUnlock()
 
 	return m.store
+}
+
+type Redis struct {
+	conn redis.Conn
+}
+
+// NewRedis return redis client
+func NewRedis(cfg *Config) (*Redis, error) {
+	conn, err := redis.Dial("tcp", cfg.Endpoint)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to connect redis")
+	}
+	return &Redis{conn: conn}, nil
+}
+
+func (r *Redis) Set(key, value interface{}) error {
+	_, err := r.conn.Do("SET", key, value)
+	return err
+}
+
+func (r *Redis) Get(key interface{}) interface{} {
+	v, err := r.conn.Do("GET", key)
+	if err != nil {
+		log.Printf("[REDIS] failed to get, key=%s, err=%v", key, err)
+		return nil
+	}
+	return v
+}
+
+func (r *Redis) Delete(key interface{}) error {
+	_, err := r.conn.Do("DEL", key)
+	return err
+}
+
+func (r *Redis) Dump() map[interface{}]interface{} {
+	res := make(map[interface{}]interface{})
+	keys, err := redis.Strings(r.conn.Do("KEYS", "*"))
+	if err != nil {
+		return res
+	}
+	args := make([]interface{}, 0)
+	for _, k := range keys {
+		args = append(args, k)
+	}
+	values, err := r.conn.Do("MGET", args...)
+	pp.Println(values)
+	if err != nil {
+		return res
+	}
+	return res
 }
 
 // TODO: impl datastore

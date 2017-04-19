@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func TestSet(t *testing.T) {
+func TestMemorySet(t *testing.T) {
 	msgA := Message{ID: "a"}
 	msgB := Message{ID: "b"}
 
@@ -35,7 +35,7 @@ func TestSet(t *testing.T) {
 	}
 }
 
-func TestGet(t *testing.T) {
+func TestMemoryGet(t *testing.T) {
 	msgA := Message{ID: "a"}
 	msgB := Message{ID: "b"}
 	baseStore := Memory{
@@ -66,7 +66,7 @@ func TestGet(t *testing.T) {
 	}
 }
 
-func TestDeleteStore(t *testing.T) {
+func TestMemoryDelete(t *testing.T) {
 	msgA := Message{ID: "a"}
 	msgB := Message{ID: "b"}
 	baseStore := Memory{
