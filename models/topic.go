@@ -2,7 +2,7 @@ package models
 
 import "github.com/pkg/errors"
 
-// Topic object
+// Topic is topic object
 type Topic struct {
 	Name string `json:"name"`
 }
@@ -61,12 +61,12 @@ func (t *Topic) GetSubscriptions() ([]*Subscription, error) {
 	return globalSubscription.CollectByTopicID(t.Name)
 }
 
-// Save is save to datastore
+// Save save to datastore
 func (t *Topic) Save() error {
 	return globalTopics.Set(t)
 }
 
-// ByTopicName implements sort.Interface for []*Topic based on the ID
+// ByTopicName is implements sort.Interface for []*Topic based on the ID
 type ByTopicName []*Topic
 
 func (a ByTopicName) Len() int           { return len(a) }
