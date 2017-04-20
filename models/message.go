@@ -33,7 +33,7 @@ type Message struct {
 	ID            string            `json:"message_id"`
 	Data          []byte            `json:"data"`
 	Attributes    map[string]string `json:"attributes"`
-	Subscriptions Datastore         `json:"-"`
+	Subscriptions *Memory           `json:"-"`
 	PublishedAt   time.Time         `json:"publish_time"`
 	DeliveredAt   time.Time         `json:"-"`
 }

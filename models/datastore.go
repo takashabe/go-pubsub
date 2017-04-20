@@ -80,14 +80,14 @@ func DecodeGobMessage(e []byte) (*Message, error) {
 
 // Datastore driver at "in memory"
 type Memory struct {
-	store map[interface{}]interface{}
+	Store map[interface{}]interface{}
 	mu    sync.RWMutex
 }
 
 // Create memory object
 func NewMemory(_ *Config) *Memory {
 	return &Memory{
-		store: make(map[interface{}]interface{}),
+		Store: make(map[interface{}]interface{}),
 	}
 }
 
@@ -96,7 +96,7 @@ func (m *Memory) Set(key, value interface{}) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	m.store[key] = value
+	m.Store[key] = value
 	return nil
 }
 
@@ -105,7 +105,7 @@ func (m *Memory) Get(key interface{}) interface{} {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	return m.store[key]
+	return m.Store[key]
 }
 
 // Delete item
@@ -113,7 +113,7 @@ func (m *Memory) Delete(key interface{}) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	delete(m.store, key)
+	delete(m.Store, key)
 	return nil
 }
 
@@ -122,7 +122,7 @@ func (m *Memory) Dump() map[interface{}]interface{} {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	return m.store
+	return m.Store
 }
 
 type Redis struct {

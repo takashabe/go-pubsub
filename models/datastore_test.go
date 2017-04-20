@@ -29,7 +29,7 @@ func TestMemorySet(t *testing.T) {
 		for _, v := range c.inputMsgs {
 			m.Set(v.ID, v)
 		}
-		if got := m.store; !reflect.DeepEqual(got, c.expect) {
+		if got := m.Store; !reflect.DeepEqual(got, c.expect) {
 			t.Errorf("#%d: want %v, got %v", i, c.expect, got)
 		}
 	}
@@ -39,7 +39,7 @@ func TestMemoryGet(t *testing.T) {
 	msgA := Message{ID: "a"}
 	msgB := Message{ID: "b"}
 	baseStore := Memory{
-		store: map[interface{}]interface{}{"a": msgA, "b": msgB},
+		Store: map[interface{}]interface{}{"a": msgA, "b": msgB},
 	}
 
 	cases := []struct {
@@ -70,7 +70,7 @@ func TestMemoryDelete(t *testing.T) {
 	msgA := Message{ID: "a"}
 	msgB := Message{ID: "b"}
 	baseStore := Memory{
-		store: map[interface{}]interface{}{"a": msgA, "b": msgB},
+		Store: map[interface{}]interface{}{"a": msgA, "b": msgB},
 	}
 
 	cases := []struct {
@@ -95,8 +95,8 @@ func TestMemoryDelete(t *testing.T) {
 		if errors.Cause(err) != c.expectErr {
 			t.Errorf("#%d: want %v, got %v", i, c.expectErr, err)
 		}
-		if !reflect.DeepEqual(baseStore.store, c.expectStore) {
-			t.Errorf("#%d: want %v, got %v", i, c.expectStore, baseStore.store)
+		if !reflect.DeepEqual(baseStore.Store, c.expectStore) {
+			t.Errorf("#%d: want %v, got %v", i, c.expectStore, baseStore.Store)
 		}
 	}
 }
