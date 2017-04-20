@@ -69,7 +69,7 @@ func (t *Topic) Publish(data []byte, attributes map[string]string) (string, erro
 	}
 
 	// TODO: need transaction
-	m := NewMessage(makeMessageID(), *t, data, attributes, subList)
+	m := NewMessage(makeMessageID(), data, attributes, subList)
 	if err := m.Save(); err != nil {
 		return "", errors.Wrap(err, "failed save Message")
 	}
