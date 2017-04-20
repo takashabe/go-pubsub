@@ -31,7 +31,6 @@ func (s messageState) String() string {
 // Message is data object
 type Message struct {
 	ID            string      `json:"message_id"`
-	Topic         Topic       `json:"-"`
 	Data          []byte      `json:"data"`
 	Attributes    *Attributes `json:"attributes"`
 	Subscriptions Datastore   `json:"-"`
@@ -52,7 +51,6 @@ func NewMessage(id string, topic Topic, data []byte, attr map[string]string, sub
 		ID:            id,
 		Data:          data,
 		Attributes:    newAttributes(attr),
-		Topic:         topic,
 		Subscriptions: NewMemory(nil),
 		PublishedAt:   time.Now(),
 	}
