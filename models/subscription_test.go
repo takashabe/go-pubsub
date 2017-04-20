@@ -36,7 +36,6 @@ func TestNewSubscription(t *testing.T) {
 			},
 		},
 	}
-	expect1.Topic.AddSubscription(expect1)
 
 	cases := []struct {
 		name      string

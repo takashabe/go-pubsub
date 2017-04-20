@@ -41,9 +41,6 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 	if err := s.Save(); err != nil {
 		return nil, err
 	}
-	if err := topic.AddSubscription(s); err != nil {
-		return nil, err
-	}
 
 	return s, nil
 }
@@ -55,9 +52,6 @@ func GetSubscription(name string) (*Subscription, error) {
 
 // Delete is delete subscription at globalSubscription
 func (s *Subscription) Delete() error {
-	if err := s.Topic.DeleteSubscription(s.Name); err != nil {
-		return err
-	}
 	return globalSubscription.Delete(s.Name)
 }
 

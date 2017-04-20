@@ -1,15 +1,10 @@
 package models
 
-import (
-	"fmt"
-
-	"github.com/pkg/errors"
-)
+import "github.com/pkg/errors"
 
 // Topic object
 type Topic struct {
-	Name string                 `json:"name"`
-	Sub  *DatastoreSubscription `json:"-"`
+	Name string `json:"name"`
 }
 
 // Create topic, if not exist already topic name in GlobalTopics
@@ -17,15 +12,8 @@ func NewTopic(name string) (*Topic, error) {
 	if _, err := GetTopic(name); err == nil {
 		return nil, ErrAlreadyExistTopic
 	}
-
-	// TODO: fix me. dont require specific datastore
-	d, err := NewDatastoreSubscription(&Config{Driver: "memory"})
-	if err != nil {
-		return nil, err
-	}
 	t := &Topic{
 		Name: name,
-		Sub:  d,
 	}
 	if err := t.Save(); err != nil {
 		return nil, errors.Wrapf(err, "failed to save topic, name=%s", name)
@@ -53,23 +41,15 @@ func (t *Topic) Delete() error {
 	return globalTopics.Delete(t.Name)
 }
 
-// Register subscription
-func (t *Topic) AddSubscription(s *Subscription) error {
-	if _, err := t.Sub.Get(s.Name); err == nil {
-		return errors.Wrapf(ErrAlreadyExistSubscription, fmt.Sprintf("id=%s", s.Name))
-	}
-	return t.Sub.Set(s)
-}
-
-// Publish is Message save and deliver to subscription, and return message id
-func (t *Topic) Publish(data []byte, attributes map[string]string) (string, error) {
+// Publish create message and deliver to subscription, and return created message id
+func (t *Topic) Publish(data []byte, attr map[string]string) (string, error) {
 	subList, err := t.GetSubscriptions()
 	if err != nil {
 		return "", errors.Wrap(err, "failed GetSubscriptions")
 	}
 
 	// TODO: need transaction
-	m := NewMessage(makeMessageID(), data, attributes, subList)
+	m := NewMessage(makeMessageID(), data, attr, subList)
 	if err := m.Save(); err != nil {
 		return "", errors.Wrap(err, "failed save Message")
 	}
@@ -83,15 +63,7 @@ func (t *Topic) Publish(data []byte, attributes map[string]string) (string, erro
 
 // GetSubscriptions returns topic dependent Subscription list
 func (t *Topic) GetSubscriptions() ([]*Subscription, error) {
-	return t.Sub.List()
-}
-
-// DeleteSubscription is delete depends subscription
-func (t *Topic) DeleteSubscription(name string) error {
-	if err := t.Sub.Delete(name); err != nil {
-		return err
-	}
-	return t.Save()
+	return globalSubscription.CollectByTopicID(t.Name)
 }
 
 // Save is save to datastore

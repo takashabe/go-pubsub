@@ -37,13 +37,8 @@ func (h *testHelper) setupGlobalAndSetTopics(t *testing.T, names ...string) {
 }
 
 func (h *testHelper) dummyTopic(t *testing.T, name string) *Topic {
-	s, err := NewDatastoreSubscription(h.dummyConfig)
-	if err != nil {
-		t.Fatalf("failed to create datastore subscription, name=%s, error=%v", name, err)
-	}
 	return &Topic{
 		Name: name,
-		Sub:  s,
 	}
 }
 
