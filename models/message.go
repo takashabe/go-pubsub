@@ -30,12 +30,12 @@ func (s messageState) String() string {
 
 // Message is data object
 type Message struct {
-	ID            string      `json:"message_id"`
-	Data          []byte      `json:"data"`
-	Attributes    *Attributes `json:"attributes"`
-	Subscriptions Datastore   `json:"-"`
-	PublishedAt   time.Time   `json:"publish_time"`
-	DeliveredAt   time.Time   `json:"-"`
+	ID            string            `json:"message_id"`
+	Data          []byte            `json:"data"`
+	Attributes    map[string]string `json:"attributes"`
+	Subscriptions Datastore         `json:"-"`
+	PublishedAt   time.Time         `json:"publish_time"`
+	DeliveredAt   time.Time         `json:"-"`
 }
 
 func makeMessageID() string {
@@ -50,7 +50,7 @@ func NewMessage(id string, data []byte, attr map[string]string, subs []*Subscrip
 	m := &Message{
 		ID:            id,
 		Data:          data,
-		Attributes:    newAttributes(attr),
+		Attributes:    attr,
 		Subscriptions: NewMemory(nil),
 		PublishedAt:   time.Now(),
 	}
