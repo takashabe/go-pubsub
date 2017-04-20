@@ -18,7 +18,7 @@ func NewPush(endpoint string, attributes map[string]string) (*Push, error) {
 	p := &Push{
 		Endpoint: url,
 		Attributes: &Attributes{
-			attr: make(map[string]string),
+			Attr: make(map[string]string),
 		},
 	}
 	for k, v := range attributes {

@@ -17,14 +17,14 @@ func dummyRedis(t *testing.T) *Redis {
 	return r
 }
 
-func _TestRedisSetAndGet(t *testing.T) {
+func TestRedisSetAndGet(t *testing.T) {
 	cases := []struct {
 		key   interface{}
 		value interface{}
 	}{
 		{
 			"a",
-			Message{ID: "a"},
+			&Message{ID: "a"},
 		},
 	}
 	for i, c := range cases {
