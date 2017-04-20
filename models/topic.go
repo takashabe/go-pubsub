@@ -23,12 +23,7 @@ func NewTopic(name string) (*Topic, error) {
 
 // Return topic object
 func GetTopic(name string) (*Topic, error) {
-	t, err := globalTopics.Get(name)
-	if err != nil {
-		return nil, err
-	}
-
-	return t, nil
+	return globalTopics.Get(name)
 }
 
 // Return topic list
