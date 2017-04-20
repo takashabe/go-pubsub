@@ -81,11 +81,6 @@ func (t *Topic) Publish(data []byte, attributes map[string]string) (string, erro
 	return m.ID, nil
 }
 
-// GetSubscription return a topic dependent Subscription
-func (t *Topic) GetSubscription(key string) (*Subscription, error) {
-	return t.Sub.Get(key)
-}
-
 // GetSubscriptions returns topic dependent Subscription list
 func (t *Topic) GetSubscriptions() ([]*Subscription, error) {
 	return t.Sub.List()
