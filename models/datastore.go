@@ -1,6 +1,8 @@
 package models
 
 import (
+	"bytes"
+	"encoding/gob"
 	"io/ioutil"
 	"log"
 	"sync"
@@ -57,6 +59,23 @@ func LoadDatastore(cfg *Config) (Datastore, error) {
 	default:
 		return NewMemory(cfg), nil
 	}
+}
+
+func EncodeGob(s interface{}) ([]byte, error) {
+	var buf bytes.Buffer
+	if err := gob.NewEncoder(&buf).Encode(s); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func DecodeGobMessage(e []byte) (*Message, error) {
+	var res *Message
+	buf := bytes.NewReader(e)
+	if err := gob.NewDecoder(buf).Decode(&res); err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 // Datastore driver at "in memory"
