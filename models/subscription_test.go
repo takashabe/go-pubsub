@@ -26,7 +26,7 @@ func TestNewSubscription(t *testing.T) {
 	}
 	expect1 := &Subscription{
 		Name:               "A",
-		Topic:              helper.dummyTopic(t, "a"),
+		TopicID:            "a",
 		MessageStatus:      ms,
 		DefaultAckDeadline: 0,
 		Push: &Push{
@@ -80,9 +80,8 @@ func TestNewSubscription(t *testing.T) {
 
 func TestDeleteSubscription(t *testing.T) {
 	helper.setupGlobal(t)
-	topicA := helper.dummyTopic(t, "a")
-	subA := &Subscription{Name: "A", Topic: topicA}
-	subB := &Subscription{Name: "B", Topic: topicA}
+	subA := &Subscription{Name: "A", TopicID: "a"}
+	subB := &Subscription{Name: "B", TopicID: "a"}
 	globalSubscription.Set(subA)
 	globalSubscription.Set(subB)
 

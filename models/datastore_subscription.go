@@ -52,7 +52,7 @@ func (ts *DatastoreSubscription) CollectByTopicID(topicID string) ([]*Subscripti
 			if !ok {
 				return nil, errors.Wrapf(ErrNotMatchTypeSubscription, "key=%s", topicID)
 			}
-			if s.Topic.Name != topicID {
+			if s.TopicID != topicID {
 				continue
 			}
 			res = append(res, s)

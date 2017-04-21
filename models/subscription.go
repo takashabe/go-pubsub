@@ -9,7 +9,7 @@ import (
 
 type Subscription struct {
 	Name               string              `json:"name"`
-	Topic              *Topic              `json:"-"`
+	TopicID            string              `json:"topic"`
 	DefaultAckDeadline time.Duration       `json:"ack_deadline_seconds"`
 	MessageStatus      *MessageStatusStore `json:"-"`
 	Push               *Push               `json:"push_config"`
@@ -20,7 +20,6 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 	if _, err := GetSubscription(name); err == nil {
 		return nil, ErrAlreadyExistSubscription
 	}
-
 	topic, err := GetTopic(topicName)
 	if err != nil {
 		return nil, err
@@ -31,7 +30,7 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 	}
 	s := &Subscription{
 		Name:               name,
-		Topic:              topic,
+		TopicID:            topic.Name,
 		MessageStatus:      ms,
 		DefaultAckDeadline: convertAckDeadlineSeconds(timeout),
 	}
