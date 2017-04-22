@@ -26,4 +26,5 @@ var (
 	ErrNotFoundTopic             = errors.New("not found topic")
 	ErrNotMatchTypeTopic         = errors.New("not match type topic")
 	ErrNotSupportOperation       = errors.New("not support operation")
+	ErrNotSupportDriver          = errors.New("not support driver")
 )

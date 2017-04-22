@@ -20,7 +20,7 @@ func testUrl(t *testing.T, raw string) *url.URL {
 
 func TestNewSubscription(t *testing.T) {
 	helper.setupGlobalAndSetTopics(t, "a")
-	ms, err := newMessageStatusStore(&Config{Driver: "memory"})
+	ms, err := newMessageStatusStore(nil)
 	if err != nil {
 		t.Fatalf("failed to create MessageStatusStore, got err %v", err)
 	}
