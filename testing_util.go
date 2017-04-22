@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -23,7 +24,13 @@ func dummyClient(t *testing.T) *http.Client {
 
 func setupServer(t *testing.T) *httptest.Server {
 	// setup datastore
-	s, err := NewServer("testdata/config.yaml")
+	var path string
+	if env := os.Getenv("GO_MESSAGE_QUEUE_CONFIG"); len(env) != 0 {
+		path = env
+	} else {
+		path = "testdata/config.yaml"
+	}
+	s, err := NewServer(path)
 	if err != nil {
 		t.Fatalf("failed to NewServer, err=%v", err)
 	}
