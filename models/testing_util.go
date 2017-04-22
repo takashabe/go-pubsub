@@ -7,7 +7,7 @@ type testHelper struct {
 }
 
 var helper = testHelper{
-	dummyConfig: &Config{Driver: "memory"},
+	dummyConfig: &Config{Datastore: &DatastoreConfig{}},
 }
 
 func (h *testHelper) setupGlobal(t *testing.T) {
