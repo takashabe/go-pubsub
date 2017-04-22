@@ -7,6 +7,39 @@ import (
 	"github.com/pkg/errors"
 )
 
+func TestLoadDatastore(t *testing.T) {
+	cases := []struct {
+		input  *Config
+		expect string
+	}{
+		{
+			&Config{Datastore: &DatastoreConfig{}},
+			"*models.Memory",
+		},
+		{
+			// WARNING: Require connect redis
+			&Config{
+				Datastore: &DatastoreConfig{
+					Redis: &RedisConfig{
+						Host: "localhost",
+						Port: 6379,
+						DB:   0,
+					},
+				}},
+			"*models.Redis",
+		},
+	}
+	for i, c := range cases {
+		d, err := LoadDatastore(c.input)
+		if err != nil {
+			t.Fatalf("#%d: failed to load datastore, got err %v", i, err)
+		}
+		if got := reflect.TypeOf(d); got.String() != c.expect {
+			t.Errorf("#%d: datastore type want %s, got %s", i, c.expect, got)
+		}
+	}
+}
+
 func TestMemorySet(t *testing.T) {
 	msgA := Message{ID: "a"}
 	msgB := Message{ID: "b"}

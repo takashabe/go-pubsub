@@ -8,8 +8,11 @@ import (
 )
 
 func dummyRedis(t *testing.T) *Redis {
-	r, err := NewRedis(&Config{
-		Endpoint: "localhost:6379",
+	r, err := NewRedis(&Config{&DatastoreConfig{
+		Redis: &RedisConfig{
+			Host: "localhost",
+			Port: 6379,
+		}},
 	})
 	if err != nil {
 		t.Fatalf("failed to connect redis, got err %v", err)
