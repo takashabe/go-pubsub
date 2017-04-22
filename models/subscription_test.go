@@ -19,7 +19,7 @@ func testUrl(t *testing.T, raw string) *url.URL {
 }
 
 func TestNewSubscription(t *testing.T) {
-	helper.setupGlobalAndSetTopics(t, "a")
+	setupGlobalAndSetTopics(t, "a")
 	ms, err := newMessageStatusStore(nil)
 	if err != nil {
 		t.Fatalf("failed to create MessageStatusStore, got err %v", err)
@@ -79,7 +79,7 @@ func TestNewSubscription(t *testing.T) {
 }
 
 func TestDeleteSubscription(t *testing.T) {
-	helper.setupGlobal(t)
+	setupGlobal(t)
 	subA := &Subscription{Name: "A", TopicID: "a"}
 	subB := &Subscription{Name: "B", TopicID: "a"}
 	globalSubscription.Set(subA)
@@ -113,7 +113,7 @@ func TestDeleteSubscription(t *testing.T) {
 }
 
 func TestPullAndAck(t *testing.T) {
-	helper.setupGlobalAndSetTopics(t, "a", "b")
+	setupGlobalAndSetTopics(t, "a", "b")
 
 	// make Subscription and Topic
 	sub, err := NewSubscription("A", "a", 0, "", nil)

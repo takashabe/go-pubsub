@@ -1,21 +1,21 @@
 package models
 
-import "testing"
+import (
+	"os"
+	"testing"
+)
 
 type testHelper struct {
 	dummyConfig *Config
 }
 
-var helper = testHelper{
-	dummyConfig: &Config{Datastore: &DatastoreConfig{}},
-}
 func setupGlobal(t *testing.T) {
 	// load config
 	var path string
 	if env := os.Getenv("GO_MESSAGE_QUEUE_CONFIG"); len(env) != 0 {
 		path = env
 	} else {
-		path = "testdata/config.yaml"
+		path = "testdata/none.yaml"
 	}
 	cfg, err := LoadConfigFromFile(path)
 	if err != nil {
@@ -35,10 +35,12 @@ func setupGlobal(t *testing.T) {
 	}
 }
 
-func (h *testHelper) setupGlobalAndSetTopics(t *testing.T, names ...string) {
-	h.setupGlobal(t)
+func setupGlobalAndSetTopics(t *testing.T, names ...string) {
+	setupGlobal(t)
 	for _, v := range names {
-		globalTopics.Set(h.dummyTopic(t, v))
+		if _, err := NewTopic(v); err != nil {
+			t.Fatalf("failed to new topic, got err %v", err)
+		}
 	}
 }
 

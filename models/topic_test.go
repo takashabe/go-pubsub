@@ -1,7 +1,6 @@
 package models
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/pkg/errors"
@@ -25,7 +24,7 @@ func TestNewTopic(t *testing.T) {
 		},
 	}
 	for i, c := range cases {
-		helper.setupGlobal(t)
+		setupGlobal(t)
 		var err error
 		for _, s := range c.inputs {
 			// expect last input return value equal expectErr
@@ -52,44 +51,23 @@ func TestNewTopic(t *testing.T) {
 
 func TestGetTopic(t *testing.T) {
 	// make test topics
-	helper.setupGlobal(t)
-	globalTopics.Set(helper.dummyTopic(t, "a"))
-	globalTopics.Set(helper.dummyTopic(t, "b"))
+	setupGlobalAndSetTopics(t, "a", "b")
 
 	cases := []struct {
-		input       string
-		expectTopic *Topic
-		expectErr   error
+		input           string
+		expectTopicName string
+		expectErr       error
 	}{
-		{"a", helper.dummyTopic(t, "a"), nil},
-		{"c", nil, ErrNotFoundTopic},
+		{"a", "a", nil},
+		{"c", "", ErrNotFoundTopic},
 	}
 	for i, c := range cases {
 		got, err := GetTopic(c.input)
 		if errors.Cause(err) != c.expectErr {
 			t.Errorf("%#d: want %v, got %v", i, c.expectErr, err)
 		}
-		if !reflect.DeepEqual(got, c.expectTopic) {
-			t.Errorf("%#d: want %v, got %v", i, c.expectTopic, got)
-		}
-	}
-}
-
-func TestPublish(t *testing.T) {
-	cases := []struct {
-		inputData []byte
-		inputAttr map[string]string
-		expectErr error
-	}{
-		{
-			[]byte(""), nil, nil,
-		},
-	}
-	for i, c := range cases {
-		topic := helper.dummyTopic(t, "a")
-		_, err := topic.Publish(c.inputData, c.inputAttr)
-		if err != c.expectErr {
-			t.Errorf("%#d: want %v, got %v", i, c.expectErr, err)
+		if c.expectTopicName != "" && c.expectTopicName != got.Name {
+			t.Errorf("%#d: want %s, got %s", i, c.expectTopicName, got.Name)
 		}
 	}
 }
