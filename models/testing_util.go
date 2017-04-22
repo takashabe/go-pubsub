@@ -9,24 +9,30 @@ type testHelper struct {
 var helper = testHelper{
 	dummyConfig: &Config{Datastore: &DatastoreConfig{}},
 }
+func setupGlobal(t *testing.T) {
+	// load config
+	var path string
+	if env := os.Getenv("GO_MESSAGE_QUEUE_CONFIG"); len(env) != 0 {
+		path = env
+	} else {
+		path = "testdata/config.yaml"
+	}
+	cfg, err := LoadConfigFromFile(path)
+	if err != nil {
+		t.Fatalf("failed to load config, got err %v", err)
+	}
+	globalConfig = cfg
 
-func (h *testHelper) setupGlobal(t *testing.T) {
-	if d, err := NewDatastoreTopic(h.dummyConfig); err != nil {
+	// setup global variables
+	if err := InitDatastoreTopic(); err != nil {
 		t.Fatal(err)
-	} else {
-		globalTopics = d
 	}
-	if d, err := NewDatastoreSubscription(h.dummyConfig); err != nil {
+	if err := InitDatastoreSubscription(); err != nil {
 		t.Fatal(err)
-	} else {
-		globalSubscription = d
 	}
-	if d, err := NewDatastoreMessage(h.dummyConfig); err != nil {
+	if err := InitDatastoreMessage(); err != nil {
 		t.Fatal(err)
-	} else {
-		globalMessage = d
 	}
-	globalConfig = h.dummyConfig
 }
 
 func (h *testHelper) setupGlobalAndSetTopics(t *testing.T, names ...string) {
