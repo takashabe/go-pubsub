@@ -3,7 +3,7 @@ package models
 import (
 	"bytes"
 	"encoding/gob"
-	"io/ioutil"
+	"fmt"
 	"log"
 	"sync"
 
@@ -11,35 +11,6 @@ import (
 	"github.com/k0kubun/pp"
 	"github.com/pkg/errors"
 )
-
-// TODO: initialize config from Server
-var globalConfig *Config
-
-// Config is connect to datastore parameters
-type Config struct {
-	Driver   string
-	Endpoint string
-
-	// username and password must be set by env
-	UsernameEnv string
-	PasswordEnv string
-}
-
-// LoadConfigFromFile read config file and create config object
-func LoadConfigFromFile(path string) (*Config, error) {
-	_, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: impl read yaml and mapping struct
-	return &Config{Driver: "memory"}, nil
-}
-
-// SetGlobalConfig set global config
-func SetGlobalConfig(cfg *Config) {
-	globalConfig = cfg
-}
 
 // Datastore is behavior like Key-Value store
 type Datastore interface {
@@ -51,14 +22,17 @@ type Datastore interface {
 
 // Load backend datastore from cnofiguration json file.
 func LoadDatastore(cfg *Config) (Datastore, error) {
-	switch cfg.Driver {
-	case "memory":
-		return NewMemory(cfg), nil
-	case "mysql":
-		return NewMySQL(cfg)
-	default:
-		return NewMemory(cfg), nil
+	if cfg == nil {
+		return NewMemory(nil), nil
 	}
+
+	if cfg.Datastore.Redis != nil {
+		return NewRedis(cfg)
+	}
+	if cfg.Datastore.MySQL != nil {
+		return nil, ErrNotSupportDriver
+	}
+	return NewMemory(nil), nil
 }
 
 func EncodeGob(s interface{}) ([]byte, error) {
@@ -131,7 +105,9 @@ type Redis struct {
 
 // NewRedis return redis client
 func NewRedis(cfg *Config) (*Redis, error) {
-	conn, err := redis.Dial("tcp", cfg.Endpoint)
+	rconf := cfg.Datastore.Redis
+	endpoint := fmt.Sprintf("%s:%d", rconf.Host, rconf.Port)
+	conn, err := redis.Dial("tcp", endpoint)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to connect redis")
 	}
