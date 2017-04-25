@@ -9,7 +9,7 @@ type testHelper struct {
 	dummyConfig *Config
 }
 
-func setupGlobal(t *testing.T) {
+func setupDatastore(t *testing.T) {
 	// load config
 	var path string
 	if env := os.Getenv("GO_MESSAGE_QUEUE_CONFIG"); len(env) != 0 {
@@ -35,8 +35,8 @@ func setupGlobal(t *testing.T) {
 	}
 }
 
-func setupGlobalAndSetTopics(t *testing.T, names ...string) {
-	setupGlobal(t)
+func setupDatastoreAndSetTopics(t *testing.T, names ...string) {
+	setupDatastore(t)
 	for _, v := range names {
 		if _, err := NewTopic(v); err != nil {
 			t.Fatalf("failed to new topic, got err %v", err)

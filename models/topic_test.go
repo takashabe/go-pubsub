@@ -24,7 +24,7 @@ func TestNewTopic(t *testing.T) {
 		},
 	}
 	for i, c := range cases {
-		setupGlobal(t)
+		setupDatastore(t)
 		var err error
 		for _, s := range c.inputs {
 			// expect last input return value equal expectErr
@@ -51,7 +51,7 @@ func TestNewTopic(t *testing.T) {
 
 func TestGetTopic(t *testing.T) {
 	// make test topics
-	setupGlobalAndSetTopics(t, "a", "b")
+	setupDatastoreAndSetTopics(t, "a", "b")
 
 	cases := []struct {
 		input           string
