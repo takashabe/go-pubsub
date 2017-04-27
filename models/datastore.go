@@ -77,7 +77,11 @@ func (m *Memory) Get(key interface{}) (interface{}, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	return m.Store[key], nil
+	v, ok := m.Store[key]
+	if !ok {
+		return nil, ErrNotFoundEntry
+	}
+	return v, nil
 }
 
 // Delete item
@@ -118,7 +122,11 @@ func (r *Redis) Set(key, value interface{}) error {
 }
 
 func (r *Redis) Get(key interface{}) (interface{}, error) {
-	return redis.Bytes(r.conn.Do("GET", key))
+	v, err := redis.Bytes(r.conn.Do("GET", key))
+	if err != nil {
+		return nil, errors.Wrapf(ErrNotFoundEntry, fmt.Sprintf("detail %v", err))
+	}
+	return v, nil
 }
 
 func (r *Redis) Delete(key interface{}) error {
