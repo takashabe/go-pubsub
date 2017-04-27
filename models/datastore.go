@@ -4,18 +4,16 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/garyburd/redigo/redis"
-	"github.com/k0kubun/pp"
 	"github.com/pkg/errors"
 )
 
 // Datastore is behavior like Key-Value store
 type Datastore interface {
 	Set(key, value interface{}) error
-	Get(key interface{}) interface{}
+	Get(key interface{}) (interface{}, error)
 	Delete(key interface{}) error
 	Dump() map[interface{}]interface{}
 }
@@ -75,11 +73,11 @@ func (m *Memory) Set(key, value interface{}) error {
 }
 
 // Get item
-func (m *Memory) Get(key interface{}) interface{} {
+func (m *Memory) Get(key interface{}) (interface{}, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	return m.Store[key]
+	return m.Store[key], nil
 }
 
 // Delete item
@@ -119,13 +117,8 @@ func (r *Redis) Set(key, value interface{}) error {
 	return err
 }
 
-func (r *Redis) Get(key interface{}) interface{} {
-	v, err := r.conn.Do("GET", key)
-	if err != nil {
-		log.Printf("[REDIS] failed to get, key=%s, err=%v", key, err)
-		return nil
-	}
-	return v
+func (r *Redis) Get(key interface{}) (interface{}, error) {
+	return redis.Bytes(r.conn.Do("GET", key))
 }
 
 func (r *Redis) Delete(key interface{}) error {
@@ -135,18 +128,20 @@ func (r *Redis) Delete(key interface{}) error {
 
 func (r *Redis) Dump() map[interface{}]interface{} {
 	res := make(map[interface{}]interface{})
-	keys, err := redis.Strings(r.conn.Do("KEYS", "*"))
+	keys, err := redis.Bytes(r.conn.Do("KEYS", "*"))
 	if err != nil {
-		return res
+		return nil
 	}
 	args := make([]interface{}, 0)
 	for _, k := range keys {
 		args = append(args, k)
 	}
-	values, err := r.conn.Do("MGET", args...)
-	pp.Println(values)
+	values, err := redis.Bytes(r.conn.Do("MGET", args...))
 	if err != nil {
-		return res
+		return nil
+	}
+	for k, v := range values {
+		res[k] = v
 	}
 	return res
 }
@@ -154,8 +149,8 @@ func (r *Redis) Dump() map[interface{}]interface{} {
 // TODO: impl datastore
 type MySQL struct{}
 
-func NewMySQL(cfg *Config) (*MySQL, error)         { return nil, nil }
-func (m *MySQL) Set(key, value interface{}) error  { return nil }
-func (m *MySQL) Get(key interface{}) interface{}   { return nil }
-func (m *MySQL) Delete(key interface{}) error      { return nil }
-func (m *MySQL) Dump() map[interface{}]interface{} { return nil }
+func NewMySQL(cfg *Config) (*MySQL, error)                { return nil, nil }
+func (m *MySQL) Set(key, value interface{}) error         { return nil }
+func (m *MySQL) Get(key interface{}) (interface{}, error) { return nil, nil }
+func (m *MySQL) Delete(key interface{}) error             { return nil }
+func (m *MySQL) Dump() map[interface{}]interface{}        { return nil }

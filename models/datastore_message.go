@@ -32,10 +32,14 @@ func InitDatastoreMessage() error {
 }
 
 func (m *DatastoreMessage) Get(key string) (*Message, error) {
-	t := m.store.Get(key)
-	if t == nil {
-		return nil, errors.Wrapf(ErrNotFoundMessage, "key=%s", key)
+	t, err := m.store.Get(key)
+	if err != nil {
+		return nil, err
 	}
+	if t == nil {
+		return nil, ErrNotFoundTopic
+	}
+
 	v, ok := t.(*Message)
 	if !ok {
 		return nil, errors.Wrapf(ErrNotMatchTypeMessage, "key=%s", key)

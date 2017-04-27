@@ -32,10 +32,14 @@ func InitDatastoreSubscription() error {
 }
 
 func (ts *DatastoreSubscription) Get(key string) (*Subscription, error) {
-	t := ts.store.Get(key)
-	if t == nil {
-		return nil, errors.Wrapf(ErrNotFoundSubscription, "key=%s", key)
+	t, err := ts.store.Get(key)
+	if err != nil {
+		return nil, err
 	}
+	if t == nil {
+		return nil, ErrNotFoundTopic
+	}
+
 	v, ok := t.(*Subscription)
 	if !ok {
 		return nil, errors.Wrapf(ErrNotMatchTypeSubscription, "key=%s", key)

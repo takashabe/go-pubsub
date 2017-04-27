@@ -42,7 +42,7 @@ func TestRedisSetAndGet(t *testing.T) {
 		}
 
 		// get
-		data, err := redis.Bytes(client.Get(c.key), nil)
+		data, err := redis.Bytes(client.Get(c.key))
 		if err != nil {
 			t.Fatalf("#%d: failed to get, key=%v, got err %v", i, c.key, err)
 		}

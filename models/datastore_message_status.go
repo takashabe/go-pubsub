@@ -20,10 +20,14 @@ func NewDatastoreMessageStatus(cfg *Config) (*DatastoreMessageStatus, error) {
 
 // FindByMessageID return MessageStatus matched MessageID
 func (m *DatastoreMessageStatus) FindByMessageID(key string) (*MessageStatus, error) {
-	t := m.store.Get(key)
-	if t == nil {
-		return nil, errors.Wrapf(ErrNotFoundMessageStatus, "key=%s", key)
+	t, err := m.store.Get(key)
+	if err != nil {
+		return nil, err
 	}
+	if t == nil {
+		return nil, ErrNotFoundTopic
+	}
+
 	v, ok := t.(*MessageStatus)
 	if !ok {
 		return nil, errors.Wrapf(ErrNotMatchTypeMessageStatus, "key=%s", key)
