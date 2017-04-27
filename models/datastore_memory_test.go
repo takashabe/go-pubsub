@@ -88,7 +88,7 @@ func TestMemoryGet(t *testing.T) {
 		{
 			"c",
 			nil,
-			ErrNotFoundMessage,
+			ErrNotFoundEntry,
 		},
 	}
 	for i, c := range cases {

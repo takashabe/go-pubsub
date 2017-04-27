@@ -25,7 +25,7 @@ func (m *DatastoreMessageStatus) FindByMessageID(key string) (*MessageStatus, er
 		return nil, err
 	}
 	if t == nil {
-		return nil, ErrNotFoundTopic
+		return nil, ErrNotFoundEntry
 	}
 
 	v, ok := t.(*MessageStatus)
@@ -49,7 +49,7 @@ func (m *DatastoreMessageStatus) FindByAckID(id string) (*MessageStatus, error) 
 				return ms, nil
 			}
 		}
-		return nil, ErrNotFoundMessageStatus
+		return nil, ErrNotFoundEntry
 	// TODO: impl case *MySQL:
 	default:
 		return nil, ErrNotSupportOperation

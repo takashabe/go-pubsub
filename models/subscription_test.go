@@ -59,7 +59,7 @@ func TestNewSubscription(t *testing.T) {
 		{
 			"B", "b", -1, "localhost:8080", map[string]string{"key": "value"},
 			nil,
-			ErrNotFoundTopic,
+			ErrNotFoundEntry,
 		},
 		{
 			"B", "a", -1, ":", map[string]string{"key": "value"},

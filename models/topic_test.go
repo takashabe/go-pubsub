@@ -59,7 +59,7 @@ func TestGetTopic(t *testing.T) {
 		expectErr       error
 	}{
 		{"A", "A", nil},
-		{"D", "", ErrNotFoundTopic},
+		{"D", "", ErrNotFoundEntry},
 	}
 	for i, c := range cases {
 		got, err := GetTopic(c.input)

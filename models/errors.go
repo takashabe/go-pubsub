@@ -17,13 +17,10 @@ var (
 	ErrAlreadyReadMessage = errors.New("already read message")
 
 	// datastore errors
-	ErrNotFoundMessage           = errors.New("not found message")
-	ErrNotFoundMessageStatus     = errors.New("not found message status")
+	ErrNotFoundEntry             = errors.New("not found entry")
 	ErrNotMatchTypeMessage       = errors.New("not match type message")
 	ErrNotMatchTypeMessageStatus = errors.New("not match type message status")
-	ErrNotFoundSubscription      = errors.New("not found subscription")
 	ErrNotMatchTypeSubscription  = errors.New("not match type subscription")
-	ErrNotFoundTopic             = errors.New("not found topic")
 	ErrNotMatchTypeTopic         = errors.New("not match type topic")
 	ErrNotSupportOperation       = errors.New("not support operation")
 	ErrNotSupportDriver          = errors.New("not support driver")

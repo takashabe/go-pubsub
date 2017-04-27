@@ -191,7 +191,7 @@ func (s *MessageStatusStore) GetRangeMessage(size int) ([]*Message, error) {
 func (s *MessageStatusStore) Deliver(msgID, ackID string) error {
 	ms, err := s.store.FindByMessageID(msgID)
 	if err != nil {
-		return ErrNotFoundMessageStatus
+		return ErrNotFoundEntry
 	}
 	if ms.AckState == stateAck {
 		return ErrAlreadyReadMessage
@@ -206,11 +206,11 @@ func (s *MessageStatusStore) Deliver(msgID, ackID string) error {
 func (s *MessageStatusStore) Ack(ackID string) error {
 	ms, err := s.store.FindByAckID(ackID)
 	if err != nil {
-		return ErrNotFoundMessageStatus
+		return ErrNotFoundEntry
 	}
 	m, err := globalMessage.Get(ms.MessageID)
 	if err != nil {
-		return ErrNotFoundMessage
+		return ErrNotFoundEntry
 	}
 	m.AckSubscription(ms.SubscriptionID)
 	if err := m.Save(); err != nil {

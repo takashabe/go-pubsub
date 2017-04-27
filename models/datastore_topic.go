@@ -58,14 +58,11 @@ func decodeGobTopic(e []byte) (*Topic, error) {
 
 func (ts *DatastoreTopic) Get(key string) (*Topic, error) {
 	v, err := ts.store.Get(key)
-	if err != nil && v == nil {
-		return nil, errors.Wrapf(ErrNotFoundTopic, err.Error())
-	}
 	if err != nil {
 		return nil, err
 	}
 	if v == nil {
-		return nil, ErrNotFoundTopic
+		return nil, ErrNotFoundEntry
 	}
 	return decodeRawTopic(v)
 }

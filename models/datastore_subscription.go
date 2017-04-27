@@ -37,7 +37,7 @@ func (ts *DatastoreSubscription) Get(key string) (*Subscription, error) {
 		return nil, err
 	}
 	if t == nil {
-		return nil, ErrNotFoundTopic
+		return nil, ErrNotFoundEntry
 	}
 
 	v, ok := t.(*Subscription)
