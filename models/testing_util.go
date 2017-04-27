@@ -44,46 +44,19 @@ func setupDatastoreAndSetTopics(t *testing.T, names ...string) {
 	}
 }
 
-func (h *testHelper) dummyTopic(t *testing.T, name string) *Topic {
-	return &Topic{
-		Name: name,
+func setupTopic(t *testing.T, name string) *Topic {
+	topic, err := NewTopic(name)
+	if err != nil {
+		t.Fatalf("failed to create topic, key=%s", name)
 	}
+	return topic
 }
 
-func (h *testHelper) dummyTopics(t *testing.T, args ...string) *DatastoreTopic {
-	m, _ := NewDatastoreTopic(nil)
-	for _, a := range args {
-		m.Set(h.dummyTopic(t, a))
+func setupDummyTopics(t *testing.T) {
+	dummies := []string{"A", "B", "C"}
+	for _, a := range dummies {
+		setupTopic(t, a)
 	}
-	return m
-}
-
-func (h *testHelper) dummyMessage(t *testing.T, id string) *Message {
-	return &Message{
-		ID: id,
-	}
-}
-
-func (h *testHelper) dummyMessageWithState(t *testing.T, id string, state map[string]messageState) *Message {
-	return &Message{
-		ID:            id,
-		Subscriptions: NewMemory(nil),
-	}
-}
-
-func isExistMessageID(src []*Message, subID []string) bool {
-	srcMap := make(map[string]bool)
-	for _, m := range src {
-		srcMap[m.ID] = true
-	}
-
-	for _, id := range subID {
-		if _, ok := srcMap[id]; !ok {
-			// not found ID
-			return false
-		}
-	}
-	return true
 }
 
 func isExistMessageData(src []*Message, datas []string) bool {
