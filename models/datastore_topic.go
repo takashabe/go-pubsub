@@ -1,6 +1,11 @@
 package models
 
 import "github.com/pkg/errors"
+import (
+	"bytes"
+	"encoding/gob"
+
+)
 
 // globalTopics global Topic datastore
 var globalTopics *DatastoreTopic
@@ -29,6 +34,26 @@ func InitDatastoreTopic() error {
 	}
 	globalTopics = d
 	return nil
+}
+
+func decodeRawTopic(r interface{}) (*Topic, error) {
+	switch a := r.(type) {
+	case *Topic:
+		return a, nil
+	case []byte:
+		return decodeGobTopic(a)
+	default:
+		return nil, ErrNotMatchTypeTopic
+	}
+}
+
+func decodeGobTopic(e []byte) (*Topic, error) {
+	var res *Topic
+	buf := bytes.NewReader(e)
+	if err := gob.NewDecoder(buf).Decode(&res); err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 func (ts *DatastoreTopic) Get(key string) (*Topic, error) {
