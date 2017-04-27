@@ -1,10 +1,10 @@
 package models
 
-import "github.com/pkg/errors"
 import (
 	"bytes"
 	"encoding/gob"
 
+	"github.com/pkg/errors"
 )
 
 // globalTopics global Topic datastore
@@ -57,32 +57,38 @@ func decodeGobTopic(e []byte) (*Topic, error) {
 }
 
 func (ts *DatastoreTopic) Get(key string) (*Topic, error) {
-	t := ts.store.Get(key)
-	if t == nil {
-		return nil, errors.Wrapf(ErrNotFoundTopic, "key=%s", key)
+	v, err := ts.store.Get(key)
+	if err != nil && v == nil {
+		return nil, errors.Wrapf(ErrNotFoundTopic, err.Error())
 	}
-	v, ok := t.(*Topic)
-	if !ok {
-		return nil, errors.Wrapf(ErrNotMatchTypeTopic, "key=%s", key)
+	if err != nil {
+		return nil, err
 	}
-	return v, nil
+	if v == nil {
+		return nil, ErrNotFoundTopic
+	}
+	return decodeRawTopic(v)
 }
 
 func (ts *DatastoreTopic) List() ([]*Topic, error) {
 	values := ts.store.Dump()
 	res := make([]*Topic, 0, len(values))
 	for _, v := range values {
-		if vt, ok := v.(*Topic); ok {
-			res = append(res, vt)
-		} else {
-			return nil, ErrNotMatchTypeTopic
+		t, err := decodeRawTopic(v)
+		if err != nil {
+			return nil, err
 		}
+		res = append(res, t)
 	}
 	return res, nil
 }
 
 func (ts *DatastoreTopic) Set(topic *Topic) error {
-	return ts.store.Set(topic.Name, topic)
+	v, err := EncodeGob(topic)
+	if err != nil {
+		return err
+	}
+	return ts.store.Set(topic.Name, v)
 }
 
 func (ts *DatastoreTopic) Delete(key string) error {

@@ -50,21 +50,21 @@ func TestNewTopic(t *testing.T) {
 }
 
 func TestGetTopic(t *testing.T) {
-	// make test topics
-	setupDatastoreAndSetTopics(t, "a", "b")
+	setupDatastore(t)
+	setupDummyTopics(t)
 
 	cases := []struct {
 		input           string
 		expectTopicName string
 		expectErr       error
 	}{
-		{"a", "a", nil},
-		{"c", "", ErrNotFoundTopic},
+		{"A", "A", nil},
+		{"D", "", ErrNotFoundTopic},
 	}
 	for i, c := range cases {
 		got, err := GetTopic(c.input)
 		if errors.Cause(err) != c.expectErr {
-			t.Errorf("%#d: want %v, got %v", i, c.expectErr, err)
+			t.Fatalf("%#d: want %v, got %v", i, c.expectErr, err)
 		}
 		if c.expectTopicName != "" && c.expectTopicName != got.Name {
 			t.Errorf("%#d: want %s, got %s", i, c.expectTopicName, got.Name)
