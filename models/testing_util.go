@@ -15,6 +15,7 @@ func setupDatastore(t *testing.T) {
 	if env := os.Getenv("GO_MESSAGE_QUEUE_CONFIG"); len(env) != 0 {
 		path = env
 	} else {
+		// load memory
 		path = "testdata/none.yaml"
 	}
 	cfg, err := LoadConfigFromFile(path)
@@ -32,6 +33,17 @@ func setupDatastore(t *testing.T) {
 	}
 	if err := InitDatastoreMessage(); err != nil {
 		t.Fatal(err)
+	}
+
+	// flush datastore. only Redis
+	d, err := LoadDatastore(globalConfig)
+	if err != nil {
+		t.Fatalf("failed to load datastore, got err %v", err)
+	}
+	if redis, ok := d.(*Redis); ok {
+		if _, err := redis.conn.Do("FLUSHDB"); err != nil {
+			t.Fatalf("failed to FLUSHDB on Redis, got error %v", err)
+		}
 	}
 }
 
