@@ -93,8 +93,8 @@ func TestMemoryGet(t *testing.T) {
 	}
 	for i, c := range cases {
 		got, err := baseStore.Get(c.input)
-		if err != nil {
-			t.Fatalf("#%d: failed to get item, got error %v", i, err)
+		if errors.Cause(err) != c.expectErr {
+			t.Fatalf("#%d: want %v, got %v", i, c.expectErr, err)
 		}
 		if !reflect.DeepEqual(got, c.expectMsg) {
 			t.Errorf("#%d: want %v, got %v", i, c.expectMsg, got)

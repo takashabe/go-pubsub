@@ -39,7 +39,7 @@ func TestNewTopic(t *testing.T) {
 			t.Fatalf("%#d: want no error, got %v", i, err)
 		}
 		if len(list) != len(c.expectExistTopics) {
-			t.Fatalf("%#d: want %d, got %d", len(c.expectExistTopics), len(list))
+			t.Fatalf("%#d: want %d, got %d", i, len(c.expectExistTopics), len(list))
 		}
 		for i2, s := range c.expectExistTopics {
 			if _, err = globalTopics.Get(s); err != nil {
