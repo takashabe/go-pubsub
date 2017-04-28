@@ -135,8 +135,8 @@ func (r *Redis) Delete(key interface{}) error {
 }
 
 func (r *Redis) Dump() map[interface{}]interface{} {
-	res := make(map[interface{}]interface{})
-	keys, err := redis.Bytes(r.conn.Do("KEYS", "*"))
+	// get keys
+	keys, err := redis.Strings(r.conn.Do("KEYS", "*"))
 	if err != nil {
 		return nil
 	}
@@ -144,12 +144,17 @@ func (r *Redis) Dump() map[interface{}]interface{} {
 	for _, k := range keys {
 		args = append(args, k)
 	}
-	values, err := redis.Bytes(r.conn.Do("MGET", args...))
+
+	// get values
+	values, err := redis.ByteSlices(r.conn.Do("MGET", args...))
 	if err != nil {
 		return nil
 	}
-	for k, v := range values {
-		res[k] = v
+
+	// key-valus to map
+	res := make(map[interface{}]interface{}, len(keys))
+	for i, k := range keys {
+		res[k] = values[i]
 	}
 	return res
 }
