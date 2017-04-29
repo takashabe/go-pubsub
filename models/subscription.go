@@ -139,7 +139,7 @@ func (s *Subscription) Save() error {
 
 // MessageStatusStore is holds and adapter for MessageStatus
 type MessageStatusStore struct {
-	store *DatastoreMessageStatus
+	Store *DatastoreMessageStatus
 }
 
 func newMessageStatusStore(cfg *Config) (*MessageStatusStore, error) {
@@ -148,28 +148,28 @@ func newMessageStatusStore(cfg *Config) (*MessageStatusStore, error) {
 		return nil, err
 	}
 	return &MessageStatusStore{
-		store: d,
+		Store: d,
 	}, nil
 }
 
 // SaveStatus MessageStatus save to backend store
 func (s *MessageStatusStore) SaveStatus(ms *MessageStatus) error {
-	return s.store.Set(ms)
+	return s.Store.Set(ms)
 }
 
 // FindByMessageID return MessageStatus matched MessageID
 func (s *MessageStatusStore) FindByMessageID(id string) (*MessageStatus, error) {
-	return s.store.FindByMessageID(id)
+	return s.Store.FindByMessageID(id)
 }
 
 // FindByAckID return MessageStatus matched AckID
 func (s *MessageStatusStore) FindByAckID(id string) (*MessageStatus, error) {
-	return s.store.FindByAckID(id)
+	return s.Store.FindByAckID(id)
 }
 
 // GetRangeMessage return readable messages
 func (s *MessageStatusStore) GetRangeMessage(size int) ([]*Message, error) {
-	storeLength := s.store.Size()
+	storeLength := s.Store.Size()
 	if storeLength == 0 {
 		return nil, ErrEmptyMessage
 	}
@@ -177,7 +177,7 @@ func (s *MessageStatusStore) GetRangeMessage(size int) ([]*Message, error) {
 		size = storeLength
 	}
 
-	msgs, err := s.store.CollectByReadableMessage(size)
+	msgs, err := s.Store.CollectByReadableMessage(size)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get range messages")
 	}
@@ -189,7 +189,7 @@ func (s *MessageStatusStore) GetRangeMessage(size int) ([]*Message, error) {
 }
 
 func (s *MessageStatusStore) Deliver(msgID, ackID string) error {
-	ms, err := s.store.FindByMessageID(msgID)
+	ms, err := s.Store.FindByMessageID(msgID)
 	if err != nil {
 		return ErrNotFoundEntry
 	}
@@ -204,7 +204,7 @@ func (s *MessageStatusStore) Deliver(msgID, ackID string) error {
 
 // Ack change state to ack for message
 func (s *MessageStatusStore) Ack(ackID string) error {
-	ms, err := s.store.FindByAckID(ackID)
+	ms, err := s.Store.FindByAckID(ackID)
 	if err != nil {
 		return ErrNotFoundEntry
 	}
@@ -216,7 +216,7 @@ func (s *MessageStatusStore) Ack(ackID string) error {
 	if err := m.Save(); err != nil {
 		return err
 	}
-	s.store.Delete(m.ID)
+	s.Store.Delete(m.ID)
 	if len(m.Subscriptions.Dump()) == 0 {
 		if err := m.Delete(); err != nil {
 			return err
