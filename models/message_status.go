@@ -19,7 +19,7 @@ type MessageStatus struct {
 	DeliveredAt    time.Time
 }
 
-func newMessageStatus(msgID, subID string, deadline time.Duration) *MessageStatus {
+func newMessageStatus(subID, msgID string, deadline time.Duration) *MessageStatus {
 	return &MessageStatus{
 		ID:             makeMessageStatusID(subID, msgID),
 		SubscriptionID: subID,
