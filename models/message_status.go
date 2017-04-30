@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"sort"
 	"time"
 
@@ -9,7 +10,8 @@ import (
 
 // MessageStatus is holds params for Message
 type MessageStatus struct {
-	SubscriptionID string // Subscription.MessageStatusID = SubscriptionID
+	ID             string
+	SubscriptionID string
 	MessageID      string
 	AckID          string
 	AckDeadline    time.Duration
@@ -19,12 +21,17 @@ type MessageStatus struct {
 
 func newMessageStatus(msgID, subID string, deadline time.Duration) *MessageStatus {
 	return &MessageStatus{
+		ID:             makeMessageStatusID(subID, msgID),
 		SubscriptionID: subID,
 		MessageID:      msgID,
 		AckID:          "",
 		AckDeadline:    deadline,
 		AckState:       stateWait,
 	}
+}
+
+func makeMessageStatusID(subID, msgID string) string {
+	return fmt.Sprintf("%s-%s", subID, msgID)
 }
 
 // Readable return whether the message can be read
