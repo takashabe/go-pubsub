@@ -93,3 +93,16 @@ _When do not specify created component(topic, subscription), Default component u
   * in memory future support
 * Save component is Topic, Subscription and Message
 * Message delete when all dependent subscription sent ack
+
+## memo
+
+```
+関係図
+
+* Topic
+* Message
+* Subscription(pk: sub_id)
+  * MessageStatusStore(pk: sub_id)
+    * []MessageStatus(pk: sub_id + msg_id)
+  => MessageStatusStoreはSubscriptionとMessageStatusの中間テーブルとして実装する
+```
