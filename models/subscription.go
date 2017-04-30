@@ -1,18 +1,13 @@
 package models
 
-import (
-	"sort"
-	"time"
-
-	"github.com/pkg/errors"
-)
+import "time"
 
 type Subscription struct {
-	Name               string              `json:"name"`
-	TopicID            string              `json:"topic"`
-	DefaultAckDeadline time.Duration       `json:"ack_deadline_seconds"`
-	MessageStatus      *MessageStatusStore `json:"-"`
-	Push               *Push               `json:"push_config"`
+	Name               string        `json:"name"`
+	TopicID            string        `json:"topic"`
+	MessageStatusID    string        `json:"-"`
+	DefaultAckDeadline time.Duration `json:"ack_deadline_seconds"`
+	Push               *Push         `json:"push_config"`
 }
 
 // Create Subscription, if not exist already same name Subscription
@@ -31,7 +26,7 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 	s := &Subscription{
 		Name:               name,
 		TopicID:            topic.Name,
-		MessageStatus:      ms,
+		MessageStatusID:    ms,
 		DefaultAckDeadline: convertAckDeadlineSeconds(timeout),
 	}
 	if err := s.SetPush(endpoint, attr); err != nil {
@@ -61,7 +56,7 @@ func ListSubscription() ([]*Subscription, error) {
 
 // RegisterMessage associate Message to Subscription
 func (s *Subscription) RegisterMessage(msg *Message) error {
-	s.MessageStatus.SaveStatus(newMessageStatus(msg.ID, s.Name, s.DefaultAckDeadline))
+	s.MessageStatusID.SaveStatus(newMessageStatus(msg.ID, s.Name, s.DefaultAckDeadline))
 	return s.Save()
 }
 
@@ -73,7 +68,7 @@ type PullMessage struct {
 
 // Pull returns readable messages, and change message state
 func (s *Subscription) Pull(size int) ([]*PullMessage, error) {
-	msgs, err := s.MessageStatus.GetRangeMessage(size)
+	msgs, err := s.MessageStatusID.GetRangeMessage(size)
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +76,7 @@ func (s *Subscription) Pull(size int) ([]*PullMessage, error) {
 	pullMsgs := make([]*PullMessage, 0, len(msgs))
 	for _, m := range msgs {
 		ackID := makeAckID()
-		if err := s.MessageStatus.Deliver(m.ID, ackID); err != nil {
+		if err := s.MessageStatusID.Deliver(m.ID, ackID); err != nil {
 			return nil, err
 		}
 		pullMsgs = append(pullMsgs, &PullMessage{AckID: ackID, Message: m})
@@ -93,7 +88,7 @@ func (s *Subscription) Pull(size int) ([]*PullMessage, error) {
 func (s *Subscription) Ack(ids ...string) error {
 	// collect MessageID list dependent to AckID
 	for _, id := range ids {
-		if err := s.MessageStatus.Ack(id); err != nil {
+		if err := s.MessageStatusID.Ack(id); err != nil {
 			return err
 		}
 	}
@@ -102,12 +97,12 @@ func (s *Subscription) Ack(ids ...string) error {
 
 // ModifyAckDeadline modify message ack deadline seconds
 func (s *Subscription) ModifyAckDeadline(id string, timeout int64) error {
-	ms, err := s.MessageStatus.FindByAckID(id)
+	ms, err := s.MessageStatusID.FindByAckID(id)
 	if err != nil {
 		return err
 	}
 	ms.AckDeadline = convertAckDeadlineSeconds(timeout)
-	return s.MessageStatus.SaveStatus(ms)
+	return s.MessageStatusID.SaveStatus(ms)
 }
 
 // Set push endpoint with attributes, only one can be set as push endpoint.
@@ -135,128 +130,6 @@ func convertAckDeadlineSeconds(timeout int64) time.Duration {
 // Save is save to datastore
 func (s *Subscription) Save() error {
 	return globalSubscription.Set(s)
-}
-
-// MessageStatusStore is holds and adapter for MessageStatus
-type MessageStatusStore struct {
-	Store *DatastoreMessageStatus
-}
-
-func newMessageStatusStore(cfg *Config) (*MessageStatusStore, error) {
-	d, err := NewDatastoreMessageStatus(cfg)
-	if err != nil {
-		return nil, err
-	}
-	return &MessageStatusStore{
-		Store: d,
-	}, nil
-}
-
-// SaveStatus MessageStatus save to backend store
-func (s *MessageStatusStore) SaveStatus(ms *MessageStatus) error {
-	return s.Store.Set(ms)
-}
-
-// FindByMessageID return MessageStatus matched MessageID
-func (s *MessageStatusStore) FindByMessageID(id string) (*MessageStatus, error) {
-	return s.Store.FindByMessageID(id)
-}
-
-// FindByAckID return MessageStatus matched AckID
-func (s *MessageStatusStore) FindByAckID(id string) (*MessageStatus, error) {
-	return s.Store.FindByAckID(id)
-}
-
-// GetRangeMessage return readable messages
-func (s *MessageStatusStore) GetRangeMessage(size int) ([]*Message, error) {
-	storeLength := s.Store.Size()
-	if storeLength == 0 {
-		return nil, ErrEmptyMessage
-	}
-	if storeLength < size {
-		size = storeLength
-	}
-
-	msgs, err := s.Store.CollectByReadableMessage(size)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get range messages")
-	}
-	if len(msgs) == 0 {
-		return nil, ErrEmptyMessage
-	}
-	sort.Sort(ByMessageID(msgs))
-	return msgs, nil
-}
-
-func (s *MessageStatusStore) Deliver(msgID, ackID string) error {
-	ms, err := s.Store.FindByMessageID(msgID)
-	if err != nil {
-		return ErrNotFoundEntry
-	}
-	if ms.AckState == stateAck {
-		return ErrAlreadyReadMessage
-	}
-	ms.AckState = stateDeliver
-	ms.AckID = ackID
-	ms.DeliveredAt = time.Now()
-	return s.SaveStatus(ms)
-}
-
-// Ack change state to ack for message
-func (s *MessageStatusStore) Ack(ackID string) error {
-	ms, err := s.Store.FindByAckID(ackID)
-	if err != nil {
-		return ErrNotFoundEntry
-	}
-	m, err := globalMessage.Get(ms.MessageID)
-	if err != nil {
-		return ErrNotFoundEntry
-	}
-	m.AckSubscription(ms.SubscriptionID)
-	if err := m.Save(); err != nil {
-		return err
-	}
-	s.Store.Delete(m.ID)
-	if len(m.Subscriptions.Dump()) == 0 {
-		if err := m.Delete(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// MessageStatus is holds params for Message
-type MessageStatus struct {
-	MessageID      string
-	SubscriptionID string
-	AckID          string
-	AckDeadline    time.Duration
-	AckState       messageState
-	DeliveredAt    time.Time
-}
-
-func newMessageStatus(msgID, subID string, deadline time.Duration) *MessageStatus {
-	return &MessageStatus{
-		MessageID:      msgID,
-		SubscriptionID: subID,
-		AckID:          "",
-		AckDeadline:    deadline,
-		AckState:       stateWait,
-	}
-}
-
-// Readable return whether the message can be read
-func (m *MessageStatus) Readable() bool {
-	switch m.AckState {
-	case stateAck:
-		return false
-	case stateDeliver:
-		return time.Now().Sub(m.DeliveredAt) > m.AckDeadline
-	case stateWait:
-		return true
-	default:
-		return false
-	}
 }
 
 // BySubscriptionName implements sort.Interface for []*Subscription based on the ID
