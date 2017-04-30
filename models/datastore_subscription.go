@@ -1,6 +1,11 @@
 package models
 
-import "github.com/pkg/errors"
+import (
+	"bytes"
+	"encoding/gob"
+
+	"github.com/pkg/errors"
+)
 
 // globalSubscription global subscription datastore
 var globalSubscription *DatastoreSubscription
@@ -31,20 +36,35 @@ func InitDatastoreSubscription() error {
 	return nil
 }
 
+func decodeRawSubscription(r interface{}) (*Subscription, error) {
+	switch a := r.(type) {
+	case *Subscription:
+		return a, nil
+	case []byte:
+		return decodeGobSubscription(a)
+	default:
+		return nil, ErrNotMatchTypeSubscription
+	}
+}
+
+func decodeGobSubscription(e []byte) (*Subscription, error) {
+	var res *Subscription
+	buf := bytes.NewReader(e)
+	if err := gob.NewDecoder(buf).Decode(&res); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (ts *DatastoreSubscription) Get(key string) (*Subscription, error) {
-	t, err := ts.store.Get(key)
+	v, err := ts.store.Get(key)
 	if err != nil {
 		return nil, err
 	}
-	if t == nil {
+	if v == nil {
 		return nil, ErrNotFoundEntry
 	}
-
-	v, ok := t.(*Subscription)
-	if !ok {
-		return nil, errors.Wrapf(ErrNotMatchTypeSubscription, "key=%s", key)
-	}
-	return v, nil
+	return decodeRawSubscription(v)
 }
 
 func (ts *DatastoreSubscription) CollectByTopicID(topicID string) ([]*Subscription, error) {
@@ -70,18 +90,22 @@ func (ts *DatastoreSubscription) CollectByTopicID(topicID string) ([]*Subscripti
 func (ts *DatastoreSubscription) List() ([]*Subscription, error) {
 	values := ts.store.Dump()
 	res := make([]*Subscription, 0, len(values))
-	for k, v := range values {
-		if vt, ok := v.(*Subscription); ok {
-			res = append(res, vt)
-		} else {
-			return nil, errors.Wrapf(ErrNotMatchTypeSubscription, "key=%s", k)
+	for _, v := range values {
+		t, err := decodeRawSubscription(v)
+		if err != nil {
+			return nil, err
 		}
+		res = append(res, t)
 	}
 	return res, nil
 }
 
 func (ts *DatastoreSubscription) Set(sub *Subscription) error {
-	return ts.store.Set(sub.Name, sub)
+	v, err := EncodeGob(sub)
+	if err != nil {
+		return errors.Wrapf(err, "failed to encode gob")
+	}
+	return ts.store.Set(sub.Name, v)
 }
 
 func (ts *DatastoreSubscription) Delete(key string) error {
