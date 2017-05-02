@@ -1,6 +1,13 @@
 package models
 
-import "github.com/pkg/errors"
+import (
+	"bytes"
+	"encoding/gob"
+
+	"github.com/pkg/errors"
+)
+
+var globalMessageStatus *DatastoreMessageStatus
 
 // DatastoreMessageStatus is adapter between actual datastore and datastore client
 type DatastoreMessageStatus struct {
@@ -18,60 +25,105 @@ func NewDatastoreMessageStatus(cfg *Config) (*DatastoreMessageStatus, error) {
 	}, nil
 }
 
-// FindByMessageID return MessageStatus matched MessageID
-func (m *DatastoreMessageStatus) FindByMessageID(key string) (*MessageStatus, error) {
-	t, err := m.store.Get(key)
+// InitDatastoreMessageStatus initialize global datastore object
+func InitDatastoreMessageStatus() error {
+	d, err := NewDatastoreMessageStatus(globalConfig)
+	if err != nil {
+		return err
+	}
+	globalMessageStatus = d
+	return nil
+}
+
+func decodeRawMessageStatus(r interface{}) (*MessageStatus, error) {
+	switch a := r.(type) {
+	case []byte:
+		return decodeGobMessageStatus(a)
+	default:
+		return nil, ErrNotMatchTypeTopic
+	}
+}
+
+func decodeGobMessageStatus(e []byte) (*MessageStatus, error) {
+	var res *MessageStatus
+	buf := bytes.NewReader(e)
+	if err := gob.NewDecoder(buf).Decode(&res); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (d *DatastoreMessageStatus) Get(key string) (*MessageStatus, error) {
+	v, err := d.store.Get(key)
 	if err != nil {
 		return nil, err
 	}
-	if t == nil {
+	if v == nil {
 		return nil, ErrNotFoundEntry
 	}
-
-	v, ok := t.(*MessageStatus)
-	if !ok {
-		return nil, errors.Wrapf(ErrNotMatchTypeMessageStatus, "key=%s", key)
-	}
-	return v, nil
+	return decodeRawMessageStatus(v)
 }
 
-// FindByAckID return MessageStatus matched AckID
-func (m *DatastoreMessageStatus) FindByAckID(id string) (*MessageStatus, error) {
-	switch m.store.(type) {
-	case *Memory:
-		source := m.store.Dump()
-		for k, v := range source {
-			ms, ok := v.(*MessageStatus)
-			if !ok {
-				return nil, errors.Wrapf(ErrNotMatchTypeMessage, "key=%s", k)
+// FindByMessageID return MessageStatus matched MessageID
+func (d *DatastoreMessageStatus) FindByMessageID(msgID string) (*MessageStatus, error) {
+	switch d.store.(type) {
+	case *Memory, *Redis, *MySQL:
+		values := d.store.Dump()
+		for _, v := range values {
+			m, err := decodeRawMessageStatus(v)
+			if err != nil {
+				return nil, err
 			}
-			if ms.AckID == id {
-				return ms, nil
+			if m.MessageID == msgID {
+				return m, nil
 			}
 		}
 		return nil, ErrNotFoundEntry
-	// TODO: impl case *MySQL:
+	default:
+		return nil, ErrNotSupportOperation
+	}
+}
+
+// FindByAckID return MessageStatus matched AckID
+func (d *DatastoreMessageStatus) FindByAckID(ackID string) (*MessageStatus, error) {
+	switch d.store.(type) {
+	case *Memory, *Redis, *MySQL:
+		values := d.store.Dump()
+		for _, v := range values {
+			m, err := decodeRawMessageStatus(v)
+			if err != nil {
+				return nil, err
+			}
+			if m.AckID == ackID {
+				return m, nil
+			}
+		}
+		return nil, ErrNotFoundEntry
 	default:
 		return nil, ErrNotSupportOperation
 	}
 }
 
 // List return all MessageStatus slice
-func (m *DatastoreMessageStatus) List() ([]*MessageStatus, error) {
-	values := m.store.Dump()
+func (d *DatastoreMessageStatus) List() ([]*MessageStatus, error) {
+	values := d.store.Dump()
 	res := make([]*MessageStatus, 0, len(values))
-	for k, v := range values {
-		if vt, ok := v.(*MessageStatus); ok {
-			res = append(res, vt)
-		} else {
-			return nil, errors.Wrapf(ErrNotMatchTypeMessageStatus, "key=%s", k)
+	for _, v := range values {
+		m, err := decodeRawMessageStatus(v)
+		if err != nil {
+			return nil, err
 		}
+		res = append(res, m)
 	}
 	return res, nil
 }
 
-func (m *DatastoreMessageStatus) Set(v *MessageStatus) error {
-	return m.store.Set(v.MessageID, v)
+func (d *DatastoreMessageStatus) Set(ms *MessageStatus) error {
+	v, err := EncodeGob(ms)
+	if err != nil {
+		return err
+	}
+	return d.store.Set(ms.ID, v)
 }
 
 func (m *DatastoreMessageStatus) Delete(key string) error {

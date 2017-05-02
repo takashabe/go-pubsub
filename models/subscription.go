@@ -3,11 +3,11 @@ package models
 import "time"
 
 type Subscription struct {
-	Name               string        `json:"name"`
-	TopicID            string        `json:"topic"`
-	MessageStatusID    string        `json:"-"`
-	DefaultAckDeadline time.Duration `json:"ack_deadline_seconds"`
-	Push               *Push         `json:"push_config"`
+	Name               string              `json:"name"`
+	TopicID            string              `json:"topic"`
+	Message            *MessageStatusStore `json:"-"`
+	DefaultAckDeadline time.Duration       `json:"ack_deadline_seconds"`
+	Push               *Push               `json:"push_config"`
 }
 
 // Create Subscription, if not exist already same name Subscription
@@ -19,14 +19,10 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 	if err != nil {
 		return nil, err
 	}
-	ms, err := newMessageStatusStore(globalConfig)
-	if err != nil {
-		return nil, err
-	}
 	s := &Subscription{
 		Name:               name,
 		TopicID:            topic.Name,
-		MessageStatusID:    ms,
+		Message:            NewMessageStatusStore(),
 		DefaultAckDeadline: convertAckDeadlineSeconds(timeout),
 	}
 	if err := s.SetPush(endpoint, attr); err != nil {
@@ -56,8 +52,8 @@ func ListSubscription() ([]*Subscription, error) {
 
 // RegisterMessage associate Message to Subscription
 func (s *Subscription) RegisterMessage(msg *Message) error {
-	s.MessageStatusID.SaveStatus(newMessageStatus(s.Name, msg.ID, s.DefaultAckDeadline))
-	return s.Save()
+	_, err := s.Message.NewMessageStatus(s.Name, msg.ID, s.DefaultAckDeadline)
+	return err
 }
 
 // PullMessage represent Message and AckID pair
@@ -68,7 +64,7 @@ type PullMessage struct {
 
 // Pull returns readable messages, and change message state
 func (s *Subscription) Pull(size int) ([]*PullMessage, error) {
-	msgs, err := s.MessageStatusID.GetRangeMessage(size)
+	msgs, err := s.Message.CollectReadableMessage(size)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +72,7 @@ func (s *Subscription) Pull(size int) ([]*PullMessage, error) {
 	pullMsgs := make([]*PullMessage, 0, len(msgs))
 	for _, m := range msgs {
 		ackID := makeAckID()
-		if err := s.MessageStatusID.Deliver(m.ID, ackID); err != nil {
+		if err := s.Message.Deliver(m.ID, ackID); err != nil {
 			return nil, err
 		}
 		pullMsgs = append(pullMsgs, &PullMessage{AckID: ackID, Message: m})
@@ -88,7 +84,7 @@ func (s *Subscription) Pull(size int) ([]*PullMessage, error) {
 func (s *Subscription) Ack(ids ...string) error {
 	// collect MessageID list dependent to AckID
 	for _, id := range ids {
-		if err := s.MessageStatusID.Ack(id); err != nil {
+		if err := s.Message.Ack(id); err != nil {
 			return err
 		}
 	}
@@ -97,12 +93,12 @@ func (s *Subscription) Ack(ids ...string) error {
 
 // ModifyAckDeadline modify message ack deadline seconds
 func (s *Subscription) ModifyAckDeadline(id string, timeout int64) error {
-	ms, err := s.MessageStatusID.FindByAckID(id)
+	ms, err := s.Message.FindByAckID(id)
 	if err != nil {
 		return err
 	}
 	ms.AckDeadline = convertAckDeadlineSeconds(timeout)
-	return s.MessageStatusID.SaveStatus(ms)
+	return ms.Save()
 }
 
 // Set push endpoint with attributes, only one can be set as push endpoint.
