@@ -38,8 +38,6 @@ func InitDatastoreSubscription() error {
 
 func decodeRawSubscription(r interface{}) (*Subscription, error) {
 	switch a := r.(type) {
-	case *Subscription:
-		return a, nil
 	case []byte:
 		return decodeGobSubscription(a)
 	default:

@@ -38,8 +38,6 @@ func InitDatastoreTopic() error {
 
 func decodeRawTopic(r interface{}) (*Topic, error) {
 	switch a := r.(type) {
-	case *Topic:
-		return a, nil
 	case []byte:
 		return decodeGobTopic(a)
 	default:
