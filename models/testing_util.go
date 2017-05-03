@@ -71,6 +71,22 @@ func setupDummyTopics(t *testing.T) {
 	}
 }
 
+// setupSubscription requires Topic
+func setupSubscription(t *testing.T, name, topicName string) *Subscription {
+	s, err := NewSubscription(name, topicName, 10, "", nil)
+	if err != nil {
+		t.Fatalf("failed to cretae Subscription, got error %v", err)
+	}
+	return s
+}
+
+func setupDummySubscription(t *testing.T) {
+	dummies := []string{"a", "b"}
+	for _, a := range dummies {
+		setupSubscription(t, a, "A")
+	}
+}
+
 func isExistMessageData(src []*Message, datas []string) bool {
 	srcMap := make(map[string]bool)
 	for _, m := range src {
