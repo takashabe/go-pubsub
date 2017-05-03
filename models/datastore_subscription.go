@@ -65,35 +65,45 @@ func (ts *DatastoreSubscription) Get(key string) (*Subscription, error) {
 	return decodeRawSubscription(v)
 }
 
-func (ts *DatastoreSubscription) CollectByTopicID(topicID string) ([]*Subscription, error) {
-	switch ts.store.(type) {
-	case *Memory, *Redis, *MySQL:
-		res := make([]*Subscription, 0)
-		for _, v := range ts.store.Dump() {
-			s, ok := v.(*Subscription)
-			if !ok {
-				return nil, errors.Wrapf(ErrNotMatchTypeSubscription, "key=%s", topicID)
-			}
-			if s.TopicID != topicID {
-				continue
-			}
-			res = append(res, s)
-		}
-		return res, nil
-	default:
-		return nil, ErrNotSupportOperation
-	}
+func (d *DatastoreSubscription) CollectByTopicID(topicID string) ([]*Subscription, error) {
+	return d.collectByField(func(s *Subscription) bool {
+		return s.TopicID == topicID
+	})
 }
 
-func (ts *DatastoreSubscription) List() ([]*Subscription, error) {
-	values := ts.store.Dump()
-	res := make([]*Subscription, 0, len(values))
-	for _, v := range values {
-		t, err := decodeRawSubscription(v)
+func (d *DatastoreSubscription) List() ([]*Subscription, error) {
+	return d.collectByField(func(s *Subscription) bool {
+		return true
+	})
+}
+
+// chooseByField choose any matched a Subscription
+func (d *DatastoreSubscription) chooseByField(fn func(ms *Subscription) bool) (*Subscription, error) {
+	sources := d.store.Dump()
+	for _, v := range sources {
+		ms, err := decodeRawSubscription(v)
 		if err != nil {
 			return nil, err
 		}
-		res = append(res, t)
+		if fn(ms) {
+			return ms, nil
+		}
+	}
+	return nil, ErrNotFoundEntry
+}
+
+// collectByField collect any matched Subscription list
+func (d *DatastoreSubscription) collectByField(fn func(ms *Subscription) bool) ([]*Subscription, error) {
+	sources := d.store.Dump()
+	res := make([]*Subscription, 0, len(sources))
+	for _, v := range sources {
+		ms, err := decodeRawSubscription(v)
+		if err != nil {
+			return nil, err
+		}
+		if fn(ms) {
+			res = append(res, ms)
+		}
 	}
 	return res, nil
 }

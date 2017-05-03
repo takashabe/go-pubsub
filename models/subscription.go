@@ -52,8 +52,10 @@ func ListSubscription() ([]*Subscription, error) {
 
 // RegisterMessage associate Message to Subscription
 func (s *Subscription) RegisterMessage(msg *Message) error {
-	_, err := s.Message.NewMessageStatus(s.Name, msg.ID, s.DefaultAckDeadline)
-	return err
+	if _, err := s.Message.NewMessageStatus(s.Name, msg.ID, s.DefaultAckDeadline); err != nil {
+		return err
+	}
+	return s.Save()
 }
 
 // PullMessage represent Message and AckID pair

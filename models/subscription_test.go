@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"net/url"
 	"reflect"
 	"testing"
@@ -20,14 +19,10 @@ func testUrl(t *testing.T, raw string) *url.URL {
 
 func TestNewSubscription(t *testing.T) {
 	setupDatastoreAndSetTopics(t, "a")
-	ms, err := newMessageStatusStore(nil)
-	if err != nil {
-		t.Fatalf("failed to create MessageStatusStore, got err %v", err)
-	}
 	expect1 := &Subscription{
 		Name:               "A",
 		TopicID:            "a",
-		MessageStatus:      ms,
+		Message:            NewMessageStatusStore(),
 		DefaultAckDeadline: 0,
 		Push: &Push{
 			Endpoint: testUrl(t, "localhost:8080"),
@@ -113,28 +108,34 @@ func TestDeleteSubscription(t *testing.T) {
 }
 
 func TestPullAndAck(t *testing.T) {
-	setupDatastoreAndSetTopics(t, "a", "b")
+	setupDatastore(t)
+	setupDummyTopics(t)
+	setupDummySubscription(t)
 
-	// make Subscription and Topic
-	sub, err := NewSubscription("A", "a", 0, "", nil)
+	// faster for test
+	if s, err := GetSubscription("a"); err != nil {
+		t.Fatalf("failed to get Subscription, got error %v", err)
+	} else {
+		s.DefaultAckDeadline = 1000 * time.Millisecond
+		if err = s.Save(); err != nil {
+			t.Fatalf("failed to save Subscription, got error %v", err)
+		}
+	}
+
+	// publish message
+	msgID := publishMessage(t, "A", "test", nil)
+
+	// collect a message
+	sub, err := GetSubscription("a") // get updated Subscription
 	if err != nil {
-		t.Fatalf("want no error, got %v", err)
+		t.Fatalf("failed to get Subscription, got error %v", err)
 	}
-	sub.DefaultAckDeadline = 100 * time.Millisecond // faster for test
-	topics, err := ListTopic()
+	got, err := sub.Message.CollectReadableMessage(2)
 	if err != nil {
-		t.Fatalf("want no error, got %v", err)
+		t.Fatalf("failed to collect message. err=%v", err)
 	}
-	for _, topic := range topics {
-		topic.Publish([]byte(fmt.Sprintf("%s-test", topic.Name)), nil)
-	}
-	// want only Topic "a"
-	got, err := sub.MessageStatus.GetRangeMessage(2)
-	if err != nil {
-		t.Fatalf("failed get message. err=%v", err)
-	}
-	if want := []string{"a-test"}; !isExistMessageData(got, want) {
-		t.Errorf("want exist %v in MessageList, got %v", want, got)
+	if got[0].ID != msgID {
+		t.Errorf("want message ID %s, got %s", msgID, got[0].ID)
 	}
 
 	// pull and ack
@@ -157,19 +158,19 @@ func TestPullAndAck(t *testing.T) {
 	}
 
 	// pull and none send ack, retry pull
-	aTopic, err := GetTopic("a")
+	publishMessage(t, "A", "test", nil)
+	sub, err = GetSubscription("a") // get updated Subscription
 	if err != nil {
-		t.Fatalf("want no error, got %v", err)
+		t.Fatalf("failed to get Subscription, got error %v", err)
 	}
-	aTopic.Publish([]byte("test"), nil)
-	pullMsgs, err = sub.Pull(1)
+	_, err = sub.Pull(1)
 	if err != nil {
 		t.Fatalf("want no error, got %v", err)
 	}
 
 	func() {
-		after1 := time.After(50 * time.Millisecond)
-		after2 := time.After(100 * time.Millisecond)
+		after1 := time.After(10 * time.Millisecond)
+		after2 := time.After(1000 * time.Millisecond)
 		for {
 			select {
 			case <-after1:

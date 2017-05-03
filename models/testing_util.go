@@ -34,6 +34,9 @@ func setupDatastore(t *testing.T) {
 	if err := InitDatastoreMessage(); err != nil {
 		t.Fatal(err)
 	}
+	if err := InitDatastoreMessageStatus(); err != nil {
+		t.Fatal(err)
+	}
 
 	// flush datastore. only Redis
 	d, err := LoadDatastore(globalConfig)
@@ -69,6 +72,19 @@ func setupDummyTopics(t *testing.T) {
 	for _, a := range dummies {
 		setupTopic(t, a)
 	}
+}
+
+// publishMessage requires Topic
+func publishMessage(t *testing.T, topicID, message string, attr map[string]string) string {
+	top, err := GetTopic(topicID)
+	if err != nil {
+		t.Fatalf("failed to get topic, got error %v", err)
+	}
+	msgID, err := top.Publish([]byte(message), attr)
+	if err != nil {
+		t.Fatalf("failed to publish message, got error %v", err)
+	}
+	return msgID
 }
 
 // setupSubscription requires Topic

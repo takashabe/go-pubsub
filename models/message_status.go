@@ -2,7 +2,12 @@ package models
 
 import (
 	"fmt"
+	"log"
+	"sort"
 	"time"
+
+	"github.com/k0kubun/pp"
+	"github.com/pkg/errors"
 )
 
 // MessageStatus is holds params for Message
@@ -32,12 +37,12 @@ func makeMessageStatusID(subID, msgID string) string {
 }
 
 // Readable return whether the message can be read
-func (m *MessageStatus) Readable() bool {
-	switch m.AckState {
+func (ms *MessageStatus) Readable() bool {
+	switch ms.AckState {
 	case stateAck:
 		return false
 	case stateDeliver:
-		return time.Now().Sub(m.DeliveredAt) > m.AckDeadline
+		return time.Now().Sub(ms.DeliveredAt) > ms.AckDeadline
 	case stateWait:
 		return true
 	default:
@@ -45,9 +50,21 @@ func (m *MessageStatus) Readable() bool {
 	}
 }
 
+// Deliver setting deliver state and new AckID
+func (ms *MessageStatus) Deliver(ackID string) {
+	ms.AckState = stateDeliver
+	ms.AckID = ackID
+	ms.DeliveredAt = time.Now()
+}
+
 // Save save MessageStatus to backend datastore
-func (m *MessageStatus) Save() error {
-	return globalMessageStatus.Set(m)
+func (ms *MessageStatus) Save() error {
+	return globalMessageStatus.Set(ms)
+}
+
+// Delete delete MessageStatus from backend datastore
+func (ms *MessageStatus) Delete() error {
+	return globalMessageStatus.Delete(ms.ID)
 }
 
 // MessageStatusStore is holds and adapter for MessageStatus
@@ -74,90 +91,87 @@ func (mss *MessageStatusStore) NewMessageStatus(subID, msgID string, deadline ti
 
 // CollectReadableMessage return readable messages
 func (mss *MessageStatusStore) CollectReadableMessage(size int) ([]*Message, error) {
-	return nil, nil
+	// check size
+	storeLength := len(mss.Status)
+	if storeLength == 0 {
+		return nil, ErrEmptyMessage
+	}
+	if storeLength < size {
+		size = storeLength
+	}
+
+	// collect messages
+	msList, err := globalMessageStatus.CollectByIDs(mss.Status...)
+	if err != nil {
+		return nil, err
+	}
+	pp.Println("msList = ", msList)
+	res := make([]*Message, 0)
+	for _, ms := range msList {
+		if len(res) >= size {
+			break
+		}
+		if ms.Readable() {
+			m, err := globalMessage.Get(ms.MessageID)
+			if err != nil {
+				log.Println("failed to get message, id=%s, error=%v", ms.MessageID, err)
+				continue
+			}
+			res = append(res, m)
+		}
+	}
+
+	// return messages
+	if len(res) == 0 {
+		return nil, ErrEmptyMessage
+	}
+	sort.Sort(ByMessageID(res))
+	return res, nil
 }
 
 // Deliver register AckID to message
 func (mss *MessageStatusStore) Deliver(msgID, ackID string) error {
-	return nil
+	ms, err := globalMessageStatus.FindByMessageID(msgID)
+	if err != nil {
+		return err
+	}
+	if ms.AckState == stateAck {
+		return ErrAlreadyReadMessage
+	}
+	ms.Deliver(ackID)
+	return ms.Save()
 }
 
 // Ack invisible message depends ackID
 func (mss *MessageStatusStore) Ack(ackID string) error {
+	ms, err := globalMessageStatus.FindByAckID(ackID)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("failed to FindByAckID, AckID=%s", ackID))
+	}
+	m, err := globalMessage.Get(ms.MessageID)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("failed to get message, MessageID=%s", ms.MessageID))
+	}
+	if err := m.AckSubscription(ms.SubscriptionID); err != nil {
+		return errors.Wrap(err, "failed to ack subscription")
+	}
+	if err := m.Save(); err != nil {
+		return err
+	}
+
+	// delete Message and MessageStatus
+	if err := ms.Delete(); err != nil {
+		return errors.Wrap(err, fmt.Sprintf("failed to delete message status, MessageStatusID=%s", ms.ID))
+	}
+	if len(m.Subscriptions.Dump()) == 0 {
+		if err := m.Delete(); err != nil {
+			return errors.Wrap(err, fmt.Sprintf("failed to delete message, MessageID=%s", m.ID))
+		}
+	}
 	return nil
 }
 
+// FindByAckID return MessageStatus depends AckID
 func (mss *MessageStatusStore) FindByAckID(ackID string) (*MessageStatus, error) {
-	return nil, nil
+	return globalMessageStatus.FindByAckID(ackID)
 }
-
-/*
- * old
- */
-// FindByMessageID return MessageStatus matched MessageID
-// func (mss *MessageStatusStore) FindByMessageID(id string) (*MessageStatus, error) {
-//   return s.Store.FindByMessageID(id)
-// }
-
-// FindByAckID return MessageStatus matched AckID
-// func (s *MessageStatusStore) FindByAckID(id string) (*MessageStatus, error) {
-//   return s.Store.FindByAckID(id)
-// }
-
-// GetRangeMessage return readable messages
-// func (s *MessageStatusStore) GetRangeMessage(size int) ([]*Message, error) {
-//   storeLength := s.Store.Size()
-//   if storeLength == 0 {
-//     return nil, ErrEmptyMessage
-//   }
-//   if storeLength < size {
-//     size = storeLength
-//   }
-//
-//   msgs, err := s.Store.CollectByReadableMessage(size)
-//   if err != nil {
-//     return nil, errors.Wrap(err, "failed to get range messages")
-//   }
-//   if len(msgs) == 0 {
-//     return nil, ErrEmptyMessage
-//   }
-//   sort.Sort(ByMessageID(msgs))
-//   return msgs, nil
-// }
-//
-// func (s *MessageStatusStore) Deliver(msgID, ackID string) error {
-//   ms, err := s.Store.FindByMessageID(msgID)
-//   if err != nil {
-//     return ErrNotFoundEntry
-//   }
-//   if ms.AckState == stateAck {
-//     return ErrAlreadyReadMessage
-//   }
-//   ms.AckState = stateDeliver
-//   ms.AckID = ackID
-//   ms.DeliveredAt = time.Now()
-//   return s.SaveStatus(ms)
-// }
-
-// Ack change state to ack for message
-// func (s *MessageStatusStore) Ack(ackID string) error {
-//   ms, err := s.Store.FindByAckID(ackID)
-//   if err != nil {
-//     return ErrNotFoundEntry
-//   }
-//   m, err := globalMessage.Get(ms.MessageID)
-//   if err != nil {
-//     return ErrNotFoundEntry
-//   }
-//   m.AckSubscription(ms.SubscriptionID)
-//   if err := m.Save(); err != nil {
-//     return err
-//   }
-//   s.Store.Delete(m.ID)
-//   if len(m.Subscriptions.Dump()) == 0 {
-//     if err := m.Delete(); err != nil {
-//       return err
-//     }
-//   }
-//   return nil
-// }

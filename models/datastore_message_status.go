@@ -66,56 +66,23 @@ func (d *DatastoreMessageStatus) Get(key string) (*MessageStatus, error) {
 
 // FindByMessageID return MessageStatus matched MessageID
 func (d *DatastoreMessageStatus) FindByMessageID(msgID string) (*MessageStatus, error) {
-	switch d.store.(type) {
-	case *Memory, *Redis, *MySQL:
-		values := d.store.Dump()
-		for _, v := range values {
-			m, err := decodeRawMessageStatus(v)
-			if err != nil {
-				return nil, err
-			}
-			if m.MessageID == msgID {
-				return m, nil
-			}
-		}
-		return nil, ErrNotFoundEntry
-	default:
-		return nil, ErrNotSupportOperation
-	}
+	return d.chooseByField(func(ms *MessageStatus) bool {
+		return ms.MessageID == msgID
+	})
 }
 
 // FindByAckID return MessageStatus matched AckID
 func (d *DatastoreMessageStatus) FindByAckID(ackID string) (*MessageStatus, error) {
-	switch d.store.(type) {
-	case *Memory, *Redis, *MySQL:
-		values := d.store.Dump()
-		for _, v := range values {
-			m, err := decodeRawMessageStatus(v)
-			if err != nil {
-				return nil, err
-			}
-			if m.AckID == ackID {
-				return m, nil
-			}
-		}
-		return nil, ErrNotFoundEntry
-	default:
-		return nil, ErrNotSupportOperation
-	}
+	return d.chooseByField(func(ms *MessageStatus) bool {
+		return ms.AckID == ackID
+	})
 }
 
 // List return all MessageStatus slice
 func (d *DatastoreMessageStatus) List() ([]*MessageStatus, error) {
-	values := d.store.Dump()
-	res := make([]*MessageStatus, 0, len(values))
-	for _, v := range values {
-		m, err := decodeRawMessageStatus(v)
-		if err != nil {
-			return nil, err
-		}
-		res = append(res, m)
-	}
-	return res, nil
+	return d.collectByField(func(ms *MessageStatus) bool {
+		return true
+	})
 }
 
 func (d *DatastoreMessageStatus) Set(ms *MessageStatus) error {
@@ -126,39 +93,54 @@ func (d *DatastoreMessageStatus) Set(ms *MessageStatus) error {
 	return d.store.Set(ms.ID, v)
 }
 
-func (m *DatastoreMessageStatus) Delete(key string) error {
-	return m.store.Delete(key)
+func (d *DatastoreMessageStatus) Delete(key string) error {
+	return d.store.Delete(key)
 }
 
-func (m *DatastoreMessageStatus) Size() int {
-	return len(m.store.Dump())
+func (d *DatastoreMessageStatus) Size() int {
+	return len(d.store.Dump())
 }
 
-// CollectByReadable return MessageStatus slice matched readable message
-func (m *DatastoreMessageStatus) CollectByReadableMessage(size int) ([]*Message, error) {
-	switch m.store.(type) {
-	case *Memory:
-		source := m.store.Dump()
-		dst := make([]*Message, 0)
-		for k, v := range source {
-			if len(dst) >= size {
-				return dst, nil
-			}
-			ms, ok := v.(*MessageStatus)
-			if !ok {
-				return nil, errors.Wrapf(ErrNotMatchTypeMessageStatus, "key=%s", k)
-			}
-			if !ms.Readable() {
-				continue
-			}
-			if msg, err := globalMessage.Get(ms.MessageID); err == nil {
-				dst = append(dst, msg)
+// SelectByIDs returns all MessageStatus depends ids
+func (d *DatastoreMessageStatus) CollectByIDs(ids ...string) ([]*MessageStatus, error) {
+	return d.collectByField(func(ms *MessageStatus) bool {
+		// TODO: improve performance
+		for _, id := range ids {
+			if ms.ID == id {
+				return true
 			}
 		}
-		return dst, nil
-	case *MySQL:
-		return nil, ErrNotSupportOperation
-	default:
-		return nil, ErrNotSupportOperation
+		return false
+	})
+}
+
+// chooseByField choose any matched a MessageStatus
+func (d *DatastoreMessageStatus) chooseByField(fn func(ms *MessageStatus) bool) (*MessageStatus, error) {
+	sources := d.store.Dump()
+	for _, v := range sources {
+		ms, err := decodeRawMessageStatus(v)
+		if err != nil {
+			return nil, err
+		}
+		if fn(ms) {
+			return ms, nil
+		}
 	}
+	return nil, ErrNotFoundEntry
+}
+
+// collectByField collect any matched MessageStatus list
+func (d *DatastoreMessageStatus) collectByField(fn func(ms *MessageStatus) bool) ([]*MessageStatus, error) {
+	sources := d.store.Dump()
+	res := make([]*MessageStatus, 0, len(sources))
+	for _, v := range sources {
+		ms, err := decodeRawMessageStatus(v)
+		if err != nil {
+			return nil, err
+		}
+		if fn(ms) {
+			res = append(res, ms)
+		}
+	}
+	return res, nil
 }
