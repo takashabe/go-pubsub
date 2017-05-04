@@ -6,28 +6,6 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-type messageState int
-
-const (
-	_ messageState = iota
-	stateWait
-	stateDeliver
-	stateAck
-)
-
-func (s messageState) String() string {
-	switch s {
-	case stateWait:
-		return "Waiting"
-	case stateDeliver:
-		return "Delivered"
-	case stateAck:
-		return "Ack"
-	default:
-		return "Non define"
-	}
-}
-
 // Message is data object
 type Message struct {
 	ID            string            `json:"message_id"`
@@ -35,7 +13,6 @@ type Message struct {
 	Attributes    map[string]string `json:"attributes"`
 	Subscriptions *Memory           `json:"-"`
 	PublishedAt   time.Time         `json:"publish_time"`
-	DeliveredAt   time.Time         `json:"-"`
 }
 
 func makeMessageID() string {

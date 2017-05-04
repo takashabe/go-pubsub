@@ -10,6 +10,45 @@ import (
 	"github.com/pkg/errors"
 )
 
+// messageState is represent Message deliver, ack status
+type messageState int
+
+const (
+	_ messageState = iota
+	stateWait
+	stateDeliver
+	stateAck
+)
+
+func (s messageState) String() string {
+	switch s {
+	case stateWait:
+		return "Waiting"
+	case stateDeliver:
+		return "Delivered"
+	case stateAck:
+		return "Ack"
+	default:
+		return "Non define"
+	}
+}
+
+// Readable return whether the message can be read
+func (ms *MessageStatus) Readable() bool {
+	switch ms.AckState {
+	case stateAck:
+		return false
+	case stateDeliver:
+		lapsedTime := time.Now().Sub(ms.DeliveredAt)
+		pp.Println("lapsedTime = ", lapsedTime, ", deadline = ", ms.AckDeadline)
+		return lapsedTime > ms.AckDeadline
+	case stateWait:
+		return true
+	default:
+		return false
+	}
+}
+
 // MessageStatus is holds params for Message
 type MessageStatus struct {
 	ID             string
@@ -34,20 +73,6 @@ func newMessageStatus(subID, msgID string, deadline time.Duration) *MessageStatu
 
 func makeMessageStatusID(subID, msgID string) string {
 	return fmt.Sprintf("%s-%s", subID, msgID)
-}
-
-// Readable return whether the message can be read
-func (ms *MessageStatus) Readable() bool {
-	switch ms.AckState {
-	case stateAck:
-		return false
-	case stateDeliver:
-		return time.Now().Sub(ms.DeliveredAt) > ms.AckDeadline
-	case stateWait:
-		return true
-	default:
-		return false
-	}
 }
 
 // Deliver setting deliver state and new AckID
@@ -105,7 +130,6 @@ func (mss *MessageStatusStore) CollectReadableMessage(size int) ([]*Message, err
 	if err != nil {
 		return nil, err
 	}
-	pp.Println("msList = ", msList)
 	res := make([]*Message, 0)
 	for _, ms := range msList {
 		if len(res) >= size {
