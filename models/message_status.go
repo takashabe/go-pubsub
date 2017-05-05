@@ -187,7 +187,7 @@ func (mss *MessageStatusStore) Ack(ackID string) error {
 	if err := ms.Delete(); err != nil {
 		return errors.Wrap(err, fmt.Sprintf("failed to delete message status, MessageStatusID=%s", ms.ID))
 	}
-	if len(m.Subscriptions.Dump()) == 0 {
+	if len(m.SubscribeIDs) == 0 {
 		if err := m.Delete(); err != nil {
 			return errors.Wrap(err, fmt.Sprintf("failed to delete message, MessageID=%s", m.ID))
 		}
