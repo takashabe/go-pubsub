@@ -40,7 +40,7 @@ func decodeRawMessageStatus(r interface{}) (*MessageStatus, error) {
 	case []byte:
 		return decodeGobMessageStatus(a)
 	default:
-		return nil, ErrNotMatchTypeTopic
+		return nil, ErrNotMatchTypeMessageStatus
 	}
 }
 
