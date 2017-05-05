@@ -22,7 +22,7 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 	s := &Subscription{
 		Name:               name,
 		TopicID:            topic.Name,
-		Message:            NewMessageStatusStore(),
+		Message:            NewMessageStatusStore(name),
 		DefaultAckDeadline: convertAckDeadlineSeconds(timeout),
 	}
 	if err := s.SetPush(endpoint, attr); err != nil {

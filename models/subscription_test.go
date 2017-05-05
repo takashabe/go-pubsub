@@ -22,7 +22,7 @@ func TestNewSubscription(t *testing.T) {
 	expect1 := &Subscription{
 		Name:               "A",
 		TopicID:            "a",
-		Message:            NewMessageStatusStore(),
+		Message:            NewMessageStatusStore("A"),
 		DefaultAckDeadline: 0,
 		Push: &Push{
 			Endpoint: testUrl(t, "localhost:8080"),

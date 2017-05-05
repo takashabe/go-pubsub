@@ -6,7 +6,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/k0kubun/pp"
 	"github.com/pkg/errors"
 )
 
@@ -40,7 +39,6 @@ func (ms *MessageStatus) Readable() bool {
 		return false
 	case stateDeliver:
 		lapsedTime := time.Now().Sub(ms.DeliveredAt)
-		pp.Println("lapsedTime = ", lapsedTime, ", deadline = ", ms.AckDeadline)
 		return lapsedTime > ms.AckDeadline
 	case stateWait:
 		return true
@@ -94,13 +92,15 @@ func (ms *MessageStatus) Delete() error {
 
 // MessageStatusStore is holds and adapter for MessageStatus
 type MessageStatusStore struct {
-	Status []string
+	SubscriptionID string
+	Status         []string
 }
 
 // NewMessageStatusStore return created MessageStatusStore
-func NewMessageStatusStore() *MessageStatusStore {
+func NewMessageStatusStore(subID string) *MessageStatusStore {
 	return &MessageStatusStore{
-		Status: make([]string, 0),
+		SubscriptionID: subID,
+		Status:         make([]string, 0),
 	}
 }
 
@@ -155,7 +155,7 @@ func (mss *MessageStatusStore) CollectReadableMessage(size int) ([]*Message, err
 
 // Deliver register AckID to message
 func (mss *MessageStatusStore) Deliver(msgID, ackID string) error {
-	ms, err := globalMessageStatus.FindByMessageID(msgID)
+	ms, err := globalMessageStatus.FindBySubscriptionIDAndMessageID(mss.SubscriptionID, msgID)
 	if err != nil {
 		return err
 	}

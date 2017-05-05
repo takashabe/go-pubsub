@@ -64,10 +64,10 @@ func (d *DatastoreMessageStatus) Get(key string) (*MessageStatus, error) {
 	return decodeRawMessageStatus(v)
 }
 
-// FindByMessageID return MessageStatus matched MessageID
-func (d *DatastoreMessageStatus) FindByMessageID(msgID string) (*MessageStatus, error) {
+// FindBySubscriptionIDAndMessageID return MessageStatus matched MessageID
+func (d *DatastoreMessageStatus) FindBySubscriptionIDAndMessageID(subID, msgID string) (*MessageStatus, error) {
 	return d.chooseByField(func(ms *MessageStatus) bool {
-		return ms.MessageID == msgID
+		return ms.SubscriptionID == subID && ms.MessageID == msgID
 	})
 }
 
