@@ -116,7 +116,7 @@ func TestPullAndAck(t *testing.T) {
 	if s, err := GetSubscription("a"); err != nil {
 		t.Fatalf("failed to get Subscription, got error %v", err)
 	} else {
-		s.DefaultAckDeadline = 1000 * time.Millisecond
+		s.DefaultAckDeadline = 100 * time.Millisecond
 		if err = s.Save(); err != nil {
 			t.Fatalf("failed to save Subscription, got error %v", err)
 		}
@@ -170,7 +170,7 @@ func TestPullAndAck(t *testing.T) {
 
 	func() {
 		after1 := time.After(10 * time.Millisecond)
-		after2 := time.After(1000 * time.Millisecond)
+		after2 := time.After(100 * time.Millisecond)
 		for {
 			select {
 			case <-after1:
