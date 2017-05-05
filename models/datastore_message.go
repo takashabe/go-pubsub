@@ -1,6 +1,11 @@
 package models
 
-import "github.com/pkg/errors"
+import (
+	"bytes"
+	"encoding/gob"
+
+	"github.com/pkg/errors"
+)
 
 // globalMessage Global message key-value store object
 var globalMessage *DatastoreMessage
@@ -31,43 +36,45 @@ func InitDatastoreMessage() error {
 	return nil
 }
 
-func (m *DatastoreMessage) Get(key string) (*Message, error) {
-	t, err := m.store.Get(key)
-	if err != nil {
-		return nil, err
+// decodeRawMessage return Message from encode raw data
+func decodeRawMessage(r interface{}) (*Message, error) {
+	switch a := r.(type) {
+	case []byte:
+		return decodeGobMessage(a)
+	default:
+		return nil, ErrNotMatchTypeMessage
 	}
-	if t == nil {
-		return nil, ErrNotFoundEntry
-	}
-
-	v, ok := t.(*Message)
-	if !ok {
-		return nil, errors.Wrapf(ErrNotMatchTypeMessage, "key=%s", key)
-	}
-	return v, nil
 }
 
-func (m *DatastoreMessage) List() ([]*Message, error) {
-	values := m.store.Dump()
-	res := make([]*Message, 0, len(values))
-	for k, v := range values {
-		if vt, ok := v.(*Message); ok {
-			res = append(res, vt)
-		} else {
-			return nil, errors.Wrapf(ErrNotMatchTypeMessage, "key=%s", k)
-		}
+// decodeGobMessage return Message from gob encode data
+func decodeGobMessage(e []byte) (*Message, error) {
+	var res *Message
+	buf := bytes.NewReader(e)
+	if err := gob.NewDecoder(buf).Decode(&res); err != nil {
+		return nil, err
 	}
 	return res, nil
 }
 
-func (m *DatastoreMessage) Set(v *Message) error {
-	return m.store.Set(v.ID, v)
+func (d *DatastoreMessage) Get(key string) (*Message, error) {
+	v, err := d.store.Get(key)
+	if err != nil {
+		return nil, err
+	}
+	if v == nil {
+		return nil, ErrNotFoundEntry
+	}
+	return decodeRawMessage(v)
 }
 
-func (m *DatastoreMessage) Delete(key string) error {
-	return m.store.Delete(key)
+func (d *DatastoreMessage) Set(m *Message) error {
+	v, err := EncodeGob(m)
+	if err != nil {
+		return err
+	}
+	return d.store.Set(m.ID, v)
 }
 
-func (m *DatastoreMessage) Size() int {
-	return len(m.store.Dump())
+func (d *DatastoreMessage) Delete(key string) error {
+	return d.store.Delete(key)
 }
