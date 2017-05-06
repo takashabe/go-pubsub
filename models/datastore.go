@@ -135,8 +135,12 @@ func (r *Redis) Delete(key interface{}) error {
 }
 
 func (r *Redis) Dump() map[interface{}]interface{} {
+	return r.MgetPrefix("")
+}
+
+func (r *Redis) MgetPrefix(p string) map[interface{}]interface{} {
 	// get keys
-	keys, err := redis.Strings(r.conn.Do("KEYS", "*"))
+	keys, err := redis.Strings(r.conn.Do("KEYS", p+"*"))
 	if err != nil {
 		return nil
 	}
