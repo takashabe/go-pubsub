@@ -54,7 +54,7 @@ func decodeGobMessageStatus(e []byte) (*MessageStatus, error) {
 }
 
 func (d *DatastoreMessageStatus) Get(key string) (*MessageStatus, error) {
-	v, err := d.store.Get(key)
+	v, err := d.store.Get(d.prefix(key))
 	if err != nil {
 		return nil, err
 	}
@@ -90,11 +90,11 @@ func (d *DatastoreMessageStatus) Set(ms *MessageStatus) error {
 	if err != nil {
 		return err
 	}
-	return d.store.Set(ms.ID, v)
+	return d.store.Set(d.prefix(ms.ID), v)
 }
 
 func (d *DatastoreMessageStatus) Delete(key string) error {
-	return d.store.Delete(key)
+	return d.store.Delete(d.prefix(key))
 }
 
 func (d *DatastoreMessageStatus) Size() int {
@@ -143,4 +143,8 @@ func (d *DatastoreMessageStatus) collectByField(fn func(ms *MessageStatus) bool)
 		}
 	}
 	return res, nil
+}
+
+func (d *DatastoreMessageStatus) prefix(key string) string {
+	return "message_status_" + key
 }

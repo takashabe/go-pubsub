@@ -54,8 +54,8 @@ func decodeGobTopic(e []byte) (*Topic, error) {
 	return res, nil
 }
 
-func (ts *DatastoreTopic) Get(key string) (*Topic, error) {
-	v, err := ts.store.Get(key)
+func (d *DatastoreTopic) Get(key string) (*Topic, error) {
+	v, err := d.store.Get(d.prefix(key))
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +65,8 @@ func (ts *DatastoreTopic) Get(key string) (*Topic, error) {
 	return decodeRawTopic(v)
 }
 
-func (ts *DatastoreTopic) List() ([]*Topic, error) {
-	values := ts.store.Dump()
+func (d *DatastoreTopic) List() ([]*Topic, error) {
+	values := d.store.Dump()
 	res := make([]*Topic, 0, len(values))
 	for _, v := range values {
 		t, err := decodeRawTopic(v)
@@ -78,14 +78,18 @@ func (ts *DatastoreTopic) List() ([]*Topic, error) {
 	return res, nil
 }
 
-func (ts *DatastoreTopic) Set(topic *Topic) error {
+func (d *DatastoreTopic) Set(topic *Topic) error {
 	v, err := EncodeGob(topic)
 	if err != nil {
 		return err
 	}
-	return ts.store.Set(topic.Name, v)
+	return d.store.Set(d.prefix(topic.Name), v)
 }
 
-func (ts *DatastoreTopic) Delete(key string) error {
-	return ts.store.Delete(key)
+func (d *DatastoreTopic) Delete(key string) error {
+	return d.store.Delete(d.prefix(key))
+}
+
+func (d *DatastoreTopic) prefix(key string) string {
+	return "topic_" + key
 }

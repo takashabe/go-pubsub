@@ -54,8 +54,8 @@ func decodeGobSubscription(e []byte) (*Subscription, error) {
 	return res, nil
 }
 
-func (ts *DatastoreSubscription) Get(key string) (*Subscription, error) {
-	v, err := ts.store.Get(key)
+func (d *DatastoreSubscription) Get(key string) (*Subscription, error) {
+	v, err := d.store.Get(d.prefix(key))
 	if err != nil {
 		return nil, err
 	}
@@ -108,14 +108,18 @@ func (d *DatastoreSubscription) collectByField(fn func(ms *Subscription) bool) (
 	return res, nil
 }
 
-func (ts *DatastoreSubscription) Set(sub *Subscription) error {
+func (d *DatastoreSubscription) Set(sub *Subscription) error {
 	v, err := EncodeGob(sub)
 	if err != nil {
 		return errors.Wrapf(err, "failed to encode gob")
 	}
-	return ts.store.Set(sub.Name, v)
+	return d.store.Set(d.prefix(sub.Name), v)
 }
 
-func (ts *DatastoreSubscription) Delete(key string) error {
-	return ts.store.Delete(key)
+func (d *DatastoreSubscription) Delete(key string) error {
+	return d.store.Delete(d.prefix(key))
+}
+
+func (d *DatastoreSubscription) prefix(key string) string {
+	return "subscription_" + key
 }

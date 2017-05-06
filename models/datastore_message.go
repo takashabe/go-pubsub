@@ -57,7 +57,7 @@ func decodeGobMessage(e []byte) (*Message, error) {
 }
 
 func (d *DatastoreMessage) Get(key string) (*Message, error) {
-	v, err := d.store.Get(key)
+	v, err := d.store.Get(d.prefix(key))
 	if err != nil {
 		return nil, err
 	}
@@ -72,9 +72,13 @@ func (d *DatastoreMessage) Set(m *Message) error {
 	if err != nil {
 		return err
 	}
-	return d.store.Set(m.ID, v)
+	return d.store.Set(d.prefix(m.ID), v)
 }
 
 func (d *DatastoreMessage) Delete(key string) error {
-	return d.store.Delete(key)
+	return d.store.Delete(d.prefix(key))
+}
+
+func (d *DatastoreMessage) prefix(key string) string {
+	return "message_" + key
 }
