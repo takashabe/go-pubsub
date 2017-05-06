@@ -66,9 +66,9 @@ func (d *DatastoreTopic) Get(key string) (*Topic, error) {
 }
 
 func (d *DatastoreTopic) List() ([]*Topic, error) {
-	values := d.store.Dump()
-	res := make([]*Topic, 0, len(values))
-	for _, v := range values {
+	sources := SpecifyDump(d.store, d.prefix(""))
+	res := make([]*Topic, 0, len(sources))
+	for _, v := range sources {
 		t, err := decodeRawTopic(v)
 		if err != nil {
 			return nil, err

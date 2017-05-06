@@ -50,6 +50,18 @@ func DecodeGobMessage(e []byte) (*Message, error) {
 	return res, nil
 }
 
+// SpecifyDump return Dump entries, each Datastore type
+func SpecifyDump(d Datastore, key string) map[interface{}]interface{} {
+	var res map[interface{}]interface{}
+	switch a := d.(type) {
+	case *Redis:
+		res = a.MgetPrefix(key)
+	default:
+		res = a.Dump()
+	}
+	return res
+}
+
 // Datastore driver at "in memory"
 type Memory struct {
 	Store map[interface{}]interface{}
