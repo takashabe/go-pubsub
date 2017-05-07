@@ -122,6 +122,9 @@ func (s *Server) InitDatastore() error {
 	if err := models.InitDatastoreMessage(); err != nil {
 		return errors.Wrap(err, "failed to init datastore message")
 	}
+	if err := models.InitDatastoreMessageStatus(); err != nil {
+		return errors.Wrap(err, "failed to init datastore message status")
+	}
 	return nil
 }
 

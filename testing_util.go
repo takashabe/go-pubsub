@@ -38,6 +38,17 @@ func setupServer(t *testing.T) *httptest.Server {
 		t.Fatalf("failed to InitDatastore, err=%v", err)
 	}
 
+	// flush datastore. only Redis
+	d, err := models.LoadDatastore(s.cfg)
+	if err != nil {
+		t.Fatalf("failed to load datastore, got err %v", err)
+	}
+	if redis, ok := d.(*models.Redis); ok {
+		if err := redis.FlushDB(); err != nil {
+			t.Fatalf("failed to FLUSHDB on Redis, got error %v", err)
+		}
+	}
+
 	// setup http server
 	return httptest.NewServer(routes())
 }
