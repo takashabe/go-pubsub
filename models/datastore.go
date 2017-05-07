@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"log"
 	"sync"
 
 	"github.com/garyburd/redigo/redis"
@@ -126,6 +127,13 @@ func NewRedis(cfg *Config) (*Redis, error) {
 		return nil, errors.Wrapf(err, "failed to connect redis")
 	}
 	return &Redis{conn: conn}, nil
+}
+
+// FlushDB delete all current DB on Redis
+func (r *Redis) FlushDB() error {
+	log.Println("EXECUTE FLUSHDB...")
+	_, err := r.conn.Do("FLUSHDB")
+	return err
 }
 
 func (r *Redis) Set(key, value interface{}) error {

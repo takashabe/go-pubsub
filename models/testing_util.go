@@ -44,7 +44,7 @@ func setupDatastore(t *testing.T) {
 		t.Fatalf("failed to load datastore, got err %v", err)
 	}
 	if redis, ok := d.(*Redis); ok {
-		if _, err := redis.conn.Do("FLUSHDB"); err != nil {
+		if err := redis.FlushDB(); err != nil {
 			t.Fatalf("failed to FLUSHDB on Redis, got error %v", err)
 		}
 	}
