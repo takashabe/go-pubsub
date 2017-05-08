@@ -2,12 +2,14 @@ package models
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/gob"
 	"fmt"
 	"log"
 	"sync"
 
 	"github.com/garyburd/redigo/redis"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/pkg/errors"
 )
 
@@ -183,11 +185,57 @@ func (r *Redis) MgetPrefix(p string) map[interface{}]interface{} {
 	return res
 }
 
-// TODO: impl datastore
-type MySQL struct{}
+// MySQL is MySQL datastore driver
+type MySQL struct {
+	conn *sql.DB
+}
 
-func NewMySQL(cfg *Config) (*MySQL, error)                { return nil, nil }
-func (m *MySQL) Set(key, value interface{}) error         { return nil }
-func (m *MySQL) Get(key interface{}) (interface{}, error) { return nil, nil }
-func (m *MySQL) Delete(key interface{}) error             { return nil }
-func (m *MySQL) Dump() map[interface{}]interface{}        { return nil }
+type generalSchema struct {
+	ID    interface{}
+	Value interface{}
+}
+
+// NewMySQL return MySQL client
+func NewMySQL(cfg *Config) (*MySQL, error) {
+	c := cfg.Datastore.MySQL
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/mq", c.User, c.Password, c.Host, c.Port))
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to connect mysql")
+	}
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+
+	return &MySQL{
+		conn: db,
+	}, nil
+}
+
+func (m *MySQL) Set(key, value interface{}) error {
+	stmt, err := m.conn.Prepare("INSERT INTO mq (id, value) VALUES (?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+	if _, err := stmt.Exec(key, value); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *MySQL) Get(key interface{}) (interface{}, error) {
+	stmt, err := m.conn.Prepare("SELECT id, value FROM mq WHERE id=?")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	var schema generalSchema
+	if err := stmt.QueryRow(key).Scan(&schema.ID, &schema.Value); err != nil {
+		return nil, err
+	}
+
+	return schema.Value, nil
+}
+func (m *MySQL) Delete(key interface{}) error      { return nil }
+func (m *MySQL) Dump() map[interface{}]interface{} { return nil }
