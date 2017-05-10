@@ -199,8 +199,8 @@ type MySQL struct {
 }
 
 type generalSchema struct {
-	ID    interface{}
-	Value interface{}
+	id    string
+	value []byte
 }
 
 // NewMySQL return MySQL client
@@ -225,6 +225,7 @@ func (m *MySQL) Set(key, value interface{}) error {
 		return err
 	}
 	defer stmt.Close()
+
 	if _, err := stmt.Exec(key, value); err != nil {
 		return err
 	}
@@ -232,18 +233,46 @@ func (m *MySQL) Set(key, value interface{}) error {
 }
 
 func (m *MySQL) Get(key interface{}) (interface{}, error) {
-	stmt, err := m.conn.Prepare("SELECT id, value FROM mq WHERE id=?")
+	stmt, err := m.conn.Prepare("SELECT value FROM mq WHERE id=?")
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 
-	var schema generalSchema
-	if err := stmt.QueryRow(key).Scan(&schema.ID, &schema.Value); err != nil {
+	var s generalSchema
+	if err := stmt.QueryRow(key).Scan(&s.value); err != nil {
 		return nil, err
 	}
-
-	return schema.Value, nil
+	return s.value, nil
 }
-func (m *MySQL) Delete(key interface{}) error      { return nil }
-func (m *MySQL) Dump() map[interface{}]interface{} { return nil }
+
+func (m *MySQL) Delete(key interface{}) error {
+	stmt, err := m.conn.Prepare("DELETE FROM mq WHERE id=?")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.Exec(key); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *MySQL) Dump() (map[interface{}]interface{}, error) {
+	rows, err := m.conn.Query("SELECT id, value FROM mq")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	res := make(map[interface{}]interface{}, 0)
+	for rows.Next() {
+		var s generalSchema
+		if err := rows.Scan(&s.id, &s.value); err != nil {
+			return nil, err
+		}
+		res[s.id] = s.value
+	}
+	return res, nil
+}
