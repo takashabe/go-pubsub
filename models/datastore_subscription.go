@@ -79,7 +79,10 @@ func (d *DatastoreSubscription) List() ([]*Subscription, error) {
 
 // chooseByField choose any matched a Subscription
 func (d *DatastoreSubscription) chooseByField(fn func(ms *Subscription) bool) (*Subscription, error) {
-	sources := SpecifyDump(d.store, d.prefix(""))
+	sources, err := SpecifyDump(d.store, d.prefix(""))
+	if err != nil {
+		return nil, err
+	}
 	for _, v := range sources {
 		ms, err := decodeRawSubscription(v)
 		if err != nil {
@@ -94,7 +97,10 @@ func (d *DatastoreSubscription) chooseByField(fn func(ms *Subscription) bool) (*
 
 // collectByField collect any matched Subscription list
 func (d *DatastoreSubscription) collectByField(fn func(ms *Subscription) bool) ([]*Subscription, error) {
-	sources := SpecifyDump(d.store, d.prefix(""))
+	sources, err := SpecifyDump(d.store, d.prefix(""))
+	if err != nil {
+		return nil, err
+	}
 	res := make([]*Subscription, 0, len(sources))
 	for _, v := range sources {
 		ms, err := decodeRawSubscription(v)

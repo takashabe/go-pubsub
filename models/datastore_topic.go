@@ -66,7 +66,10 @@ func (d *DatastoreTopic) Get(key string) (*Topic, error) {
 }
 
 func (d *DatastoreTopic) List() ([]*Topic, error) {
-	sources := SpecifyDump(d.store, d.prefix(""))
+	sources, err := SpecifyDump(d.store, d.prefix(""))
+	if err != nil {
+		return nil, err
+	}
 	res := make([]*Topic, 0, len(sources))
 	for _, v := range sources {
 		t, err := decodeRawTopic(v)

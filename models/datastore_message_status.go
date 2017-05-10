@@ -116,7 +116,10 @@ func (d *DatastoreMessageStatus) CollectByIDs(ids ...string) ([]*MessageStatus, 
 
 // chooseByField choose any matched a MessageStatus
 func (d *DatastoreMessageStatus) chooseByField(fn func(ms *MessageStatus) bool) (*MessageStatus, error) {
-	sources := SpecifyDump(d.store, d.prefix(""))
+	sources, err := SpecifyDump(d.store, d.prefix(""))
+	if err != nil {
+		return nil, err
+	}
 	for _, v := range sources {
 		ms, err := decodeRawMessageStatus(v)
 		if err != nil {
@@ -131,7 +134,10 @@ func (d *DatastoreMessageStatus) chooseByField(fn func(ms *MessageStatus) bool) 
 
 // collectByField collect any matched MessageStatus list
 func (d *DatastoreMessageStatus) collectByField(fn func(ms *MessageStatus) bool) ([]*MessageStatus, error) {
-	sources := SpecifyDump(d.store, d.prefix(""))
+	sources, err := SpecifyDump(d.store, d.prefix(""))
+	if err != nil {
+		return nil, err
+	}
 	res := make([]*MessageStatus, 0, len(sources))
 	for _, v := range sources {
 		ms, err := decodeRawMessageStatus(v)
