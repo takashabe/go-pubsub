@@ -18,7 +18,7 @@ type Datastore interface {
 	Set(key, value interface{}) error
 	Get(key interface{}) (interface{}, error)
 	Delete(key interface{}) error
-	Dump() map[interface{}]interface{}
+	Dump() (map[interface{}]interface{}, error)
 }
 
 // Load backend datastore from cnofiguration json file.
@@ -54,15 +54,23 @@ func DecodeGobMessage(e []byte) (*Message, error) {
 }
 
 // SpecifyDump return Dump entries, each Datastore type
-func SpecifyDump(d Datastore, key string) map[interface{}]interface{} {
+func SpecifyDump(d Datastore, key string) (map[interface{}]interface{}, error) {
 	var res map[interface{}]interface{}
 	switch a := d.(type) {
 	case *Redis:
-		res = a.MgetPrefix(key)
+		v, err := a.MgetPrefix(key)
+		if err != nil {
+			return nil, err
+		}
+		res = v
 	default:
-		res = a.Dump()
+		v, err := a.Dump()
+		if err != nil {
+			return nil, err
+		}
+		res = v
 	}
-	return res
+	return res, nil
 }
 
 // Datastore driver at "in memory"
@@ -109,11 +117,11 @@ func (m *Memory) Delete(key interface{}) error {
 }
 
 // Dump store values
-func (m *Memory) Dump() map[interface{}]interface{} {
+func (m *Memory) Dump() (map[interface{}]interface{}, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	return m.Store
+	return m.Store, nil
 }
 
 type Redis struct {
@@ -156,15 +164,15 @@ func (r *Redis) Delete(key interface{}) error {
 	return err
 }
 
-func (r *Redis) Dump() map[interface{}]interface{} {
+func (r *Redis) Dump() (map[interface{}]interface{}, error) {
 	return r.MgetPrefix("")
 }
 
-func (r *Redis) MgetPrefix(p string) map[interface{}]interface{} {
+func (r *Redis) MgetPrefix(p string) (map[interface{}]interface{}, error) {
 	// get keys
 	keys, err := redis.Strings(r.conn.Do("KEYS", p+"*"))
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	args := make([]interface{}, 0)
 	for _, k := range keys {
@@ -174,7 +182,7 @@ func (r *Redis) MgetPrefix(p string) map[interface{}]interface{} {
 	// get values
 	values, err := redis.ByteSlices(r.conn.Do("MGET", args...))
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	// key-valus to map
@@ -182,7 +190,7 @@ func (r *Redis) MgetPrefix(p string) map[interface{}]interface{} {
 	for i, k := range keys {
 		res[k] = values[i]
 	}
-	return res
+	return res, nil
 }
 
 // MySQL is MySQL datastore driver
