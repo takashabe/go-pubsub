@@ -97,10 +97,6 @@ func (d *DatastoreMessageStatus) Delete(key string) error {
 	return d.store.Delete(d.prefix(key))
 }
 
-func (d *DatastoreMessageStatus) Size() int {
-	return len(d.store.Dump())
-}
-
 // SelectByIDs returns all MessageStatus depends ids
 func (d *DatastoreMessageStatus) CollectByIDs(ids ...string) ([]*MessageStatus, error) {
 	return d.collectByField(func(ms *MessageStatus) bool {
