@@ -12,7 +12,7 @@ func TestLoadConfig(t *testing.T) {
 		expectErr    error
 	}{
 		{
-			"testdata/redis.yaml",
+			"testdata/valid_redis.yaml",
 			&Config{
 				&DatastoreConfig{
 					Redis: &RedisConfig{
@@ -26,7 +26,7 @@ func TestLoadConfig(t *testing.T) {
 			nil,
 		},
 		{
-			"testdata/mysql.yaml",
+			"testdata/unknown_param.yaml",
 			&Config{
 				&DatastoreConfig{
 					Redis: nil,
@@ -39,7 +39,7 @@ func TestLoadConfig(t *testing.T) {
 			nil,
 		},
 		{
-			"testdata/none.yaml",
+			"testdata/empty_param.yaml",
 			&Config{&DatastoreConfig{}},
 			nil,
 		},

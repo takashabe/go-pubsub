@@ -16,7 +16,7 @@ func setupDatastore(t *testing.T) {
 		path = env
 	} else {
 		// load memory
-		path = "testdata/none.yaml"
+		path = "testdata/config/memory.yaml"
 	}
 	cfg, err := LoadConfigFromFile(path)
 	if err != nil {

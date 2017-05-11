@@ -13,7 +13,7 @@ import (
 func dummyMySQL(t *testing.T) *MySQL {
 	c, err := NewMySQL(&Config{&DatastoreConfig{
 		MySQL: &MySQLConfig{
-			User:     "root",
+			User:     "mq",
 			Password: "",
 			Host:     "localhost",
 			Port:     3306,
@@ -27,7 +27,7 @@ func dummyMySQL(t *testing.T) *MySQL {
 
 func clearTable(t *testing.T, db *sql.DB) {
 	f := fixture.NewFixture(db, "mysql")
-	if err := f.LoadSQL("testdata/empty_table.sql"); err != nil {
+	if err := f.LoadSQL("fixture/setup_mq_table.sql"); err != nil {
 		t.Fatalf("failed to execute fixture, got err %v", err)
 	}
 }

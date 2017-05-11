@@ -28,7 +28,7 @@ func setupServer(t *testing.T) *httptest.Server {
 	if env := os.Getenv("GO_MESSAGE_QUEUE_CONFIG"); len(env) != 0 {
 		path = env
 	} else {
-		path = "testdata/config.yaml"
+		path = "testdata/config/memory.yaml"
 	}
 	s, err := NewServer(path)
 	if err != nil {
