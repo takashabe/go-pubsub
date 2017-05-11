@@ -11,7 +11,7 @@ import (
 // default parameters
 const (
 	defaultPort = 8080
-	defaultFile = "_config/config.yaml"
+	defaultFile = "config/app.yaml"
 )
 
 // Exit codes. used only in Run()
