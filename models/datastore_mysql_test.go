@@ -1,12 +1,10 @@
 package models
 
 import (
-	"database/sql"
 	"reflect"
 	"testing"
 
 	"github.com/pkg/errors"
-	"github.com/takashabe/go-fixture"
 	_ "github.com/takashabe/go-fixture/mysql"
 )
 
@@ -42,7 +40,7 @@ func TestMySQLSetAndGet(t *testing.T) {
 			t.Fatalf("#%d: failed to encode data, got err %v", i, err)
 		}
 		client := dummyMySQL(t)
-		clearTable(t, client.conn)
+		clearTable(t, client.Conn)
 		if err := client.Set(c.key, encode); err != nil {
 			t.Fatalf("#%d: failed to set, key=%v, value=%v, got err %v", i, c.key, c.value, err)
 		}
@@ -75,7 +73,7 @@ func TestMySQLDelete(t *testing.T) {
 		{
 			"a",
 			&Message{ID: "a"},
-			sql.ErrNoRows,
+			ErrNotFoundEntry,
 		},
 	}
 	for i, c := range cases {
@@ -85,7 +83,7 @@ func TestMySQLDelete(t *testing.T) {
 			t.Fatalf("#%d: failed to encode data, got err %v", i, err)
 		}
 		client := dummyMySQL(t)
-		clearTable(t, client.conn)
+		clearTable(t, client.Conn)
 		if err := client.Set(c.key, encode); err != nil {
 			t.Fatalf("#%d: failed to set, key=%v, value=%v, got err %v", i, c.key, c.value, err)
 		}
@@ -125,7 +123,7 @@ func TestMySQLDump(t *testing.T) {
 	}
 	for i, c := range cases {
 		client := dummyMySQL(t)
-		clearTable(t, client.conn)
+		clearTable(t, client.Conn)
 
 		// set
 		for _, e := range c.inputEntries {
