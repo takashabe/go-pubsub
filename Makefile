@@ -1,6 +1,9 @@
 test:
 	go test -v ./...
 
+test_memory:
+	GO_MESSAGE_QUEUE_CONFIG="testdata/config/memory.yaml" go test -v ./...
+
 test_redis:
 	GO_MESSAGE_QUEUE_CONFIG="testdata/config/redis.yaml" go test -v ./...
 
