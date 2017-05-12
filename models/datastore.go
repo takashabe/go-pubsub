@@ -181,6 +181,10 @@ func (r *Redis) DumpPrefix(p string) (map[interface{}]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+	if len(keys) == 0 {
+		return make(map[interface{}]interface{}), nil
+	}
+
 	args := make([]interface{}, 0)
 	for _, k := range keys {
 		args = append(args, k)
