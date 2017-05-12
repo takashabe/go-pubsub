@@ -47,6 +47,11 @@ func setupDatastore(t *testing.T) {
 		if err := redis.FlushDB(); err != nil {
 			t.Fatalf("failed to FLUSHDB on Redis, got error %v", err)
 		}
+
+func clearTable(t *testing.T, db *sql.DB) {
+	f := fixture.NewFixture(db, "mysql")
+	if err := f.LoadSQL("fixture/setup_mq_table.sql"); err != nil {
+		t.Fatalf("failed to execute fixture, got err %v", err)
 	}
 }
 

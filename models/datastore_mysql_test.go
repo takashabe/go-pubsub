@@ -25,13 +25,6 @@ func dummyMySQL(t *testing.T) *MySQL {
 	return c
 }
 
-func clearTable(t *testing.T, db *sql.DB) {
-	f := fixture.NewFixture(db, "mysql")
-	if err := f.LoadSQL("fixture/setup_mq_table.sql"); err != nil {
-		t.Fatalf("failed to execute fixture, got err %v", err)
-	}
-}
-
 func TestMySQLSetAndGet(t *testing.T) {
 	cases := []struct {
 		key   interface{}
