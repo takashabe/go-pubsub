@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	fixture "github.com/takashabe/go-fixture"
+	_ "github.com/takashabe/go-fixture/mysql"
 )
 
 type testHelper struct {

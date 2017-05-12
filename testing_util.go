@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	fixture "github.com/takashabe/go-fixture"
+	_ "github.com/takashabe/go-fixture/mysql"
 	"github.com/takashabe/go-message-queue/models"
 )
 
@@ -43,9 +45,16 @@ func setupServer(t *testing.T) *httptest.Server {
 	if err != nil {
 		t.Fatalf("failed to load datastore, got err %v", err)
 	}
-	if redis, ok := d.(*models.Redis); ok {
-		if err := redis.FlushDB(); err != nil {
+	switch a := d.(type) {
+	case *models.Redis:
+		_, err := a.Conn.Do("FLUSHDB")
+		if err != nil {
 			t.Fatalf("failed to FLUSHDB on Redis, got error %v", err)
+		}
+	case *models.MySQL:
+		f := fixture.NewFixture(a.Conn, "mysql")
+		if err := f.LoadSQL("fixture/setup_mq_table.sql"); err != nil {
+			t.Fatalf("failed to execute fixture, got err %v", err)
 		}
 	}
 
