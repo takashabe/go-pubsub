@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
-	_ "github.com/takashabe/go-fixture/mysql"
 )
 
 func dummyMySQL(t *testing.T) *MySQL {
