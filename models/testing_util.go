@@ -1,8 +1,11 @@
 package models
 
 import (
+	"database/sql"
 	"os"
 	"testing"
+
+	fixture "github.com/takashabe/go-fixture"
 )
 
 type testHelper struct {
@@ -38,15 +41,21 @@ func setupDatastore(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// flush datastore. only Redis
+	// flush datastore
 	d, err := LoadDatastore(globalConfig)
 	if err != nil {
 		t.Fatalf("failed to load datastore, got err %v", err)
 	}
-	if redis, ok := d.(*Redis); ok {
-		if err := redis.FlushDB(); err != nil {
+	switch a := d.(type) {
+	case *Redis:
+		_, err := a.Conn.Do("FLUSHDB")
+		if err != nil {
 			t.Fatalf("failed to FLUSHDB on Redis, got error %v", err)
 		}
+	case *MySQL:
+		clearTable(t, a.Conn)
+	}
+}
 
 func clearTable(t *testing.T, db *sql.DB) {
 	f := fixture.NewFixture(db, "mysql")

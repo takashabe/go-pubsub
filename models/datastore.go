@@ -31,7 +31,7 @@ func LoadDatastore(cfg *Config) (Datastore, error) {
 		return NewRedis(cfg)
 	}
 	if cfg.Datastore.MySQL != nil {
-		return nil, ErrNotSupportDriver
+		return NewMySQL(cfg)
 	}
 	return NewMemory(nil), nil
 }
@@ -55,10 +55,17 @@ func DecodeGobMessage(e []byte) (*Message, error) {
 
 // SpecifyDump return Dump entries, each Datastore type
 func SpecifyDump(d Datastore, key string) (map[interface{}]interface{}, error) {
+	// TODO: SpecifyDump is used to acquire entries for each type, but it is more efficient to divide the DB/Table.
 	var res map[interface{}]interface{}
 	switch a := d.(type) {
 	case *Redis:
-		v, err := a.MgetPrefix(key)
+		v, err := a.DumpPrefix(key)
+		if err != nil {
+			return nil, err
+		}
+		res = v
+	case *MySQL:
+		v, err := a.DumpPrefix(key)
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +132,7 @@ func (m *Memory) Dump() (map[interface{}]interface{}, error) {
 }
 
 type Redis struct {
-	conn redis.Conn
+	Conn redis.Conn
 }
 
 // NewRedis return redis client
@@ -136,23 +143,23 @@ func NewRedis(cfg *Config) (*Redis, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to connect redis")
 	}
-	return &Redis{conn: conn}, nil
+	return &Redis{Conn: conn}, nil
 }
 
 // FlushDB delete all current DB on Redis
 func (r *Redis) FlushDB() error {
 	log.Println("EXECUTE FLUSHDB...")
-	_, err := r.conn.Do("FLUSHDB")
+	_, err := r.Conn.Do("FLUSHDB")
 	return err
 }
 
 func (r *Redis) Set(key, value interface{}) error {
-	_, err := r.conn.Do("SET", key, value)
+	_, err := r.Conn.Do("SET", key, value)
 	return err
 }
 
 func (r *Redis) Get(key interface{}) (interface{}, error) {
-	v, err := redis.Bytes(r.conn.Do("GET", key))
+	v, err := redis.Bytes(r.Conn.Do("GET", key))
 	if err != nil {
 		return nil, errors.Wrapf(ErrNotFoundEntry, fmt.Sprintf("detail %v", err))
 	}
@@ -160,17 +167,17 @@ func (r *Redis) Get(key interface{}) (interface{}, error) {
 }
 
 func (r *Redis) Delete(key interface{}) error {
-	_, err := r.conn.Do("DEL", key)
+	_, err := r.Conn.Do("DEL", key)
 	return err
 }
 
 func (r *Redis) Dump() (map[interface{}]interface{}, error) {
-	return r.MgetPrefix("")
+	return r.DumpPrefix("")
 }
 
-func (r *Redis) MgetPrefix(p string) (map[interface{}]interface{}, error) {
+func (r *Redis) DumpPrefix(p string) (map[interface{}]interface{}, error) {
 	// get keys
-	keys, err := redis.Strings(r.conn.Do("KEYS", p+"*"))
+	keys, err := redis.Strings(r.Conn.Do("KEYS", p+"*"))
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +187,7 @@ func (r *Redis) MgetPrefix(p string) (map[interface{}]interface{}, error) {
 	}
 
 	// get values
-	values, err := redis.ByteSlices(r.conn.Do("MGET", args...))
+	values, err := redis.ByteSlices(r.Conn.Do("MGET", args...))
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +202,7 @@ func (r *Redis) MgetPrefix(p string) (map[interface{}]interface{}, error) {
 
 // MySQL is MySQL datastore driver
 type MySQL struct {
-	conn *sql.DB
+	Conn *sql.DB
 }
 
 type generalSchema struct {
@@ -215,25 +222,26 @@ func NewMySQL(cfg *Config) (*MySQL, error) {
 	}
 
 	return &MySQL{
-		conn: db,
+		Conn: db,
 	}, nil
 }
 
 func (m *MySQL) Set(key, value interface{}) error {
-	stmt, err := m.conn.Prepare("INSERT INTO mq (id, value) VALUES (?, ?)")
+	stmt, err := m.Conn.Prepare(`INSERT INTO mq (id, value) VALUES (?, ?) 
+		ON DUPLICATE KEY UPDATE value=?`)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
-	if _, err := stmt.Exec(key, value); err != nil {
+	if _, err := stmt.Exec(key, value, value); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (m *MySQL) Get(key interface{}) (interface{}, error) {
-	stmt, err := m.conn.Prepare("SELECT value FROM mq WHERE id=?")
+	stmt, err := m.Conn.Prepare("SELECT value FROM mq WHERE id=?")
 	if err != nil {
 		return nil, err
 	}
@@ -241,13 +249,13 @@ func (m *MySQL) Get(key interface{}) (interface{}, error) {
 
 	var s generalSchema
 	if err := stmt.QueryRow(key).Scan(&s.value); err != nil {
-		return nil, err
+		return nil, errors.Wrapf(ErrNotFoundEntry, fmt.Sprintf("detail %v", err))
 	}
 	return s.value, nil
 }
 
 func (m *MySQL) Delete(key interface{}) error {
-	stmt, err := m.conn.Prepare("DELETE FROM mq WHERE id=?")
+	stmt, err := m.Conn.Prepare("DELETE FROM mq WHERE id=?")
 	if err != nil {
 		return err
 	}
@@ -260,12 +268,32 @@ func (m *MySQL) Delete(key interface{}) error {
 }
 
 func (m *MySQL) Dump() (map[interface{}]interface{}, error) {
-	rows, err := m.conn.Query("SELECT id, value FROM mq")
+	rows, err := m.Conn.Query("SELECT id, value FROM mq")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	return m.convertRowsToMap(rows)
+}
+
+func (m *MySQL) DumpPrefix(p string) (map[interface{}]interface{}, error) {
+	stmt, err := m.Conn.Prepare("SELECT id, value FROM mq WHERE id like ?")
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(p + "%")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return m.convertRowsToMap(rows)
+}
+
+func (m *MySQL) convertRowsToMap(rows *sql.Rows) (map[interface{}]interface{}, error) {
 	res := make(map[interface{}]interface{}, 0)
 	for rows.Next() {
 		var s generalSchema
