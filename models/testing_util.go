@@ -1,7 +1,6 @@
 package models
 
 import (
-	"database/sql"
 	"os"
 	"testing"
 
@@ -54,14 +53,10 @@ func setupDatastore(t *testing.T) {
 			t.Fatalf("failed to FLUSHDB on Redis, got error %v", err)
 		}
 	case *MySQL:
-		clearTable(t, a.Conn)
-	}
-}
-
-func clearTable(t *testing.T, db *sql.DB) {
-	f := fixture.NewFixture(db, "mysql")
-	if err := f.LoadSQL("fixture/setup_mq_table.sql"); err != nil {
-		t.Fatalf("failed to execute fixture, got err %v", err)
+		f := fixture.NewFixture(a.Conn, "mysql")
+		if err := f.LoadSQL("fixture/setup_mq_table.sql"); err != nil {
+			t.Fatalf("failed to execute fixture, got err %v", err)
+		}
 	}
 }
 
