@@ -10,6 +10,13 @@ type Push struct {
 
 // Create Push object when valid URL
 func NewPush(endpoint string, attributes map[string]string) (*Push, error) {
+	if len(endpoint) == 0 {
+		return &Push{
+			Endpoint:   nil,
+			Attributes: nil,
+		}, nil
+	}
+
 	url, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, ErrInvalidEndpoint

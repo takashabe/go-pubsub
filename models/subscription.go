@@ -105,10 +105,6 @@ func (s *Subscription) ModifyAckDeadline(id string, timeout int64) error {
 
 // Set push endpoint with attributes, only one can be set as push endpoint.
 func (s *Subscription) SetPush(endpoint string, attribute map[string]string) error {
-	if len(endpoint) == 0 {
-		return nil
-	}
-
 	p, err := NewPush(endpoint, attribute)
 	if err != nil {
 		return err
