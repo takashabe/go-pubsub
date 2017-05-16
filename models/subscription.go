@@ -55,7 +55,17 @@ func (s *Subscription) RegisterMessage(msg *Message) error {
 	if _, err := s.Message.NewMessageStatus(s.Name, msg.ID, s.DefaultAckDeadline); err != nil {
 		return err
 	}
-	return s.Save()
+	if err := s.Save(); err != nil {
+		return err
+	}
+
+	// push
+	if s.PushConfig.HasValidEndpoint() {
+		// TODO: implements push loop goroutine
+		return s.Push()
+	}
+
+	return nil
 }
 
 // PullMessage represent Message and AckID pair
@@ -80,6 +90,26 @@ func (s *Subscription) Pull(size int) ([]*PullMessage, error) {
 		pullMsgs = append(pullMsgs, &PullMessage{AckID: ackID, Message: m})
 	}
 	return pullMsgs, nil
+}
+
+// Push send message to push endpoint
+func (s *Subscription) Push() error {
+	// TODO: implements slow start size. it means, size increment when success push
+	msgs, err := s.Message.CollectReadableMessage(3)
+	if err != nil {
+		return err
+	}
+	for _, msg := range msgs {
+		ackID := makeAckID()
+		s.Message.Deliver(msg.ID, ackID)
+		err := s.PushConfig.sendMessage(msg, s.Name)
+		if err != nil {
+			return err
+		}
+		s.Ack(ackID)
+	}
+
+	return nil
 }
 
 // Succeed Message delivery. remove sent Message.
