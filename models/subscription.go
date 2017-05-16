@@ -7,7 +7,7 @@ type Subscription struct {
 	TopicID            string              `json:"topic"`
 	Message            *MessageStatusStore `json:"-"`
 	DefaultAckDeadline time.Duration       `json:"ack_deadline_seconds"`
-	Push               *Push               `json:"push_config"`
+	PushConfig         *Push               `json:"push_config"`
 }
 
 // Create Subscription, if not exist already same name Subscription
@@ -25,7 +25,7 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 		Message:            NewMessageStatusStore(name),
 		DefaultAckDeadline: convertAckDeadlineSeconds(timeout),
 	}
-	if err := s.SetPush(endpoint, attr); err != nil {
+	if err := s.SetPushConfig(endpoint, attr); err != nil {
 		return nil, err
 	}
 	if err := s.Save(); err != nil {
@@ -103,14 +103,14 @@ func (s *Subscription) ModifyAckDeadline(id string, timeout int64) error {
 	return ms.Save()
 }
 
-// Set push endpoint with attributes, only one can be set as push endpoint.
-func (s *Subscription) SetPush(endpoint string, attribute map[string]string) error {
+// SetPushConfig setting push endpoint with attributes
+func (s *Subscription) SetPushConfig(endpoint string, attribute map[string]string) error {
 	p, err := NewPush(endpoint, attribute)
 	if err != nil {
 		return err
 	}
-	s.Push = p
-	return nil
+	s.PushConfig = p
+	return s.Save()
 }
 
 // convertAckDeadlineSeconds convert timeout to seconds time.Duration

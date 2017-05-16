@@ -24,7 +24,7 @@ func TestNewSubscription(t *testing.T) {
 		TopicID:            "a",
 		Message:            NewMessageStatusStore("A"),
 		DefaultAckDeadline: 0,
-		Push: &Push{
+		PushConfig: &Push{
 			Endpoint: testUrl(t, "localhost:8080"),
 			Attributes: &Attributes{
 				Attr: map[string]string{"key": "value"},
