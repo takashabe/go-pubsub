@@ -113,17 +113,18 @@ func setupDummySubscription(t *testing.T) {
 	}
 }
 
-func isExistMessageData(src []*Message, datas []string) bool {
-	srcMap := make(map[string]bool)
-	for _, m := range src {
-		srcMap[string(m.Data)] = true
+func mustGetTopic(t *testing.T, id string) *Topic {
+	a, err := GetTopic(id)
+	if err != nil {
+		t.Fatalf("failed to get topic, got err %v", err)
 	}
+	return a
+}
 
-	for _, d := range datas {
-		if _, ok := srcMap[d]; !ok {
-			// not found data
-			return false
-		}
+func mustGetSubscription(t *testing.T, id string) *Subscription {
+	a, err := GetSubscription(id)
+	if err != nil {
+		t.Fatalf("failed to get subscription, got err %v", err)
 	}
-	return true
+	return a
 }

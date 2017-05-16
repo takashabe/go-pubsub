@@ -1,6 +1,8 @@
 package models
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"testing"
@@ -192,4 +194,31 @@ func TestPullAndAck(t *testing.T) {
 			}
 		}
 	}()
+}
+
+func TestPushAndAck(t *testing.T) {
+	setupDatastore(t)
+	setupDummyTopics(t)
+	setupDummySubscription(t)
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	}))
+	defer ts.Close()
+
+	err := mustGetSubscription(t, "a").SetPushConfig(ts.URL, nil)
+	if err != nil {
+		t.Fatalf("failed to SetPushConfig, got err %v", err)
+	}
+
+	msgID, err := mustGetTopic(t, "A").Publish([]byte("test"), map[string]string{"1": "2"})
+	if err != nil {
+		t.Fatalf("failed to Publish, got err %v", err)
+	}
+
+	// not exist message when push and ack message
+	_, err = globalMessageStatus.FindBySubscriptionIDAndMessageID("a", msgID)
+	if err != ErrNotFoundEntry {
+		t.Errorf("error want %s , got %s", ErrNotFoundEntry, err)
+	}
 }
