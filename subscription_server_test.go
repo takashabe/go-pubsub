@@ -267,7 +267,7 @@ func TestPull(t *testing.T) {
 			t.Fatalf("#%d: failed decode to json, body %s", i, actBody)
 		}
 		if got := len(body.Messages); got != c.expectSize {
-			t.Fatalf("#%d: message len want %d, got %d", i, c.expectSize, got)
+			t.Errorf("#%d: message len want %d, got %d", i, c.expectSize, got)
 		}
 	}
 }

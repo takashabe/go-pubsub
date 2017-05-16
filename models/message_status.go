@@ -35,8 +35,6 @@ func (s messageState) String() string {
 // Readable return whether the message can be read
 func (ms *MessageStatus) Readable() bool {
 	switch ms.AckState {
-	case stateAck:
-		return false
 	case stateDeliver:
 		lapsedTime := time.Now().Sub(ms.DeliveredAt)
 		return lapsedTime > ms.AckDeadline

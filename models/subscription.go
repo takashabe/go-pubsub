@@ -7,7 +7,7 @@ type Subscription struct {
 	TopicID            string              `json:"topic"`
 	Message            *MessageStatusStore `json:"-"`
 	DefaultAckDeadline time.Duration       `json:"ack_deadline_seconds"`
-	Push               *Push               `json:"push_config"`
+	PushConfig         *Push               `json:"push_config"`
 }
 
 // Create Subscription, if not exist already same name Subscription
@@ -25,7 +25,7 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 		Message:            NewMessageStatusStore(name),
 		DefaultAckDeadline: convertAckDeadlineSeconds(timeout),
 	}
-	if err := s.SetPush(endpoint, attr); err != nil {
+	if err := s.SetPushConfig(endpoint, attr); err != nil {
 		return nil, err
 	}
 	if err := s.Save(); err != nil {
@@ -55,7 +55,17 @@ func (s *Subscription) RegisterMessage(msg *Message) error {
 	if _, err := s.Message.NewMessageStatus(s.Name, msg.ID, s.DefaultAckDeadline); err != nil {
 		return err
 	}
-	return s.Save()
+	if err := s.Save(); err != nil {
+		return err
+	}
+
+	// push
+	if s.PushConfig.HasValidEndpoint() {
+		// TODO: implements push loop goroutine
+		return s.Push()
+	}
+
+	return nil
 }
 
 // PullMessage represent Message and AckID pair
@@ -82,6 +92,26 @@ func (s *Subscription) Pull(size int) ([]*PullMessage, error) {
 	return pullMsgs, nil
 }
 
+// Push send message to push endpoint
+func (s *Subscription) Push() error {
+	// TODO: implements slow start size. it means, size increment when success push
+	msgs, err := s.Message.CollectReadableMessage(3)
+	if err != nil {
+		return err
+	}
+	for _, msg := range msgs {
+		ackID := makeAckID()
+		s.Message.Deliver(msg.ID, ackID)
+		err := s.PushConfig.sendMessage(msg, s.Name)
+		if err != nil {
+			return err
+		}
+		s.Ack(ackID)
+	}
+
+	return nil
+}
+
 // Succeed Message delivery. remove sent Message.
 func (s *Subscription) Ack(ids ...string) error {
 	// collect MessageID list dependent to AckID
@@ -103,18 +133,14 @@ func (s *Subscription) ModifyAckDeadline(id string, timeout int64) error {
 	return ms.Save()
 }
 
-// Set push endpoint with attributes, only one can be set as push endpoint.
-func (s *Subscription) SetPush(endpoint string, attribute map[string]string) error {
-	if len(endpoint) == 0 {
-		return nil
-	}
-
+// SetPushConfig setting push endpoint with attributes
+func (s *Subscription) SetPushConfig(endpoint string, attribute map[string]string) error {
 	p, err := NewPush(endpoint, attribute)
 	if err != nil {
 		return err
 	}
-	s.Push = p
-	return nil
+	s.PushConfig = p
+	return s.Save()
 }
 
 // convertAckDeadlineSeconds convert timeout to seconds time.Duration
