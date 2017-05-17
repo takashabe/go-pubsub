@@ -1,6 +1,12 @@
 package models
 
-import "time"
+import (
+	"log"
+	"sync"
+	"time"
+
+	"github.com/pkg/errors"
+)
 
 type Subscription struct {
 	Name               string              `json:"name"`
@@ -8,6 +14,11 @@ type Subscription struct {
 	Message            *MessageStatusStore `json:"-"`
 	DefaultAckDeadline time.Duration       `json:"ack_deadline_seconds"`
 	PushConfig         *Push               `json:"push_config"`
+
+	// push loop channel
+	abortPush     chan struct{} `json:"-"`
+	pushRunning   bool          `json:"-"`
+	pushRunningMu sync.Mutex    `json:"-"`
 }
 
 // Create Subscription, if not exist already same name Subscription
@@ -24,6 +35,8 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 		TopicID:            topic.Name,
 		Message:            NewMessageStatusStore(name),
 		DefaultAckDeadline: convertAckDeadlineSeconds(timeout),
+		abortPush:          make(chan struct{}),
+		pushRunning:        false,
 	}
 	if err := s.SetPushConfig(endpoint, attr); err != nil {
 		return nil, err
@@ -97,6 +110,10 @@ func (s *Subscription) Push() error {
 	// TODO: implements slow start size. it means, size increment when success push
 	msgs, err := s.Message.CollectReadableMessage(3)
 	if err != nil {
+		// empty message is non error
+		if errors.Cause(err) == ErrEmptyMessage {
+			return nil
+		}
 		return err
 	}
 	for _, msg := range msgs {
@@ -139,7 +156,57 @@ func (s *Subscription) SetPushConfig(endpoint string, attribute map[string]strin
 	if err != nil {
 		return err
 	}
+
 	s.PushConfig = p
+	return s.Save()
+}
+
+// PushLoop goroutine that keeps looking for pushable messages
+func (s *Subscription) PushLoop() error {
+	// already running loop, or pull mode
+	if s.getRunning() || !s.PushConfig.HasValidEndpoint() {
+		return nil
+	}
+
+	if err := s.setRunning(true); err != nil {
+		return err
+	}
+	go func() {
+		t := time.NewTicker(100 * time.Millisecond)
+		for {
+			select {
+			case <-t.C:
+				err := s.Push()
+				if err != nil {
+					log.Println(err.Error())
+				}
+			case <-s.abortPush:
+				break
+			}
+		}
+		t.Stop()
+		err := s.setRunning(false)
+		if err != nil {
+			log.Println(err.Error())
+		}
+	}()
+	return nil
+}
+
+// getRunning return pushRunning at mutex
+func (s *Subscription) getRunning() bool {
+	s.pushRunningMu.Lock()
+	defer s.pushRunningMu.Unlock()
+
+	return s.pushRunning
+}
+
+// setRunning setting pushRunning at mutex
+func (s *Subscription) setRunning(b bool) error {
+	s.pushRunningMu.Lock()
+	defer s.pushRunningMu.Unlock()
+
+	s.pushRunning = b
 	return s.Save()
 }
 

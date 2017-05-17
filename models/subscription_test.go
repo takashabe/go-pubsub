@@ -32,6 +32,7 @@ func TestNewSubscription(t *testing.T) {
 				Attr: map[string]string{"key": "value"},
 			},
 		},
+		abortPush: nil,
 	}
 
 	cases := []struct {
@@ -68,6 +69,9 @@ func TestNewSubscription(t *testing.T) {
 		got, err := NewSubscription(c.name, c.topicName, c.timeout, c.endpoint, c.attr)
 		if errors.Cause(err) != c.expectErr {
 			t.Fatalf("%#d: want %v, got %v", i, c.expectErr, err)
+		}
+		if got != nil {
+			got.abortPush = nil // for channel equal
 		}
 		if !reflect.DeepEqual(got, c.expectObj) {
 			t.Errorf("%#d: want %#v, got %#v", i, c.expectObj, got)
