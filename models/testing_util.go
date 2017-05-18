@@ -1,6 +1,8 @@
 package models
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -127,4 +129,10 @@ func mustGetSubscription(t *testing.T, id string) *Subscription {
 		t.Fatalf("failed to get subscription, got err %v", err)
 	}
 	return a
+}
+
+func getDummyServer(t *testing.T) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	}))
 }

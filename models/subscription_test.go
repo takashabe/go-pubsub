@@ -1,8 +1,6 @@
 package models
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"testing"
@@ -32,7 +30,9 @@ func TestNewSubscription(t *testing.T) {
 				Attr: map[string]string{"key": "value"},
 			},
 		},
-		abortPush: nil,
+		AbortPush:   nil,
+		PushRunning: true,
+		PushTick:    10 * time.Second,
 	}
 
 	cases := []struct {
@@ -71,7 +71,7 @@ func TestNewSubscription(t *testing.T) {
 			t.Fatalf("%#d: want %v, got %v", i, c.expectErr, err)
 		}
 		if got != nil {
-			got.abortPush = nil // for channel equal
+			got.AbortPush = nil // for channel equal
 		}
 		if !reflect.DeepEqual(got, c.expectObj) {
 			t.Errorf("%#d: want %#v, got %#v", i, c.expectObj, got)
@@ -200,14 +200,12 @@ func TestPullAndAck(t *testing.T) {
 	}()
 }
 
-func TestPushAndAck(t *testing.T) {
+func TestPushImmediately(t *testing.T) {
 	setupDatastore(t)
 	setupDummyTopics(t)
 	setupDummySubscription(t)
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
-	}))
+	ts := getDummyServer(t)
 	defer ts.Close()
 
 	err := mustGetSubscription(t, "a").SetPushConfig(ts.URL, nil)
