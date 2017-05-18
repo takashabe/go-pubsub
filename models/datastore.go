@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"encoding/gob"
 	"fmt"
-	"log"
 	"sync"
+	"time"
 
 	"github.com/garyburd/redigo/redis"
 	_ "github.com/go-sql-driver/mysql"
@@ -132,34 +132,50 @@ func (m *Memory) Dump() (map[interface{}]interface{}, error) {
 }
 
 type Redis struct {
-	Conn redis.Conn
+	Pool *redis.Pool
 }
 
 // NewRedis return redis client
 func NewRedis(cfg *Config) (*Redis, error) {
 	rconf := cfg.Datastore.Redis
-	endpoint := fmt.Sprintf("%s:%d", rconf.Host, rconf.Port)
-	conn, err := redis.Dial("tcp", endpoint)
+	pool := newPool(fmt.Sprintf("%s:%d", rconf.Host, rconf.Port))
+	_, err := pool.Dial()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to connect redis")
 	}
-	return &Redis{Conn: conn}, nil
+	return &Redis{
+		Pool: pool,
+	}, nil
 }
 
-// FlushDB delete all current DB on Redis
-func (r *Redis) FlushDB() error {
-	log.Println("EXECUTE FLUSHDB...")
-	_, err := r.Conn.Do("FLUSHDB")
-	return err
+// newPool return redis connection pool
+func newPool(addr string) *redis.Pool {
+	return &redis.Pool{
+		MaxIdle:     3,
+		IdleTimeout: 240 * time.Second,
+		Dial: func() (redis.Conn, error) {
+			return redis.Dial("tcp", addr)
+		},
+		TestOnBorrow: func(c redis.Conn, t time.Time) error {
+			_, err := c.Do("PING")
+			return err
+		},
+	}
 }
 
 func (r *Redis) Set(key, value interface{}) error {
-	_, err := r.Conn.Do("SET", key, value)
+	conn := r.Pool.Get()
+	defer conn.Close()
+
+	_, err := conn.Do("SET", key, value)
 	return err
 }
 
 func (r *Redis) Get(key interface{}) (interface{}, error) {
-	v, err := redis.Bytes(r.Conn.Do("GET", key))
+	conn := r.Pool.Get()
+	defer conn.Close()
+
+	v, err := redis.Bytes(conn.Do("GET", key))
 	if err != nil {
 		return nil, errors.Wrapf(ErrNotFoundEntry, fmt.Sprintf("detail %v", err))
 	}
@@ -167,7 +183,10 @@ func (r *Redis) Get(key interface{}) (interface{}, error) {
 }
 
 func (r *Redis) Delete(key interface{}) error {
-	_, err := r.Conn.Do("DEL", key)
+	conn := r.Pool.Get()
+	defer conn.Close()
+
+	_, err := conn.Do("DEL", key)
 	return err
 }
 
@@ -176,8 +195,11 @@ func (r *Redis) Dump() (map[interface{}]interface{}, error) {
 }
 
 func (r *Redis) DumpPrefix(p string) (map[interface{}]interface{}, error) {
+	conn := r.Pool.Get()
+	defer conn.Close()
+
 	// get keys
-	keys, err := redis.Strings(r.Conn.Do("KEYS", p+"*"))
+	keys, err := redis.Strings(conn.Do("KEYS", p+"*"))
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +213,7 @@ func (r *Redis) DumpPrefix(p string) (map[interface{}]interface{}, error) {
 	}
 
 	// get values
-	values, err := redis.ByteSlices(r.Conn.Do("MGET", args...))
+	values, err := redis.ByteSlices(conn.Do("MGET", args...))
 	if err != nil {
 		return nil, err
 	}

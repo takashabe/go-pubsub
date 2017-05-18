@@ -47,7 +47,10 @@ func setupServer(t *testing.T) *httptest.Server {
 	}
 	switch a := d.(type) {
 	case *models.Redis:
-		_, err := a.Conn.Do("FLUSHDB")
+		conn := a.Pool.Get()
+		defer conn.Close()
+
+		_, err := conn.Do("FLUSHDB")
 		if err != nil {
 			t.Fatalf("failed to FLUSHDB on Redis, got error %v", err)
 		}
