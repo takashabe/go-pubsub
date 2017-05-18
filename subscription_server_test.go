@@ -171,7 +171,7 @@ func TestDeleteSubscription(t *testing.T) {
 		defer res.Body.Close()
 
 		if got := res.StatusCode; got != c.expectCode {
-			t.Errorf("#%d: want %d, got %d", i, c.expectCode, got)
+			t.Fatalf("#%d: want %d, got %d", i, c.expectCode, got)
 		}
 		got, err := ioutil.ReadAll(res.Body)
 		if err != nil {
@@ -259,7 +259,11 @@ func TestPull(t *testing.T) {
 		defer res.Body.Close()
 
 		if got := res.StatusCode; got != c.expectCode {
-			t.Errorf("#%d: want %d, got %d", i, c.expectCode, got)
+			if b, err := ioutil.ReadAll(res.Body); err != nil {
+				t.Fatalf("#%d: code want %d, got %d", i, c.expectCode, got)
+			} else {
+				t.Fatalf("#%d: code want %d, got %d, body %s", i, c.expectCode, got, b)
+			}
 		}
 		var body ResponsePull
 		if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
@@ -343,7 +347,11 @@ func TestPullAck(t *testing.T) {
 		res := pullMessage(t, ts, "A", c.inputSize)
 		defer res.Body.Close()
 		if got := res.StatusCode; got != c.expectCode {
-			t.Errorf("#%d: code want %d, got %d", i, c.expectCode, got)
+			if b, err := ioutil.ReadAll(res.Body); err != nil {
+				t.Fatalf("#%d: code want %d, got %d", i, c.expectCode, got)
+			} else {
+				t.Fatalf("#%d: code want %d, got %d, body %s", i, c.expectCode, got, b)
+			}
 		}
 		if c.expectCode != http.StatusOK {
 			continue
