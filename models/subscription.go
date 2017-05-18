@@ -16,9 +16,10 @@ type Subscription struct {
 	PushConfig         *Push               `json:"push_config"`
 
 	// push loop channel
-	abortPush     chan struct{} `json:"-"`
-	pushRunning   bool          `json:"-"`
-	pushRunningMu sync.Mutex    `json:"-"`
+	PushTick    time.Duration `json:"-"`
+	AbortPush   chan struct{} `json:"-"`
+	PushRunning bool          `json:"-"`
+	mu          sync.Mutex    `json:"-"`
 }
 
 // Create Subscription, if not exist already same name Subscription
@@ -35,8 +36,9 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 		TopicID:            topic.Name,
 		Message:            NewMessageStatusStore(name),
 		DefaultAckDeadline: convertAckDeadlineSeconds(timeout),
-		abortPush:          make(chan struct{}),
-		pushRunning:        false,
+		AbortPush:          make(chan struct{}),
+		PushRunning:        false,
+		PushTick:           10 * time.Second,
 	}
 	if err := s.SetPushConfig(endpoint, attr); err != nil {
 		return nil, err
@@ -73,7 +75,7 @@ func (s *Subscription) RegisterMessage(msg *Message) error {
 	}
 
 	// push
-	if s.PushConfig.HasValidEndpoint() {
+	if !s.isPullMode() {
 		// TODO: implements push loop goroutine
 		return s.Push()
 	}
@@ -158,13 +160,20 @@ func (s *Subscription) SetPushConfig(endpoint string, attribute map[string]strin
 	}
 
 	s.PushConfig = p
+	if err := s.PushLoop(); err != nil {
+		return err
+	}
 	return s.Save()
+}
+
+func (s *Subscription) isPullMode() bool {
+	return !s.PushConfig.HasValidEndpoint()
 }
 
 // PushLoop goroutine that keeps looking for pushable messages
 func (s *Subscription) PushLoop() error {
 	// already running loop, or pull mode
-	if s.getRunning() || !s.PushConfig.HasValidEndpoint() {
+	if s.getRunning() || s.isPullMode() {
 		return nil
 	}
 
@@ -172,7 +181,7 @@ func (s *Subscription) PushLoop() error {
 		return err
 	}
 	go func() {
-		t := time.NewTicker(100 * time.Millisecond)
+		t := time.NewTicker(s.PushTick)
 		for {
 			select {
 			case <-t.C:
@@ -180,7 +189,7 @@ func (s *Subscription) PushLoop() error {
 				if err != nil {
 					log.Println(err.Error())
 				}
-			case <-s.abortPush:
+			case <-s.AbortPush:
 				break
 			}
 		}
@@ -195,18 +204,18 @@ func (s *Subscription) PushLoop() error {
 
 // getRunning return pushRunning at mutex
 func (s *Subscription) getRunning() bool {
-	s.pushRunningMu.Lock()
-	defer s.pushRunningMu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	return s.pushRunning
+	return s.PushRunning
 }
 
 // setRunning setting pushRunning at mutex
 func (s *Subscription) setRunning(b bool) error {
-	s.pushRunningMu.Lock()
-	defer s.pushRunningMu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-	s.pushRunning = b
+	s.PushRunning = b
 	return s.Save()
 }
 
