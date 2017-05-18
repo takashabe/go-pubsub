@@ -224,3 +224,36 @@ func TestPushImmediately(t *testing.T) {
 		t.Errorf("error want %s , got %s", ErrNotFoundEntry, err)
 	}
 }
+
+func TestPushLoop(t *testing.T) {
+	setupDatastore(t)
+	setupDummyTopics(t)
+	setupDummySubscription(t)
+
+	ts := getDummyServer(t)
+	defer ts.Close()
+
+	// publish message at pull mode
+	for i := 0; i < 3; i++ {
+		publishMessage(t, "A", "test", nil)
+	}
+
+	// set to push mode
+	sub := mustGetSubscription(t, "a")
+	sub.PushTick = 10 * time.Millisecond // faster testing
+	if err := sub.SetPushConfig(ts.URL, nil); err != nil {
+		t.Fatalf("failed to SetPushConfig, got err %v", err)
+	}
+
+	// want empty message
+	time.Sleep(100 * time.Millisecond)
+	list, err := globalMessageStatus.collectByField(func(ms *MessageStatus) bool {
+		return ms.SubscriptionID == sub.Name
+	})
+	if err != nil {
+		t.Fatalf("failed to collect MessageStatus, got err %v", err)
+	}
+	if len(list) != 0 {
+		t.Errorf("MessageStatus list size want 0, got %d", len(list))
+	}
+}
