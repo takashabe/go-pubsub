@@ -15,12 +15,21 @@ type Subscription struct {
 	DefaultAckDeadline time.Duration       `json:"ack_deadline_seconds"`
 	PushConfig         *Push               `json:"push_config"`
 
-	// push loop channel
+	// push params
 	PushTick    time.Duration `json:"-"`
 	AbortPush   chan struct{} `json:"-"`
 	PushRunning bool          `json:"-"`
-	mu          sync.Mutex    `json:"-"`
+	PushSize    int           `json:"-"`
+	runningMu   sync.RWMutex  `json:"-"`
+	sizeMu      sync.RWMutex  `json:"-"`
 }
+
+const (
+	// push variables
+	PushInterval = 10 * time.Second
+	MaxPushSize  = 1000
+	MinPushSize  = 1
+)
 
 // Create Subscription, if not exist already same name Subscription
 func NewSubscription(name, topicName string, timeout int64, endpoint string, attr map[string]string) (*Subscription, error) {
@@ -37,8 +46,9 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 		Message:            NewMessageStatusStore(name),
 		DefaultAckDeadline: convertAckDeadlineSeconds(timeout),
 		AbortPush:          make(chan struct{}),
+		PushTick:           PushInterval,
 		PushRunning:        false,
-		PushTick:           10 * time.Second,
+		PushSize:           MinPushSize,
 	}
 	if err := s.SetPushConfig(endpoint, attr); err != nil {
 		return nil, err
@@ -76,8 +86,7 @@ func (s *Subscription) RegisterMessage(msg *Message) error {
 
 	// push
 	if !s.isPullMode() {
-		// TODO: implements push loop goroutine
-		return s.Push()
+		return s.Push(1)
 	}
 
 	return nil
@@ -108,9 +117,8 @@ func (s *Subscription) Pull(size int) ([]*PullMessage, error) {
 }
 
 // Push send message to push endpoint
-func (s *Subscription) Push() error {
-	// TODO: implements slow start size. it means, size increment when success push
-	msgs, err := s.Message.CollectReadableMessage(3)
+func (s *Subscription) Push(size int) error {
+	msgs, err := s.Message.CollectReadableMessage(size)
 	if err != nil {
 		// empty message is non error
 		if errors.Cause(err) == ErrEmptyMessage {
@@ -185,9 +193,13 @@ func (s *Subscription) PushLoop() error {
 		for {
 			select {
 			case <-t.C:
-				err := s.Push()
+				err := s.Push(s.getSize())
+				// improve push size, it is determined like TCP slow start
 				if err != nil {
 					log.Println(err.Error())
+					s.decrementPushSize()
+				} else {
+					s.incrementPushSize()
 				}
 			case <-s.AbortPush:
 				break
@@ -204,19 +216,52 @@ func (s *Subscription) PushLoop() error {
 
 // getRunning return pushRunning at mutex
 func (s *Subscription) getRunning() bool {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.runningMu.RLock()
+	defer s.runningMu.RUnlock()
 
 	return s.PushRunning
 }
 
 // setRunning setting pushRunning at mutex
 func (s *Subscription) setRunning(b bool) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.runningMu.Lock()
+	defer s.runningMu.Unlock()
 
 	s.PushRunning = b
 	return s.Save()
+}
+
+// getSize return pushSize at mutex
+func (s *Subscription) getSize() int {
+	s.sizeMu.RLock()
+	defer s.sizeMu.RUnlock()
+
+	return s.PushSize
+}
+
+// setSize setting pushSize at mutex
+func (s *Subscription) setSize(i int) error {
+	s.sizeMu.Lock()
+	defer s.sizeMu.Unlock()
+
+	s.PushSize = i
+	return s.Save()
+}
+
+func (s *Subscription) incrementPushSize() error {
+	newSize := s.getSize() * 2
+	if newSize > MaxPushSize {
+		newSize = MaxPushSize
+	}
+	return s.setSize(newSize)
+}
+
+func (s *Subscription) decrementPushSize() error {
+	newSize := int(s.getSize() / 2)
+	if newSize < MinPushSize {
+		newSize = MinPushSize
+	}
+	return s.setSize(newSize)
 }
 
 // convertAckDeadlineSeconds convert timeout to seconds time.Duration

@@ -32,7 +32,8 @@ func TestNewSubscription(t *testing.T) {
 		},
 		AbortPush:   nil,
 		PushRunning: true,
-		PushTick:    10 * time.Second,
+		PushTick:    PushInterval,
+		PushSize:    MinPushSize,
 	}
 
 	cases := []struct {
