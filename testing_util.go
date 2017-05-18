@@ -94,11 +94,7 @@ func setupDummyTopicAndSub(t *testing.T, ts *httptest.Server) {
 		{
 			"B",
 			ResourceSubscription{
-				Topic: "a",
-				Push: PushConfig{
-					Endpoint: "test",
-					Attr:     map[string]string{"1": "2"},
-				},
+				Topic:      "a",
 				AckTimeout: 10,
 			},
 		},

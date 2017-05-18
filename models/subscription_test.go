@@ -1,8 +1,6 @@
 package models
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"testing"
@@ -32,6 +30,9 @@ func TestNewSubscription(t *testing.T) {
 				Attr: map[string]string{"key": "value"},
 			},
 		},
+		AbortPush:   nil,
+		PushRunning: true,
+		PushTick:    10 * time.Second,
 	}
 
 	cases := []struct {
@@ -68,6 +69,9 @@ func TestNewSubscription(t *testing.T) {
 		got, err := NewSubscription(c.name, c.topicName, c.timeout, c.endpoint, c.attr)
 		if errors.Cause(err) != c.expectErr {
 			t.Fatalf("%#d: want %v, got %v", i, c.expectErr, err)
+		}
+		if got != nil {
+			got.AbortPush = nil // for channel equal
 		}
 		if !reflect.DeepEqual(got, c.expectObj) {
 			t.Errorf("%#d: want %#v, got %#v", i, c.expectObj, got)
@@ -196,14 +200,12 @@ func TestPullAndAck(t *testing.T) {
 	}()
 }
 
-func TestPushAndAck(t *testing.T) {
+func TestPushImmediately(t *testing.T) {
 	setupDatastore(t)
 	setupDummyTopics(t)
 	setupDummySubscription(t)
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
-	}))
+	ts := getDummyServer(t)
 	defer ts.Close()
 
 	err := mustGetSubscription(t, "a").SetPushConfig(ts.URL, nil)
@@ -220,5 +222,38 @@ func TestPushAndAck(t *testing.T) {
 	_, err = globalMessageStatus.FindBySubscriptionIDAndMessageID("a", msgID)
 	if err != ErrNotFoundEntry {
 		t.Errorf("error want %s , got %s", ErrNotFoundEntry, err)
+	}
+}
+
+func TestPushLoop(t *testing.T) {
+	setupDatastore(t)
+	setupDummyTopics(t)
+	setupDummySubscription(t)
+
+	ts := getDummyServer(t)
+	defer ts.Close()
+
+	// publish message at pull mode
+	for i := 0; i < 3; i++ {
+		publishMessage(t, "A", "test", nil)
+	}
+
+	// set to push mode
+	sub := mustGetSubscription(t, "a")
+	sub.PushTick = 10 * time.Millisecond // faster testing
+	if err := sub.SetPushConfig(ts.URL, nil); err != nil {
+		t.Fatalf("failed to SetPushConfig, got err %v", err)
+	}
+
+	// want empty message
+	time.Sleep(100 * time.Millisecond)
+	list, err := globalMessageStatus.collectByField(func(ms *MessageStatus) bool {
+		return ms.SubscriptionID == sub.Name
+	})
+	if err != nil {
+		t.Fatalf("failed to collect MessageStatus, got err %v", err)
+	}
+	if len(list) != 0 {
+		t.Errorf("MessageStatus list size want 0, got %d", len(list))
 	}
 }

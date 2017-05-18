@@ -1,6 +1,12 @@
 package models
 
-import "time"
+import (
+	"log"
+	"sync"
+	"time"
+
+	"github.com/pkg/errors"
+)
 
 type Subscription struct {
 	Name               string              `json:"name"`
@@ -8,6 +14,12 @@ type Subscription struct {
 	Message            *MessageStatusStore `json:"-"`
 	DefaultAckDeadline time.Duration       `json:"ack_deadline_seconds"`
 	PushConfig         *Push               `json:"push_config"`
+
+	// push loop channel
+	PushTick    time.Duration `json:"-"`
+	AbortPush   chan struct{} `json:"-"`
+	PushRunning bool          `json:"-"`
+	mu          sync.Mutex    `json:"-"`
 }
 
 // Create Subscription, if not exist already same name Subscription
@@ -24,6 +36,9 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 		TopicID:            topic.Name,
 		Message:            NewMessageStatusStore(name),
 		DefaultAckDeadline: convertAckDeadlineSeconds(timeout),
+		AbortPush:          make(chan struct{}),
+		PushRunning:        false,
+		PushTick:           10 * time.Second,
 	}
 	if err := s.SetPushConfig(endpoint, attr); err != nil {
 		return nil, err
@@ -60,7 +75,7 @@ func (s *Subscription) RegisterMessage(msg *Message) error {
 	}
 
 	// push
-	if s.PushConfig.HasValidEndpoint() {
+	if !s.isPullMode() {
 		// TODO: implements push loop goroutine
 		return s.Push()
 	}
@@ -97,6 +112,10 @@ func (s *Subscription) Push() error {
 	// TODO: implements slow start size. it means, size increment when success push
 	msgs, err := s.Message.CollectReadableMessage(3)
 	if err != nil {
+		// empty message is non error
+		if errors.Cause(err) == ErrEmptyMessage {
+			return nil
+		}
 		return err
 	}
 	for _, msg := range msgs {
@@ -139,7 +158,64 @@ func (s *Subscription) SetPushConfig(endpoint string, attribute map[string]strin
 	if err != nil {
 		return err
 	}
+
 	s.PushConfig = p
+	if err := s.PushLoop(); err != nil {
+		return err
+	}
+	return s.Save()
+}
+
+func (s *Subscription) isPullMode() bool {
+	return !s.PushConfig.HasValidEndpoint()
+}
+
+// PushLoop goroutine that keeps looking for pushable messages
+func (s *Subscription) PushLoop() error {
+	// already running loop, or pull mode
+	if s.getRunning() || s.isPullMode() {
+		return nil
+	}
+
+	if err := s.setRunning(true); err != nil {
+		return err
+	}
+	go func() {
+		t := time.NewTicker(s.PushTick)
+		for {
+			select {
+			case <-t.C:
+				err := s.Push()
+				if err != nil {
+					log.Println(err.Error())
+				}
+			case <-s.AbortPush:
+				break
+			}
+		}
+		t.Stop()
+		err := s.setRunning(false)
+		if err != nil {
+			log.Println(err.Error())
+		}
+	}()
+	return nil
+}
+
+// getRunning return pushRunning at mutex
+func (s *Subscription) getRunning() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.PushRunning
+}
+
+// setRunning setting pushRunning at mutex
+func (s *Subscription) setRunning(b bool) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	s.PushRunning = b
 	return s.Save()
 }
 
