@@ -77,6 +77,6 @@ func (p *Push) sendMessage(msg *Message, subID string) error {
 	case 200, 201, 204, 102:
 		return nil
 	default:
-		return errors.New("failed http status code")
+		return errors.Errorf("error send push message, got http status code '%d'", res.StatusCode)
 	}
 }
