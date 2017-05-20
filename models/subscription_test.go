@@ -18,10 +18,12 @@ func testUrl(t *testing.T, raw string) *url.URL {
 }
 
 func TestNewSubscription(t *testing.T) {
-	setupDatastoreAndSetTopics(t, "a")
+	setupDatastore(t)
+	setupDummyTopics(t)
+
 	expect1 := &Subscription{
 		Name:               "A",
-		TopicID:            "a",
+		TopicID:            "A",
 		Message:            NewMessageStatusStore("A"),
 		DefaultAckDeadline: 0,
 		PushConfig: &Push{
@@ -46,22 +48,22 @@ func TestNewSubscription(t *testing.T) {
 		expectErr error
 	}{
 		{
-			"A", "a", -1, "localhost:8080", map[string]string{"key": "value"},
+			"A", "A", -1, "localhost:8080", map[string]string{"key": "value"},
 			expect1,
 			nil,
 		},
 		{ // same name Subscription
-			"A", "a", -1, "localhost:8080", map[string]string{"key": "value"},
+			"A", "A", -1, "localhost:8080", map[string]string{"key": "value"},
 			nil,
 			ErrAlreadyExistSubscription,
 		},
 		{
-			"B", "b", -1, "localhost:8080", map[string]string{"key": "value"},
+			"B", "_", -1, "localhost:8080", map[string]string{"key": "value"},
 			nil,
 			ErrNotFoundEntry,
 		},
 		{
-			"B", "a", -1, ":", map[string]string{"key": "value"},
+			"B", "A", -1, ":", map[string]string{"key": "value"},
 			nil,
 			ErrInvalidEndpoint,
 		},
