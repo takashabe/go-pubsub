@@ -222,28 +222,54 @@ func (s *Subscription) PushLoop() error {
 		return err
 	}
 	go func() {
-		t := time.NewTicker(s.PushTick)
 		for {
-			select {
-			case <-t.C:
-				err := s.Push(s.getSize())
-				// improve push size, it is determined like TCP slow start
-				if err != nil {
-					log.Println(err.Error())
-					s.decrementPushSize()
-				} else {
-					s.incrementPushSize()
-				}
-			case <-s.AbortPush:
+			// refresh Subscription
+			s, err := GetSubscription(s.Name)
+			if err != nil {
+				log.Println(err.Error())
 				break
 			}
+
+			// check abort
+			if s.getAbortPush() {
+				break
+			}
+
+			state, err := s.Push(s.getSize())
+			// improve push size, it is determined like TCP slow start
+			if err != nil {
+				log.Println(err.Error())
+			}
+			switch state {
+			case sentSucceed:
+				s.incrementPushSize()
+			case sentFailed:
+				s.decrementPushSize()
+			}
+
+			time.Sleep(s.PushTick)
 		}
-		t.Stop()
-		err := s.setRunning(false)
-		if err != nil {
+
+		if err := s.teardownPushLoop(); err != nil {
 			log.Println(err.Error())
 		}
 	}()
+	return nil
+}
+
+func (s *Subscription) teardownPushLoop() error {
+	// goroutine safe
+	s, err := GetSubscription(s.Name)
+	if err != nil {
+		return err
+	}
+
+	if err := s.setRunning(false); err != nil {
+		return err
+	}
+	if err := s.setAbortPush(false); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -294,6 +320,11 @@ func (s *Subscription) setSize(i int) error {
 	s.sizeMu.Lock()
 	defer s.sizeMu.Unlock()
 
+	// goroutine safe
+	s, err := GetSubscription(s.Name)
+	if err != nil {
+		return err
+	}
 	s.PushSize = i
 	return s.Save()
 }
