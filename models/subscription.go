@@ -85,7 +85,8 @@ func (s *Subscription) RegisterMessage(msg *Message) error {
 
 	// push
 	if !s.isPullMode() {
-		return s.Push(1)
+		_, err := s.Push(1)
+		return err
 	}
 
 	return nil
@@ -115,27 +116,50 @@ func (s *Subscription) Pull(size int) ([]*PullMessage, error) {
 	return pullMsgs, nil
 }
 
-// Push send message to push endpoint
-func (s *Subscription) Push(size int) error {
+// sentState is state of send push message
+type sentState int
+
+const (
+	_ sentState = iota
+	sentSucceed
+	sentFailed
+	notSent
+)
+
+func (s sentState) String() string {
+	switch s {
+	case sentSucceed:
+		return "Succeed"
+	case sentFailed:
+		return "Failed"
+	case notSent:
+		return "Not send"
+	default:
+		return "Unknown"
+	}
+}
+
+// Push send message to push endpoint, returns send flag and error
+func (s *Subscription) Push(size int) (sentState, error) {
 	msgs, err := s.Message.CollectReadableMessage(size)
 	if err != nil {
 		// empty message is non error
 		if errors.Cause(err) == ErrEmptyMessage {
-			return nil
+			return notSent, nil
 		}
-		return err
+		return notSent, err
 	}
 	for _, msg := range msgs {
 		ackID := makeAckID()
 		s.Message.Deliver(msg.ID, ackID)
 		err := s.PushConfig.sendMessage(msg, s.Name)
 		if err != nil {
-			return err
+			return sentFailed, err
 		}
 		s.Ack(ackID)
 	}
 
-	return nil
+	return sentSucceed, nil
 }
 
 // Succeed Message delivery. remove sent Message.
@@ -167,8 +191,18 @@ func (s *Subscription) SetPushConfig(endpoint string, attribute map[string]strin
 	}
 
 	s.PushConfig = p
-	if err := s.PushLoop(); err != nil {
-		return err
+	if p.HasValidEndpoint() {
+		// set push
+		if err := s.PushLoop(); err != nil {
+			return err
+		}
+	} else {
+		// set pull
+		if s.getRunning() {
+			if err := s.setAbortPush(true); err != nil {
+				return err
+			}
+		}
 	}
 	return s.Save()
 }
