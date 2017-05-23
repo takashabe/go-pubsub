@@ -1,4 +1,4 @@
-package models
+package datastore
 
 import (
 	"database/sql"
