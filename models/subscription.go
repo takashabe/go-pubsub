@@ -17,9 +17,10 @@ type Subscription struct {
 
 	// push params
 	PushTick    time.Duration `json:"-"`
-	AbortPush   chan struct{} `json:"-"`
+	AbortPush   bool          `json:"-"`
 	PushRunning bool          `json:"-"`
 	PushSize    int           `json:"-"`
+	abortMu     sync.RWMutex  `json:"-"`
 	runningMu   sync.RWMutex  `json:"-"`
 	sizeMu      sync.RWMutex  `json:"-"`
 }
@@ -45,9 +46,7 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 		TopicID:            topic.Name,
 		Message:            NewMessageStatusStore(name),
 		DefaultAckDeadline: convertAckDeadlineSeconds(timeout),
-		AbortPush:          make(chan struct{}),
 		PushTick:           PushInterval,
-		PushRunning:        false,
 		PushSize:           MinPushSize,
 	}
 	if err := s.SetPushConfig(endpoint, attr); err != nil {
@@ -212,6 +211,23 @@ func (s *Subscription) PushLoop() error {
 		}
 	}()
 	return nil
+}
+
+// getAbortPush return AbortPush at mutex
+func (s *Subscription) getAbortPush() bool {
+	s.abortMu.RLock()
+	defer s.abortMu.RUnlock()
+
+	return s.AbortPush
+}
+
+// setAbortPush setting AbortPush at mutex
+func (s *Subscription) setAbortPush(b bool) error {
+	s.abortMu.Lock()
+	defer s.abortMu.Unlock()
+
+	s.AbortPush = b
+	return s.Save()
 }
 
 // getRunning return pushRunning at mutex

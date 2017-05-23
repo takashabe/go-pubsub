@@ -1,8 +1,11 @@
 package models
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 
@@ -32,7 +35,6 @@ func TestNewSubscription(t *testing.T) {
 				Attr: map[string]string{"key": "value"},
 			},
 		},
-		AbortPush:   nil,
 		PushRunning: true,
 		PushTick:    PushInterval,
 		PushSize:    MinPushSize,
@@ -72,9 +74,6 @@ func TestNewSubscription(t *testing.T) {
 		got, err := NewSubscription(c.name, c.topicName, c.timeout, c.endpoint, c.attr)
 		if errors.Cause(err) != c.expectErr {
 			t.Fatalf("%#d: want %v, got %v", i, c.expectErr, err)
-		}
-		if got != nil {
-			got.AbortPush = nil // for channel equal
 		}
 		if !reflect.DeepEqual(got, c.expectObj) {
 			t.Errorf("%#d: want %#v, got %#v", i, c.expectObj, got)
