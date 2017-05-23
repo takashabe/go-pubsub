@@ -15,12 +15,22 @@ type Subscription struct {
 	DefaultAckDeadline time.Duration       `json:"ack_deadline_seconds"`
 	PushConfig         *Push               `json:"push_config"`
 
-	// push loop channel
+	// push params
 	PushTick    time.Duration `json:"-"`
-	AbortPush   chan struct{} `json:"-"`
+	AbortPush   bool          `json:"-"`
 	PushRunning bool          `json:"-"`
-	mu          sync.Mutex    `json:"-"`
+	PushSize    int           `json:"-"`
+	abortMu     sync.RWMutex  `json:"-"`
+	runningMu   sync.RWMutex  `json:"-"`
+	sizeMu      sync.RWMutex  `json:"-"`
 }
+
+const (
+	// push variables
+	PushInterval = 10 * time.Second
+	MaxPushSize  = 1000
+	MinPushSize  = 1
+)
 
 // Create Subscription, if not exist already same name Subscription
 func NewSubscription(name, topicName string, timeout int64, endpoint string, attr map[string]string) (*Subscription, error) {
@@ -36,9 +46,8 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 		TopicID:            topic.Name,
 		Message:            NewMessageStatusStore(name),
 		DefaultAckDeadline: convertAckDeadlineSeconds(timeout),
-		AbortPush:          make(chan struct{}),
-		PushRunning:        false,
-		PushTick:           10 * time.Second,
+		PushTick:           PushInterval,
+		PushSize:           MinPushSize,
 	}
 	if err := s.SetPushConfig(endpoint, attr); err != nil {
 		return nil, err
@@ -76,8 +85,8 @@ func (s *Subscription) RegisterMessage(msg *Message) error {
 
 	// push
 	if !s.isPullMode() {
-		// TODO: implements push loop goroutine
-		return s.Push()
+		_, err := s.Push(1)
+		return err
 	}
 
 	return nil
@@ -107,28 +116,50 @@ func (s *Subscription) Pull(size int) ([]*PullMessage, error) {
 	return pullMsgs, nil
 }
 
-// Push send message to push endpoint
-func (s *Subscription) Push() error {
-	// TODO: implements slow start size. it means, size increment when success push
-	msgs, err := s.Message.CollectReadableMessage(3)
+// sentState is state of send push message
+type sentState int
+
+const (
+	_ sentState = iota
+	sentSucceed
+	sentFailed
+	notSent
+)
+
+func (s sentState) String() string {
+	switch s {
+	case sentSucceed:
+		return "Succeed"
+	case sentFailed:
+		return "Failed"
+	case notSent:
+		return "Not send"
+	default:
+		return "Unknown"
+	}
+}
+
+// Push send message to push endpoint, returns send flag and error
+func (s *Subscription) Push(size int) (sentState, error) {
+	msgs, err := s.Message.CollectReadableMessage(size)
 	if err != nil {
 		// empty message is non error
 		if errors.Cause(err) == ErrEmptyMessage {
-			return nil
+			return notSent, nil
 		}
-		return err
+		return notSent, err
 	}
 	for _, msg := range msgs {
 		ackID := makeAckID()
 		s.Message.Deliver(msg.ID, ackID)
 		err := s.PushConfig.sendMessage(msg, s.Name)
 		if err != nil {
-			return err
+			return sentFailed, err
 		}
 		s.Ack(ackID)
 	}
 
-	return nil
+	return sentSucceed, nil
 }
 
 // Succeed Message delivery. remove sent Message.
@@ -160,8 +191,18 @@ func (s *Subscription) SetPushConfig(endpoint string, attribute map[string]strin
 	}
 
 	s.PushConfig = p
-	if err := s.PushLoop(); err != nil {
-		return err
+	if p.HasValidEndpoint() {
+		// set push
+		if err := s.PushLoop(); err != nil {
+			return err
+		}
+	} else {
+		// set pull
+		if s.getRunning() {
+			if err := s.setAbortPush(true); err != nil {
+				return err
+			}
+		}
 	}
 	return s.Save()
 }
@@ -181,42 +222,127 @@ func (s *Subscription) PushLoop() error {
 		return err
 	}
 	go func() {
-		t := time.NewTicker(s.PushTick)
 		for {
-			select {
-			case <-t.C:
-				err := s.Push()
-				if err != nil {
-					log.Println(err.Error())
-				}
-			case <-s.AbortPush:
+			// refresh Subscription
+			s, err := GetSubscription(s.Name)
+			if err != nil {
+				log.Println(err.Error())
 				break
 			}
+
+			// check abort
+			if s.getAbortPush() {
+				break
+			}
+
+			state, err := s.Push(s.getSize())
+			// improve push size, it is determined like TCP slow start
+			if err != nil {
+				log.Println(err.Error())
+			}
+			switch state {
+			case sentSucceed:
+				s.incrementPushSize()
+			case sentFailed:
+				s.decrementPushSize()
+			}
+
+			time.Sleep(s.PushTick)
 		}
-		t.Stop()
-		err := s.setRunning(false)
-		if err != nil {
+
+		if err := s.teardownPushLoop(); err != nil {
 			log.Println(err.Error())
 		}
 	}()
 	return nil
 }
 
+func (s *Subscription) teardownPushLoop() error {
+	// goroutine safe
+	s, err := GetSubscription(s.Name)
+	if err != nil {
+		return err
+	}
+
+	if err := s.setRunning(false); err != nil {
+		return err
+	}
+	if err := s.setAbortPush(false); err != nil {
+		return err
+	}
+	return nil
+}
+
+// getAbortPush return AbortPush at mutex
+func (s *Subscription) getAbortPush() bool {
+	s.abortMu.RLock()
+	defer s.abortMu.RUnlock()
+
+	return s.AbortPush
+}
+
+// setAbortPush setting AbortPush at mutex
+func (s *Subscription) setAbortPush(b bool) error {
+	s.abortMu.Lock()
+	defer s.abortMu.Unlock()
+
+	s.AbortPush = b
+	return s.Save()
+}
+
 // getRunning return pushRunning at mutex
 func (s *Subscription) getRunning() bool {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.runningMu.RLock()
+	defer s.runningMu.RUnlock()
 
 	return s.PushRunning
 }
 
 // setRunning setting pushRunning at mutex
 func (s *Subscription) setRunning(b bool) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.runningMu.Lock()
+	defer s.runningMu.Unlock()
 
 	s.PushRunning = b
 	return s.Save()
+}
+
+// getSize return pushSize at mutex
+func (s *Subscription) getSize() int {
+	s.sizeMu.RLock()
+	defer s.sizeMu.RUnlock()
+
+	return s.PushSize
+}
+
+// setSize setting pushSize at mutex
+func (s *Subscription) setSize(i int) error {
+	s.sizeMu.Lock()
+	defer s.sizeMu.Unlock()
+
+	// goroutine safe
+	s, err := GetSubscription(s.Name)
+	if err != nil {
+		return err
+	}
+	s.PushSize = i
+	return s.Save()
+}
+
+func (s *Subscription) incrementPushSize() error {
+	newSize := s.getSize() * 2
+	if newSize > MaxPushSize {
+		newSize = MaxPushSize
+	}
+	return s.setSize(newSize)
+}
+
+func (s *Subscription) decrementPushSize() error {
+	newSize := int(s.getSize() / 2)
+	if newSize < MinPushSize {
+		newSize = MinPushSize
+	}
+	return s.setSize(newSize)
 }
 
 // convertAckDeadlineSeconds convert timeout to seconds time.Duration
