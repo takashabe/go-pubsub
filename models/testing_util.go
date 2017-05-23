@@ -1,10 +1,9 @@
 package models
 
 import (
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"testing"
+	"time"
 
 	fixture "github.com/takashabe/go-fixture"
 	_ "github.com/takashabe/go-fixture/mysql"
@@ -134,8 +133,32 @@ func mustGetSubscription(t *testing.T, id string) *Subscription {
 	return a
 }
 
-func getDummyServer(t *testing.T) *httptest.Server {
-	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(200)
-	}))
+func WaitPushMessaging(t *testing.T, reqCount *int, messageSize int) {
+	failCount := 0
+	for {
+		if *reqCount >= messageSize {
+			return
+		}
+
+		if failCount > 100 {
+			t.Fatalf("failed to push message, timeout error")
+		}
+		failCount++
+		time.Sleep(10 * time.Millisecond)
+	}
+}
+
+func waitPushRunningDisable(t *testing.T, subID string) {
+	failCount := 0
+	for {
+		s := mustGetSubscription(t, subID)
+		if !s.getRunning() {
+			return
+		}
+		if failCount >= 100 {
+			t.Fatalf("failed to wait PushRunning disabled, timeout error")
+		}
+		failCount++
+		time.Sleep(10 * time.Millisecond)
+	}
 }

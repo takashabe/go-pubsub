@@ -208,7 +208,9 @@ func TestPushImmediately(t *testing.T) {
 	setupDummyTopics(t)
 	setupDummySubscription(t)
 
-	ts := getDummyServer(t)
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	}))
 	defer ts.Close()
 
 	err := mustGetSubscription(t, "a").SetPushConfig(ts.URL, nil)
@@ -233,11 +235,16 @@ func TestPushLoop(t *testing.T) {
 	setupDummyTopics(t)
 	setupDummySubscription(t)
 
-	ts := getDummyServer(t)
+	var wg sync.WaitGroup
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		wg.Done()
+		w.WriteHeader(200)
+	}))
 	defer ts.Close()
 
 	// publish message at pull mode
 	for i := 0; i < 3; i++ {
+		wg.Add(1)
 		publishMessage(t, "A", "test", nil)
 	}
 
@@ -248,8 +255,14 @@ func TestPushLoop(t *testing.T) {
 		t.Fatalf("failed to SetPushConfig, got err %v", err)
 	}
 
+	// wait push messaging
+	wg.Wait()
+	if err := mustGetSubscription(t, "a").SetPushConfig("", nil); err != nil {
+		t.Fatalf("failed to SetPushConfig, got err %v", err)
+	}
+	waitPushRunningDisable(t, "a")
+
 	// want empty message
-	time.Sleep(100 * time.Millisecond)
 	list, err := globalMessageStatus.collectByField(func(ms *MessageStatus) bool {
 		return ms.SubscriptionID == sub.Name
 	})
@@ -258,5 +271,106 @@ func TestPushLoop(t *testing.T) {
 	}
 	if len(list) != 0 {
 		t.Errorf("MessageStatus list size want 0, got %d", len(list))
+	}
+}
+
+func TestPushLoopIncrement(t *testing.T) {
+	setupDatastore(t)
+	setupDummyTopics(t)
+	setupDummySubscription(t)
+
+	var wg sync.WaitGroup
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		wg.Done()
+		w.WriteHeader(200)
+	}))
+	defer ts.Close()
+
+	// publish message at pull mode
+	for i := 0; i < 3; i++ {
+		wg.Add(1)
+		publishMessage(t, "A", "test", nil)
+	}
+
+	// set to push mode
+	sub := mustGetSubscription(t, "a")
+	sub.PushTick = 10 * time.Millisecond  // faster testing
+	sub.PushSize = int(MaxPushSize/2) + 1 // want max size at next loop
+	if err := sub.SetPushConfig(ts.URL, nil); err != nil {
+		t.Fatalf("failed to SetPushConfig, got err %v", err)
+	}
+
+	// wait push messaging
+	wg.Wait()
+	if err := mustGetSubscription(t, "a").SetPushConfig("", nil); err != nil {
+		t.Fatalf("failed to SetPushConfig, got err %v", err)
+	}
+	waitPushRunningDisable(t, "a")
+
+	// want empty message
+	list, err := globalMessageStatus.collectByField(func(ms *MessageStatus) bool {
+		return ms.SubscriptionID == sub.Name
+	})
+	if err != nil {
+		t.Fatalf("failed to collect MessageStatus, got err %v", err)
+	}
+	if len(list) != 0 {
+		t.Errorf("MessageStatus list size want 0, got %d", len(list))
+	}
+
+	// want MaxPushSize
+	if got := mustGetSubscription(t, "a").PushSize; got != MaxPushSize {
+		t.Errorf("want push size = %d, got %d", MaxPushSize, got)
+	}
+}
+
+func TestPushLoopDecrement(t *testing.T) {
+	setupDatastore(t)
+	setupDummyTopics(t)
+	setupDummySubscription(t)
+
+	var wg sync.WaitGroup
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		wg.Done()
+		w.WriteHeader(500)
+	}))
+	defer ts.Close()
+
+	// publish message at pull mode
+	messageSize := 3
+	for i := 0; i < messageSize; i++ {
+		wg.Add(1)
+		publishMessage(t, "A", "test", nil)
+	}
+
+	// set to push mode
+	sub := mustGetSubscription(t, "a")
+	sub.PushTick = 10 * time.Millisecond // faster testing
+	sub.PushSize = MinPushSize
+	if err := sub.SetPushConfig(ts.URL, nil); err != nil {
+		t.Fatalf("failed to SetPushConfig, got err %v", err)
+	}
+
+	// wait push messaging
+	wg.Wait()
+	if err := mustGetSubscription(t, "a").SetPushConfig("", nil); err != nil {
+		t.Fatalf("failed to SetPushConfig, got err %v", err)
+	}
+	waitPushRunningDisable(t, "a")
+
+	// want fullsize message
+	list, err := globalMessageStatus.collectByField(func(ms *MessageStatus) bool {
+		return ms.SubscriptionID == sub.Name
+	})
+	if err != nil {
+		t.Fatalf("failed to collect MessageStatus, got err %v", err)
+	}
+	if len(list) != messageSize {
+		t.Errorf("MessageStatus list size want %d, got %d", messageSize, len(list))
+	}
+
+	// want MinPushSize
+	if got := mustGetSubscription(t, "a").PushSize; got != MinPushSize {
+		t.Errorf("want push size = %d, got %d", MinPushSize, got)
 	}
 }
