@@ -13,20 +13,19 @@ func TestLoadDatastore(t *testing.T) {
 		expect string
 	}{
 		{
-			&Config{Datastore: &DatastoreConfig{}},
-			"*models.Memory",
+			&Config{},
+			"*datastore.Memory",
 		},
 		{
 			// WARNING: Require connect redis
 			&Config{
-				Datastore: &DatastoreConfig{
-					Redis: &RedisConfig{
-						Host: "localhost",
-						Port: 6379,
-						DB:   0,
-					},
-				}},
-			"*models.Redis",
+				Redis: &RedisConfig{
+					Host: "localhost",
+					Port: 6379,
+					DB:   0,
+				},
+			},
+			"*datastore.Redis",
 		},
 	}
 	for i, c := range cases {
@@ -41,15 +40,15 @@ func TestLoadDatastore(t *testing.T) {
 }
 
 func TestMemorySet(t *testing.T) {
-	msgA := Message{ID: "a"}
-	msgB := Message{ID: "b"}
+	msgA := Dummy{ID: "a"}
+	msgB := Dummy{ID: "b"}
 
 	cases := []struct {
-		inputMsgs []Message
+		inputMsgs []Dummy
 		expect    map[interface{}]interface{}
 	}{
 		{
-			[]Message{
+			[]Dummy{
 				msgA, msgA, msgB,
 			},
 			map[interface{}]interface{}{
@@ -69,8 +68,8 @@ func TestMemorySet(t *testing.T) {
 }
 
 func TestMemoryGet(t *testing.T) {
-	msgA := Message{ID: "a"}
-	msgB := Message{ID: "b"}
+	msgA := Dummy{ID: "a"}
+	msgB := Dummy{ID: "b"}
 	baseStore := Memory{
 		Store: map[interface{}]interface{}{"a": msgA, "b": msgB},
 	}
@@ -103,8 +102,8 @@ func TestMemoryGet(t *testing.T) {
 }
 
 func TestMemoryDelete(t *testing.T) {
-	msgA := Message{ID: "a"}
-	msgB := Message{ID: "b"}
+	msgA := Dummy{ID: "a"}
+	msgB := Dummy{ID: "b"}
 	baseStore := Memory{
 		Store: map[interface{}]interface{}{"a": msgA, "b": msgB},
 	}

@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 
 	"github.com/pkg/errors"
+	"github.com/takashabe/go-message-queue/datastore"
 )
 
 // globalMessage Global message key-value store object
@@ -12,7 +13,7 @@ var globalMessage *DatastoreMessage
 
 // DatastoreMessage is adapter between actual datastore and datastore client
 type DatastoreMessage struct {
-	store Datastore
+	store datastore.Datastore
 }
 
 // NewDatastoreMessage create DatastoreTopic object

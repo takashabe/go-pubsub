@@ -8,11 +8,11 @@ import (
 )
 
 func dummyRedis(t *testing.T) *Redis {
-	r, err := NewRedis(&Config{&DatastoreConfig{
+	r, err := NewRedis(&Config{
 		Redis: &RedisConfig{
 			Host: "localhost",
 			Port: 6379,
-		}},
+		},
 	})
 	if err != nil {
 		t.Fatalf("failed to connect redis, got err %v", err)
@@ -27,7 +27,7 @@ func TestRedisSetAndGet(t *testing.T) {
 	}{
 		{
 			"a",
-			&Message{ID: "a"},
+			&Dummy{ID: "a"},
 		},
 	}
 	for i, c := range cases {
@@ -46,7 +46,7 @@ func TestRedisSetAndGet(t *testing.T) {
 		if err != nil {
 			t.Fatalf("#%d: failed to get, key=%v, got err %v", i, c.key, err)
 		}
-		m, err := DecodeGobMessage(data)
+		m, err := DecodeDummy(data)
 		if err != nil {
 			t.Fatalf("#%d: failed to decode data, got err %v", i, err)
 		}
