@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 
 	"github.com/pkg/errors"
+	"github.com/takashabe/go-message-queue/datastore"
 )
 
 // globalTopics global Topic datastore
@@ -12,12 +13,12 @@ var globalTopics *DatastoreTopic
 
 // DatastoreTopic is adapter between actual datastore and datastore client
 type DatastoreTopic struct {
-	store Datastore
+	store datastore.Datastore
 }
 
 // NewDatastoreTopic create DatastoreTopic object
-func NewDatastoreTopic(cfg *Config) (*DatastoreTopic, error) {
-	d, err := LoadDatastore(cfg)
+func NewDatastoreTopic(cfg *datastore.Config) (*DatastoreTopic, error) {
+	d, err := datastore.LoadDatastore(cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load datastore")
 	}
@@ -28,7 +29,7 @@ func NewDatastoreTopic(cfg *Config) (*DatastoreTopic, error) {
 
 // InitDatastoreTopic initialize global datastore object
 func InitDatastoreTopic() error {
-	d, err := NewDatastoreTopic(globalConfig)
+	d, err := NewDatastoreTopic(datastore.GlobalConfig)
 	if err != nil {
 		return err
 	}
@@ -66,7 +67,7 @@ func (d *DatastoreTopic) Get(key string) (*Topic, error) {
 }
 
 func (d *DatastoreTopic) List() ([]*Topic, error) {
-	sources, err := SpecifyDump(d.store, d.prefix(""))
+	sources, err := datastore.SpecifyDump(d.store, d.prefix(""))
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +83,7 @@ func (d *DatastoreTopic) List() ([]*Topic, error) {
 }
 
 func (d *DatastoreTopic) Set(topic *Topic) error {
-	v, err := EncodeGob(topic)
+	v, err := datastore.EncodeGob(topic)
 	if err != nil {
 		return err
 	}

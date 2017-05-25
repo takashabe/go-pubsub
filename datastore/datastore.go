@@ -1,4 +1,4 @@
-package models
+package datastore
 
 import (
 	"bytes"
@@ -27,10 +27,10 @@ func LoadDatastore(cfg *Config) (Datastore, error) {
 		return NewMemory(nil), nil
 	}
 
-	if cfg.Datastore.Redis != nil {
+	if cfg.Redis != nil {
 		return NewRedis(cfg)
 	}
-	if cfg.Datastore.MySQL != nil {
+	if cfg.MySQL != nil {
 		return NewMySQL(cfg)
 	}
 	return NewMemory(nil), nil
@@ -42,15 +42,6 @@ func EncodeGob(s interface{}) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
-}
-
-func DecodeGobMessage(e []byte) (*Message, error) {
-	var res *Message
-	buf := bytes.NewReader(e)
-	if err := gob.NewDecoder(buf).Decode(&res); err != nil {
-		return nil, err
-	}
-	return res, nil
 }
 
 // SpecifyDump return Dump entries, each Datastore type
@@ -137,7 +128,7 @@ type Redis struct {
 
 // NewRedis return redis client
 func NewRedis(cfg *Config) (*Redis, error) {
-	rconf := cfg.Datastore.Redis
+	rconf := cfg.Redis
 	pool := newPool(fmt.Sprintf("%s:%d", rconf.Host, rconf.Port))
 	_, err := pool.Dial()
 	if err != nil {
@@ -238,7 +229,7 @@ type generalSchema struct {
 
 // NewMySQL return MySQL client
 func NewMySQL(cfg *Config) (*MySQL, error) {
-	c := cfg.Datastore.MySQL
+	c := cfg.MySQL
 	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/mq", c.User, c.Password, c.Host, c.Port))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to connect mysql")

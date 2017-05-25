@@ -1,5 +1,7 @@
+SUBPACKAGES := $(shell go list ./... | grep -v /vendor/)
+
 test:
-	go test ./ -v; go test ./models -v
+	go test -v $(SUBPACKAGES)
 
 test_memory:
 	GO_MESSAGE_QUEUE_CONFIG="testdata/config/memory.yaml" go test ./ -v; go test ./models -v

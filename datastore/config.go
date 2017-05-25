@@ -1,4 +1,4 @@
-package models
+package datastore
 
 import (
 	"io/ioutil"
@@ -6,20 +6,15 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-// TODO: initialize config from Server
-var globalConfig *Config
+var GlobalConfig *Config
 
 // SetGlobalConfig set global config
 func SetGlobalConfig(cfg *Config) {
-	globalConfig = cfg
+	GlobalConfig = cfg
 }
 
-// Config is connect to datastore parameters
+// Config is specific datastore config, written under "datastore"
 type Config struct {
-	Datastore *DatastoreConfig `yaml:"datastore"`
-}
-
-type DatastoreConfig struct {
 	Redis *RedisConfig `yaml:"redis"`
 	MySQL *MySQLConfig `yaml:"mysql"`
 }
@@ -38,6 +33,7 @@ type MySQLConfig struct {
 	Password string `yaml:"password"`
 }
 
+// TODO: move to server package
 // LoadConfigFromFile read config file and create config object
 func LoadConfigFromFile(path string) (*Config, error) {
 	d, err := ioutil.ReadFile(path)

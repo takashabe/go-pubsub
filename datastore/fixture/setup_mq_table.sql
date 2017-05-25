@@ -1,0 +1,1 @@
+../../models/fixture/setup_mq_table.sql

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/takashabe/go-message-queue/datastore"
 )
 
 func testUrl(t *testing.T, raw string) *url.URL {
@@ -62,7 +63,7 @@ func TestNewSubscription(t *testing.T) {
 		{
 			"B", "_", -1, "localhost:8080", map[string]string{"key": "value"},
 			nil,
-			ErrNotFoundEntry,
+			datastore.ErrNotFoundEntry,
 		},
 		{
 			"B", "A", -1, ":", map[string]string{"key": "value"},
@@ -223,7 +224,7 @@ func TestPushImmediately(t *testing.T) {
 	}
 
 	// not exist message when push and ack message
-	_, err = globalMessageStatus.FindBySubscriptionIDAndMessageID("a", msgID)
+	_, err = getGlobalMessageStatus().FindBySubscriptionIDAndMessageID("a", msgID)
 	if err != ErrNotFoundEntry {
 		t.Errorf("error want %s , got %s", ErrNotFoundEntry, err)
 	}
@@ -262,7 +263,7 @@ func TestPushLoop(t *testing.T) {
 	waitPushRunningDisable(t, "a")
 
 	// want empty message
-	list, err := globalMessageStatus.collectByField(func(ms *MessageStatus) bool {
+	list, err := getGlobalMessageStatus().collectByField(func(ms *MessageStatus) bool {
 		return ms.SubscriptionID == sub.Name
 	})
 	if err != nil {
@@ -307,7 +308,7 @@ func TestPushLoopIncrement(t *testing.T) {
 	waitPushRunningDisable(t, "a")
 
 	// want empty message
-	list, err := globalMessageStatus.collectByField(func(ms *MessageStatus) bool {
+	list, err := getGlobalMessageStatus().collectByField(func(ms *MessageStatus) bool {
 		return ms.SubscriptionID == sub.Name
 	})
 	if err != nil {
@@ -352,13 +353,16 @@ func TestPushLoopDecrement(t *testing.T) {
 
 	// wait push messaging
 	wg.Wait()
+	// wait push response finished
+	// TODO: exit time.Sleep()
+	time.Sleep(100 * time.Millisecond)
 	if err := mustGetSubscription(t, "a").SetPushConfig("", nil); err != nil {
 		t.Fatalf("failed to SetPushConfig, got err %v", err)
 	}
 	waitPushRunningDisable(t, "a")
 
 	// want fullsize message
-	list, err := globalMessageStatus.collectByField(func(ms *MessageStatus) bool {
+	list, err := getGlobalMessageStatus().collectByField(func(ms *MessageStatus) bool {
 		return ms.SubscriptionID == sub.Name
 	})
 	if err != nil {

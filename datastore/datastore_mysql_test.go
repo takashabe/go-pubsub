@@ -1,4 +1,4 @@
-package models
+package datastore
 
 import (
 	"database/sql"
@@ -11,13 +11,13 @@ import (
 )
 
 func dummyMySQL(t *testing.T) *MySQL {
-	c, err := NewMySQL(&Config{&DatastoreConfig{
+	c, err := NewMySQL(&Config{
 		MySQL: &MySQLConfig{
 			User:     "mq",
 			Password: "",
 			Host:     "localhost",
 			Port:     3306,
-		}},
+		},
 	})
 	if err != nil {
 		t.Fatalf("failed to connect mysql, got err %v", err)
@@ -39,7 +39,7 @@ func TestMySQLSetAndGet(t *testing.T) {
 	}{
 		{
 			"a",
-			&Message{ID: "a"},
+			&Dummy{ID: "a"},
 		},
 	}
 	for i, c := range cases {
@@ -63,7 +63,7 @@ func TestMySQLSetAndGet(t *testing.T) {
 		if !ok {
 			t.Fatalf("#%d: failed to convert []byte, got err %v", i, err)
 		}
-		m, err := DecodeGobMessage(data)
+		m, err := DecodeDummy(data)
 		if err != nil {
 			t.Fatalf("#%d: failed to decode data, got err %v", i, err)
 		}
@@ -81,7 +81,7 @@ func TestMySQLDelete(t *testing.T) {
 	}{
 		{
 			"a",
-			&Message{ID: "a"},
+			&Dummy{ID: "a"},
 			ErrNotFoundEntry,
 		},
 	}
@@ -121,12 +121,12 @@ func TestMySQLDump(t *testing.T) {
 	}{
 		{
 			[]kv{
-				{id: "a", value: &Message{ID: "a"}},
-				{id: "b", value: &Message{ID: "b"}},
+				{id: "a", value: &Dummy{ID: "a"}},
+				{id: "b", value: &Dummy{ID: "b"}},
 			},
 			map[interface{}]interface{}{
-				"a": &Message{ID: "a"},
-				"b": &Message{ID: "b"},
+				"a": &Dummy{ID: "a"},
+				"b": &Dummy{ID: "b"},
 			},
 		},
 	}
@@ -153,7 +153,7 @@ func TestMySQLDump(t *testing.T) {
 
 		replaces := make(map[interface{}]interface{}, len(c.inputEntries))
 		for k, v := range dump {
-			m, err := DecodeGobMessage(v.([]byte))
+			m, err := DecodeDummy(v.([]byte))
 			if err != nil {
 				t.Fatalf("#%d: failed to decode data, got err %v", i, err)
 			}

@@ -80,12 +80,12 @@ func (ms *MessageStatus) Deliver(ackID string) {
 
 // Save save MessageStatus to backend datastore
 func (ms *MessageStatus) Save() error {
-	return globalMessageStatus.Set(ms)
+	return getGlobalMessageStatus().Set(ms)
 }
 
 // Delete delete MessageStatus from backend datastore
 func (ms *MessageStatus) Delete() error {
-	return globalMessageStatus.Delete(ms.ID)
+	return getGlobalMessageStatus().Delete(ms.ID)
 }
 
 // MessageStatusStore is holds and adapter for MessageStatus
@@ -124,7 +124,7 @@ func (mss *MessageStatusStore) CollectReadableMessage(size int) ([]*Message, err
 	}
 
 	// collect messages
-	msList, err := globalMessageStatus.CollectByIDs(mss.Status...)
+	msList, err := getGlobalMessageStatus().CollectByIDs(mss.Status...)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func (mss *MessageStatusStore) CollectReadableMessage(size int) ([]*Message, err
 
 // Deliver register AckID to message
 func (mss *MessageStatusStore) Deliver(msgID, ackID string) error {
-	ms, err := globalMessageStatus.FindBySubscriptionIDAndMessageID(mss.SubscriptionID, msgID)
+	ms, err := getGlobalMessageStatus().FindBySubscriptionIDAndMessageID(mss.SubscriptionID, msgID)
 	if err != nil {
 		return err
 	}
@@ -166,7 +166,7 @@ func (mss *MessageStatusStore) Deliver(msgID, ackID string) error {
 
 // Ack invisible message depends ackID
 func (mss *MessageStatusStore) Ack(ackID string) error {
-	ms, err := globalMessageStatus.FindByAckID(ackID)
+	ms, err := getGlobalMessageStatus().FindByAckID(ackID)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("failed to FindByAckID, AckID=%s", ackID))
 	}
@@ -195,5 +195,5 @@ func (mss *MessageStatusStore) Ack(ackID string) error {
 
 // FindByAckID return MessageStatus depends AckID
 func (mss *MessageStatusStore) FindByAckID(ackID string) (*MessageStatus, error) {
-	return globalMessageStatus.FindByAckID(ackID)
+	return getGlobalMessageStatus().FindByAckID(ackID)
 }
