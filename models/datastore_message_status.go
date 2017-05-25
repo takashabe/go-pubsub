@@ -3,12 +3,29 @@ package models
 import (
 	"bytes"
 	"encoding/gob"
+	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/takashabe/go-message-queue/datastore"
 )
 
-var globalMessageStatus *DatastoreMessageStatus
+// globalMessageStatus global subscription datastore
+var (
+	globalMessageStatus   *DatastoreMessageStatus
+	globalMessageStatusMu sync.RWMutex
+)
+
+func getGlobalMessageStatus() *DatastoreMessageStatus {
+	globalMessageStatusMu.RLock()
+	defer globalMessageStatusMu.RUnlock()
+	return globalMessageStatus
+}
+
+func setGlobalMessageStatus(v *DatastoreMessageStatus) {
+	globalMessageStatusMu.Lock()
+	defer globalMessageStatusMu.Unlock()
+	globalMessageStatus = v
+}
 
 // DatastoreMessageStatus is adapter between actual datastore and datastore client
 type DatastoreMessageStatus struct {

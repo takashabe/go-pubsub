@@ -224,7 +224,7 @@ func TestPushImmediately(t *testing.T) {
 	}
 
 	// not exist message when push and ack message
-	_, err = globalMessageStatus.FindBySubscriptionIDAndMessageID("a", msgID)
+	_, err = getGlobalMessageStatus().FindBySubscriptionIDAndMessageID("a", msgID)
 	if err != ErrNotFoundEntry {
 		t.Errorf("error want %s , got %s", ErrNotFoundEntry, err)
 	}
@@ -263,7 +263,7 @@ func TestPushLoop(t *testing.T) {
 	waitPushRunningDisable(t, "a")
 
 	// want empty message
-	list, err := globalMessageStatus.collectByField(func(ms *MessageStatus) bool {
+	list, err := getGlobalMessageStatus().collectByField(func(ms *MessageStatus) bool {
 		return ms.SubscriptionID == sub.Name
 	})
 	if err != nil {
@@ -308,7 +308,7 @@ func TestPushLoopIncrement(t *testing.T) {
 	waitPushRunningDisable(t, "a")
 
 	// want empty message
-	list, err := globalMessageStatus.collectByField(func(ms *MessageStatus) bool {
+	list, err := getGlobalMessageStatus().collectByField(func(ms *MessageStatus) bool {
 		return ms.SubscriptionID == sub.Name
 	})
 	if err != nil {
@@ -359,7 +359,7 @@ func TestPushLoopDecrement(t *testing.T) {
 	waitPushRunningDisable(t, "a")
 
 	// want fullsize message
-	list, err := globalMessageStatus.collectByField(func(ms *MessageStatus) bool {
+	list, err := getGlobalMessageStatus().collectByField(func(ms *MessageStatus) bool {
 		return ms.SubscriptionID == sub.Name
 	})
 	if err != nil {

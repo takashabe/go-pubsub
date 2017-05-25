@@ -3,12 +3,29 @@ package models
 import (
 	"bytes"
 	"encoding/gob"
+	"sync"
 
 	"github.com/pkg/errors"
 	"github.com/takashabe/go-message-queue/datastore"
 )
 
 // globalSubscription global subscription datastore
+var (
+	globalSubscription   *DatastoreSubscription
+	globalSubscriptionMu sync.RWMutex
+)
+
+func getGlobalSubscription() *DatastoreSubscription {
+	globalSubscriptionMu.RLock()
+	defer globalSubscriptionMu.RUnlock()
+	return globalSubscription
+}
+
+func setGlobalSubscription(v *DatastoreSubscription) {
+	globalSubscriptionMu.Lock()
+	defer globalSubscriptionMu.Unlock()
+	globalSubscription = v
+}
 
 // DatastoreSubscription is adapter between actual datastore and datastore client
 type DatastoreSubscription struct {
@@ -32,7 +49,7 @@ func InitDatastoreSubscription() error {
 	if err != nil {
 		return err
 	}
-	globalSubscription = d
+	setGlobalSubscription(d)
 	return nil
 }
 

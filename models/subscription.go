@@ -61,17 +61,17 @@ func NewSubscription(name, topicName string, timeout int64, endpoint string, att
 
 // GetSubscription return Subscription object
 func GetSubscription(name string) (*Subscription, error) {
-	return globalSubscription.Get(name)
+	return getGlobalSubscription().Get(name)
 }
 
 // Delete is delete subscription at globalSubscription
 func (s *Subscription) Delete() error {
-	return globalSubscription.Delete(s.Name)
+	return getGlobalSubscription().Delete(s.Name)
 }
 
 // ListSubscription returns subscription list from globalSubscription
 func ListSubscription() ([]*Subscription, error) {
-	return globalSubscription.List()
+	return getGlobalSubscription().List()
 }
 
 // RegisterMessage associate Message to Subscription
@@ -355,7 +355,7 @@ func convertAckDeadlineSeconds(timeout int64) time.Duration {
 
 // Save is save to datastore
 func (s *Subscription) Save() error {
-	return globalSubscription.Set(s)
+	return getGlobalSubscription().Set(s)
 }
 
 // BySubscriptionName implements sort.Interface for []*Subscription based on the ID
