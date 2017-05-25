@@ -353,6 +353,9 @@ func TestPushLoopDecrement(t *testing.T) {
 
 	// wait push messaging
 	wg.Wait()
+	// wait push response finished
+	// TODO: exit time.Sleep()
+	time.Sleep(100 * time.Millisecond)
 	if err := mustGetSubscription(t, "a").SetPushConfig("", nil); err != nil {
 		t.Fatalf("failed to SetPushConfig, got err %v", err)
 	}
