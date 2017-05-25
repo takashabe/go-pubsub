@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+	"github.com/takashabe/go-message-queue/datastore"
 	"github.com/takashabe/go-message-queue/models"
 	"github.com/takashabe/go-router"
 )
@@ -98,11 +99,11 @@ func routes() *router.Router {
 
 // Server is topic and subscription frontend server
 type Server struct {
-	cfg *models.Config
+	cfg *Config
 }
 
 func NewServer(path string) (*Server, error) {
-	c, err := models.LoadConfigFromFile(path)
+	c, err := LoadConfigFromFile(path)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load config")
 	}
@@ -112,7 +113,7 @@ func NewServer(path string) (*Server, error) {
 }
 
 func (s *Server) InitDatastore() error {
-	models.SetGlobalConfig(s.cfg)
+	datastore.SetGlobalConfig(s.cfg.Datastore)
 	if err := models.InitDatastoreTopic(); err != nil {
 		return errors.Wrap(err, "failed to init datastore topic")
 	}

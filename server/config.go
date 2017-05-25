@@ -3,11 +3,12 @@ package server
 import (
 	"io/ioutil"
 
+	"github.com/takashabe/go-message-queue/datastore"
 	yaml "gopkg.in/yaml.v2"
 )
 
-type Cofig struct {
-	Datastore *datastore.config `yaml:"datastore"`
+type Config struct {
+	Datastore *datastore.Config `yaml:"datastore"`
 }
 
 // LoadConfigFromFile read config file and create config object

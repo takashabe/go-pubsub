@@ -3,6 +3,8 @@ package server
 import (
 	"reflect"
 	"testing"
+
+	"github.com/takashabe/go-message-queue/datastore"
 )
 
 func TestLoadConfig(t *testing.T) {
@@ -14,8 +16,8 @@ func TestLoadConfig(t *testing.T) {
 		{
 			"testdata/valid_redis.yaml",
 			&Config{
-				&DatastoreConfig{
-					Redis: &RedisConfig{
+				&datastore.Config{
+					Redis: &datastore.RedisConfig{
 						Host: "localhost",
 						Port: 6379,
 						DB:   0,
@@ -28,9 +30,9 @@ func TestLoadConfig(t *testing.T) {
 		{
 			"testdata/unknown_param.yaml",
 			&Config{
-				&DatastoreConfig{
+				&datastore.Config{
 					Redis: nil,
-					MySQL: &MySQLConfig{
+					MySQL: &datastore.MySQLConfig{
 						Host: "localhost",
 						Port: 3306,
 					},
@@ -40,7 +42,7 @@ func TestLoadConfig(t *testing.T) {
 		},
 		{
 			"testdata/empty_param.yaml",
-			&Config{&DatastoreConfig{}},
+			&Config{&datastore.Config{}},
 			nil,
 		},
 	}
