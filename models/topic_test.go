@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
+	"github.com/takashabe/go-message-queue/datastore"
 )
 
 func TestNewTopic(t *testing.T) {
@@ -59,7 +60,7 @@ func TestGetTopic(t *testing.T) {
 		expectErr       error
 	}{
 		{"A", "A", nil},
-		{"D", "", ErrNotFoundEntry},
+		{"D", "", datastore.ErrNotFoundEntry},
 	}
 	for i, c := range cases {
 		got, err := GetTopic(c.input)

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/takashabe/go-message-queue/datastore"
 )
 
 func testUrl(t *testing.T, raw string) *url.URL {
@@ -62,7 +63,7 @@ func TestNewSubscription(t *testing.T) {
 		{
 			"B", "_", -1, "localhost:8080", map[string]string{"key": "value"},
 			nil,
-			ErrNotFoundEntry,
+			datastore.ErrNotFoundEntry,
 		},
 		{
 			"B", "A", -1, ":", map[string]string{"key": "value"},

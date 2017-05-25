@@ -5,19 +5,19 @@ import (
 	"encoding/gob"
 
 	"github.com/pkg/errors"
+	"github.com/takashabe/go-message-queue/datastore"
 )
 
 // globalSubscription global subscription datastore
-var globalSubscription *DatastoreSubscription
 
 // DatastoreSubscription is adapter between actual datastore and datastore client
 type DatastoreSubscription struct {
-	store Datastore
+	store datastore.Datastore
 }
 
 // NewDatastoreSubscription create DatastoreSubscription object
-func NewDatastoreSubscription(cfg *Config) (*DatastoreSubscription, error) {
-	d, err := LoadDatastore(cfg)
+func NewDatastoreSubscription(cfg *datastore.Config) (*DatastoreSubscription, error) {
+	d, err := datastore.LoadDatastore(cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load datastore")
 	}
@@ -28,7 +28,7 @@ func NewDatastoreSubscription(cfg *Config) (*DatastoreSubscription, error) {
 
 // InitDatastoreSubscription initialize global datastore object
 func InitDatastoreSubscription() error {
-	d, err := NewDatastoreSubscription(globalConfig)
+	d, err := NewDatastoreSubscription(datastore.GlobalConfig)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (d *DatastoreSubscription) List() ([]*Subscription, error) {
 
 // chooseByField choose any matched a Subscription
 func (d *DatastoreSubscription) chooseByField(fn func(ms *Subscription) bool) (*Subscription, error) {
-	sources, err := SpecifyDump(d.store, d.prefix(""))
+	sources, err := datastore.SpecifyDump(d.store, d.prefix(""))
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +97,7 @@ func (d *DatastoreSubscription) chooseByField(fn func(ms *Subscription) bool) (*
 
 // collectByField collect any matched Subscription list
 func (d *DatastoreSubscription) collectByField(fn func(ms *Subscription) bool) ([]*Subscription, error) {
-	sources, err := SpecifyDump(d.store, d.prefix(""))
+	sources, err := datastore.SpecifyDump(d.store, d.prefix(""))
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (d *DatastoreSubscription) collectByField(fn func(ms *Subscription) bool) (
 }
 
 func (d *DatastoreSubscription) Set(sub *Subscription) error {
-	v, err := EncodeGob(sub)
+	v, err := datastore.EncodeGob(sub)
 	if err != nil {
 		return errors.Wrapf(err, "failed to encode gob")
 	}

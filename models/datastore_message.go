@@ -17,8 +17,8 @@ type DatastoreMessage struct {
 }
 
 // NewDatastoreMessage create DatastoreTopic object
-func NewDatastoreMessage(cfg *Config) (*DatastoreMessage, error) {
-	d, err := LoadDatastore(cfg)
+func NewDatastoreMessage(cfg *datastore.Config) (*DatastoreMessage, error) {
+	d, err := datastore.LoadDatastore(cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load datastore")
 	}
@@ -29,7 +29,7 @@ func NewDatastoreMessage(cfg *Config) (*DatastoreMessage, error) {
 
 // InitDatastoreMessage initialize global datastore object
 func InitDatastoreMessage() error {
-	d, err := NewDatastoreMessage(globalConfig)
+	d, err := NewDatastoreMessage(datastore.GlobalConfig)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (d *DatastoreMessage) Get(key string) (*Message, error) {
 }
 
 func (d *DatastoreMessage) Set(m *Message) error {
-	v, err := EncodeGob(m)
+	v, err := datastore.EncodeGob(m)
 	if err != nil {
 		return err
 	}

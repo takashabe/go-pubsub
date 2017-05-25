@@ -58,7 +58,7 @@ func (t *Topic) Publish(data []byte, attr map[string]string) (string, error) {
 
 // GetSubscriptions returns topic dependent Subscription list
 func (t *Topic) GetSubscriptions() ([]*Subscription, error) {
-	return globalSubscription.CollectByTopicID(t.Name)
+	return getGlobalSubscription().CollectByTopicID(t.Name)
 }
 
 // Save save to datastore

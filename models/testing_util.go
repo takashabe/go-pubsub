@@ -7,10 +7,11 @@ import (
 
 	fixture "github.com/takashabe/go-fixture"
 	_ "github.com/takashabe/go-fixture/mysql"
+	"github.com/takashabe/go-message-queue/datastore"
 )
 
 type testHelper struct {
-	dummyConfig *Config
+	dummyConfig *datastore.Config
 }
 
 func setupDatastore(t *testing.T) {
@@ -22,11 +23,11 @@ func setupDatastore(t *testing.T) {
 		// load memory
 		path = "testdata/config/memory.yaml"
 	}
-	cfg, err := LoadConfigFromFile(path)
+	cfg, err := datastore.LoadConfigFromFile(path)
 	if err != nil {
 		t.Fatalf("failed to load config, got err %v", err)
 	}
-	globalConfig = cfg
+	datastore.GlobalConfig = cfg
 
 	// setup global variables
 	if err := InitDatastoreTopic(); err != nil {
@@ -43,12 +44,12 @@ func setupDatastore(t *testing.T) {
 	}
 
 	// flush datastore
-	d, err := LoadDatastore(globalConfig)
+	d, err := datastore.LoadDatastore(datastore.GlobalConfig)
 	if err != nil {
 		t.Fatalf("failed to load datastore, got err %v", err)
 	}
 	switch a := d.(type) {
-	case *Redis:
+	case *datastore.Redis:
 		conn := a.Pool.Get()
 		defer conn.Close()
 
@@ -56,7 +57,7 @@ func setupDatastore(t *testing.T) {
 		if err != nil {
 			t.Fatalf("failed to FLUSHDB on Redis, got error %v", err)
 		}
-	case *MySQL:
+	case *datastore.MySQL:
 		f := fixture.NewFixture(a.Conn, "mysql")
 		if err := f.LoadSQL("fixture/setup_mq_table.sql"); err != nil {
 			t.Fatalf("failed to execute fixture, got err %v", err)

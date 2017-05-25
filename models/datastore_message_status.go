@@ -5,18 +5,19 @@ import (
 	"encoding/gob"
 
 	"github.com/pkg/errors"
+	"github.com/takashabe/go-message-queue/datastore"
 )
 
 var globalMessageStatus *DatastoreMessageStatus
 
 // DatastoreMessageStatus is adapter between actual datastore and datastore client
 type DatastoreMessageStatus struct {
-	store Datastore
+	store datastore.Datastore
 }
 
 // NewDatastoreMessageStatus create DatastoreTopic object
-func NewDatastoreMessageStatus(cfg *Config) (*DatastoreMessageStatus, error) {
-	d, err := LoadDatastore(cfg)
+func NewDatastoreMessageStatus(cfg *datastore.Config) (*DatastoreMessageStatus, error) {
+	d, err := datastore.LoadDatastore(cfg)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to load datastore")
 	}
@@ -27,11 +28,11 @@ func NewDatastoreMessageStatus(cfg *Config) (*DatastoreMessageStatus, error) {
 
 // InitDatastoreMessageStatus initialize global datastore object
 func InitDatastoreMessageStatus() error {
-	d, err := NewDatastoreMessageStatus(globalConfig)
+	d, err := NewDatastoreMessageStatus(datastore.GlobalConfig)
 	if err != nil {
 		return err
 	}
-	globalMessageStatus = d
+	setGlobalMessageStatus(d)
 	return nil
 }
 
@@ -86,7 +87,7 @@ func (d *DatastoreMessageStatus) List() ([]*MessageStatus, error) {
 }
 
 func (d *DatastoreMessageStatus) Set(ms *MessageStatus) error {
-	v, err := EncodeGob(ms)
+	v, err := datastore.EncodeGob(ms)
 	if err != nil {
 		return err
 	}
@@ -112,7 +113,7 @@ func (d *DatastoreMessageStatus) CollectByIDs(ids ...string) ([]*MessageStatus, 
 
 // chooseByField choose any matched a MessageStatus
 func (d *DatastoreMessageStatus) chooseByField(fn func(ms *MessageStatus) bool) (*MessageStatus, error) {
-	sources, err := SpecifyDump(d.store, d.prefix(""))
+	sources, err := datastore.SpecifyDump(d.store, d.prefix(""))
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +131,7 @@ func (d *DatastoreMessageStatus) chooseByField(fn func(ms *MessageStatus) bool) 
 
 // collectByField collect any matched MessageStatus list
 func (d *DatastoreMessageStatus) collectByField(fn func(ms *MessageStatus) bool) ([]*MessageStatus, error) {
-	sources, err := SpecifyDump(d.store, d.prefix(""))
+	sources, err := datastore.SpecifyDump(d.store, d.prefix(""))
 	if err != nil {
 		return nil, err
 	}
