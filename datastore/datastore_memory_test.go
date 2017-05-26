@@ -20,8 +20,7 @@ func TestLoadDatastore(t *testing.T) {
 			// WARNING: Require connect redis
 			&Config{
 				Redis: &RedisConfig{
-					Host: "localhost",
-					Port: 6379,
+					Addr: "localhost:6379",
 					DB:   0,
 				},
 			},

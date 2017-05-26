@@ -128,8 +128,8 @@ type Redis struct {
 
 // NewRedis return redis client
 func NewRedis(cfg *Config) (*Redis, error) {
-	rconf := cfg.Redis
-	pool := newPool(fmt.Sprintf("%s:%d", rconf.Host, rconf.Port))
+	c := cfg.Redis
+	pool := newPool(c.Addr)
 	_, err := pool.Dial()
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to connect redis")
@@ -230,7 +230,7 @@ type generalSchema struct {
 // NewMySQL return MySQL client
 func NewMySQL(cfg *Config) (*MySQL, error) {
 	c := cfg.MySQL
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/mq", c.User, c.Password, c.Host, c.Port))
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/mq", c.User, c.Password, c.Addr))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to connect mysql")
 	}

@@ -20,6 +20,7 @@ type Config struct {
 }
 
 type RedisConfig struct {
+	Addr     string `yaml:"addr"`
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
 	DB       int    `yaml:"db"`
@@ -27,6 +28,7 @@ type RedisConfig struct {
 }
 
 type MySQLConfig struct {
+	Addr     string `yaml:"addr"`
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
 	User     string `yaml:"user"`

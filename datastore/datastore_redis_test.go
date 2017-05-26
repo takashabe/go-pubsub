@@ -10,8 +10,7 @@ import (
 func dummyRedis(t *testing.T) *Redis {
 	r, err := NewRedis(&Config{
 		Redis: &RedisConfig{
-			Host: "localhost",
-			Port: 6379,
+			Addr: "localhost:6379",
 		},
 	})
 	if err != nil {
