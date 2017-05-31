@@ -1,11 +1,5 @@
 package datastore
 
-import (
-	"io/ioutil"
-
-	yaml "gopkg.in/yaml.v2"
-)
-
 var GlobalConfig *Config
 
 // SetGlobalConfig set global config
@@ -20,6 +14,7 @@ type Config struct {
 }
 
 type RedisConfig struct {
+	Addr     string `yaml:"addr"`
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
 	DB       int    `yaml:"db"`
@@ -27,22 +22,9 @@ type RedisConfig struct {
 }
 
 type MySQLConfig struct {
+	Addr     string `yaml:"addr"`
 	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
 	User     string `yaml:"user"`
 	Password string `yaml:"password"`
-}
-
-// TODO: move to server package
-// LoadConfigFromFile read config file and create config object
-func LoadConfigFromFile(path string) (*Config, error) {
-	d, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	var config Config
-	if err := yaml.Unmarshal(d, &config); err != nil {
-		return nil, err
-	}
-	return &config, nil
 }

@@ -13,10 +13,9 @@ import (
 func dummyMySQL(t *testing.T) *MySQL {
 	c, err := NewMySQL(&Config{
 		MySQL: &MySQLConfig{
+			Addr:     "localhost:3306",
 			User:     "mq",
 			Password: "",
-			Host:     "localhost",
-			Port:     3306,
 		},
 	})
 	if err != nil {

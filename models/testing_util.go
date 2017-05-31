@@ -8,25 +8,56 @@ import (
 	fixture "github.com/takashabe/go-fixture"
 	_ "github.com/takashabe/go-fixture/mysql"
 	"github.com/takashabe/go-message-queue/datastore"
+
+	"github.com/go-sql-driver/mysql"
 )
 
-type testHelper struct {
-	dummyConfig *datastore.Config
+func createDatastoreConfig(t *testing.T) *datastore.Config {
+	switch os.Getenv("GO_MESSAGE_QUEUE_TEST_DATASTORE") {
+	case "mysql":
+		var defaultConfig = &datastore.Config{
+			MySQL: &datastore.MySQLConfig{
+				Addr:     "localhost:3306",
+				User:     "root",
+				Password: "",
+			},
+		}
+
+		dsn := os.Getenv("GO_MESSAGE_QUEUE_TEST_DSN")
+		if len(dsn) == 0 {
+			return defaultConfig
+		}
+
+		mysqlConfig, err := mysql.ParseDSN(dsn)
+		if err != nil {
+			return defaultConfig
+		}
+		return &datastore.Config{
+			MySQL: &datastore.MySQLConfig{
+				Addr:     mysqlConfig.Addr,
+				User:     mysqlConfig.User,
+				Password: mysqlConfig.Passwd,
+			},
+		}
+	case "redis":
+		// TODO: specifiable redis config
+
+		// note: return default local redis
+		return &datastore.Config{
+			Redis: &datastore.RedisConfig{
+				Addr:     "localhost:6379",
+				DB:       0,
+				Password: "",
+			},
+		}
+	default:
+		// use memory
+		return &datastore.Config{}
+	}
 }
 
 func setupDatastore(t *testing.T) {
-	// load config
-	var path string
-	if env := os.Getenv("GO_MESSAGE_QUEUE_CONFIG"); len(env) != 0 {
-		path = env
-	} else {
-		// load memory
-		path = "testdata/config/memory.yaml"
-	}
-	cfg, err := datastore.LoadConfigFromFile(path)
-	if err != nil {
-		t.Fatalf("failed to load config, got err %v", err)
-	}
+	cfg := createDatastoreConfig(t)
 	datastore.GlobalConfig = cfg
 
 	// setup global variables
