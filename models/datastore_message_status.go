@@ -118,7 +118,6 @@ func (d *DatastoreMessageStatus) Delete(key string) error {
 // SelectByIDs returns all MessageStatus depends ids
 func (d *DatastoreMessageStatus) CollectByIDs(ids ...string) ([]*MessageStatus, error) {
 	return d.collectByField(func(ms *MessageStatus) bool {
-		// TODO: improve performance
 		for _, id := range ids {
 			if ms.ID == id {
 				return true
