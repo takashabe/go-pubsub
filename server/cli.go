@@ -10,7 +10,6 @@ import (
 
 // default parameters
 const (
-	defaultPort = 8080
 	defaultFile = "config/app.yaml"
 )
 
@@ -66,8 +65,6 @@ func (c *CLI) parseArgs(args []string, p *param) error {
 	flags := flag.NewFlagSet("param", flag.ContinueOnError)
 	flags.SetOutput(c.errStream)
 
-	// TODO: add datastore driver config
-	flags.IntVar(&p.port, "port", defaultPort, "")
 	flags.StringVar(&p.file, "file", defaultFile, "")
 
 	err := flags.Parse(args)
