@@ -2,27 +2,14 @@
 
 ## todo
 
-* HTTP interface
-* MessgaePack interface
-* set queue name
-* set queue expire
-* set timeout and retry
+* gRPC interface
 * monitoring stats
 * redundancy
-
-## desgin
-
-### ref. google cloud pub/sub
-
-https://cloud.google.com/pubsub/docs/
-
-_But go-message-queue is message queue, not pub/sub model. To be a simple!!_
 
 ### interface
 
 * REST API
   * ref [docs](https://cloud.google.com/pubsub/docs/reference/rest/)
-* (option) MessgaePack API
 * (option) gRPC API
 
 ### components
@@ -79,7 +66,7 @@ _When do not specify created component(topic, subscription), Default component u
 | modify push config | POST:   `/subscription/{name}/push/modify` | modify push config                                                                        |
 | list               | GET:    `/subscription/`                   | get subscripction list                                                                    |
 
-### Datastore
+### Datastore design
 
 #### features
 
@@ -90,19 +77,5 @@ _When do not specify created component(topic, subscription), Default component u
 
 * datastore behavior like key-value store
 * when need redundancy, use Redis or MySQL
-  * in memory future support
 * Save component is Topic, Subscription and Message
 * Message delete when all dependent subscription sent ack
-
-## memo
-
-```
-関係図
-
-* Topic
-* Message
-* Subscription(pk: sub_id)
-  * MessageStatusStore(pk: sub_id)
-    * []MessageStatus(pk: sub_id + msg_id)
-  => MessageStatusStoreはSubscriptionとMessageStatusの中間テーブルとして実装する
-```
