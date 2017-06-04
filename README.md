@@ -5,11 +5,11 @@
 * gRPC interface
 * monitoring stats
 * redundancy
+* authenticate
 
 ### interface
 
 * REST API
-  * ref [docs](https://cloud.google.com/pubsub/docs/reference/rest/)
 * (option) gRPC API
 
 ### components
