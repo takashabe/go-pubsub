@@ -10,7 +10,6 @@
 ### interface
 
 * REST API
-* (option) gRPC API
 
 ### components
 
