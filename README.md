@@ -65,6 +65,16 @@ _When do not specify created component(topic, subscription), Default component u
 | modify push config | POST:   `/subscription/{name}/push/modify` | modify push config                                                                        |
 | list               | GET:    `/subscription/`                   | get subscripction list                                                                    |
 
+#### Monitoring
+
+| Method               | URL                               | Behavior                     |
+| ------               | ------                            | -----                        |
+| summary              | GET: `/stats`                     | pubsub metrics summary       |
+| topic summary        | GET: `/stats/topic`               | topic metrics summary        |
+| topic detail         | GET: `/stats/topic/{name}`        | topic metrics detail         |
+| subscription summary | GET: `/stats/subscription`        | subscription metrics summary |
+| subscription detail  | GET: `/stats/subscription/{name}` | subscription metrics detail  |
+
 ### Datastore design
 
 #### features
