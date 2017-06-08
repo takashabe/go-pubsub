@@ -1,5 +1,6 @@
 package datastore
 
+// TODO: abort global variables
 var GlobalConfig *Config
 
 // SetGlobalConfig set global config
