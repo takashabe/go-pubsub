@@ -35,8 +35,8 @@ type param struct {
 
 // CLI is the command line interface object
 type CLI struct {
-	outStream io.Writer
-	errStream io.Writer
+	OutStream io.Writer
+	ErrStream io.Writer
 }
 
 // Run invokes the CLI with the given arguments
@@ -44,18 +44,18 @@ func (c *CLI) Run(args []string) int {
 	param := &param{}
 	err := c.parseArgs(args[1:], param)
 	if err != nil {
-		fmt.Fprintf(c.errStream, "args parse error: %v", err)
+		fmt.Fprintf(c.ErrStream, "args parse error: %v", err)
 		return ExitCodeParseError
 	}
 
 	server, err := NewServer(param.file)
 	if err != nil {
-		fmt.Fprintf(c.errStream, "invalid args. failed to initialize server: %v", err)
+		fmt.Fprintf(c.ErrStream, "invalid args. failed to initialize server: %v", err)
 		return ExitCodeInvalidArgsError
 	}
 
 	if err := server.Run(param.port); err != nil {
-		fmt.Fprintf(c.errStream, "failed from server: %v", err)
+		fmt.Fprintf(c.ErrStream, "failed from server: %v", err)
 		return ExitCodeError
 	}
 	return ExitCodeOK
@@ -63,7 +63,7 @@ func (c *CLI) Run(args []string) int {
 
 func (c *CLI) parseArgs(args []string, p *param) error {
 	flags := flag.NewFlagSet("param", flag.ContinueOnError)
-	flags.SetOutput(c.errStream)
+	flags.SetOutput(c.ErrStream)
 
 	flags.StringVar(&p.file, "file", defaultFile, "")
 
