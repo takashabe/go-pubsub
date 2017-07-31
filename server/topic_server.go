@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/takashabe/go-message-queue/models"
+	"github.com/takashabe/go-message-queue/stats"
 )
 
 // TopicServer is topic frontend server
@@ -19,6 +20,8 @@ func (s *TopicServer) Create(w http.ResponseWriter, r *http.Request, id string) 
 		return
 	}
 	Json(w, http.StatusCreated, t)
+
+	stats.GetTopicAdapter().AddTopic(t.Name, 1)
 }
 
 // Get is get already exist topic
@@ -81,6 +84,8 @@ func (s *TopicServer) Delete(w http.ResponseWriter, r *http.Request, id string) 
 		return
 	}
 	Json(w, http.StatusNoContent, "")
+
+	stats.GetTopicAdapter().AddTopic(t.Name, -1)
 }
 
 // PublishData represent post publish data
@@ -123,4 +128,6 @@ func (s *TopicServer) Publish(w http.ResponseWriter, r *http.Request, id string)
 		pubIDs = append(pubIDs, id)
 	}
 	Json(w, http.StatusOK, ResponsePublish{MessageIDs: pubIDs})
+
+	stats.GetTopicAdapter().AddMessage(t.Name)
 }
