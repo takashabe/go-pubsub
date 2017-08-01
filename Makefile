@@ -3,7 +3,10 @@ TEST_MYSQL := GO_MESSAGE_QUEUE_TEST_DATASTORE="mysql"; GO_MESSAGE_QUEUE_TEST_DSN
 TEST_REDIS := GO_MESSAGE_QUEUE_TEST_DATASTORE="redis"
 SHOW_ENV := $(shell env | grep GO_MESSAGE_QUEUE)
 
-.PHONY: test_all vet lint
+.PHONY: build test_all vet lint clean
+
+build: cmd/queue/main.go
+	cd cmd/queue && go build -a
 
 test:
 	$(SHOW_ENV)
@@ -31,3 +34,6 @@ vet:
 
 lint:
 	golint $(SUBPACKAGES)
+
+clean:
+	rm cmd/queue/queue
