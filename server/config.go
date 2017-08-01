@@ -18,9 +18,15 @@ func LoadConfigFromFile(path string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	var config Config
+	var config *Config
 	if err := yaml.Unmarshal(d, &config); err != nil {
 		return nil, err
 	}
-	return &config, nil
+
+	if config == nil || config.Datastore == nil {
+		config = &Config{
+			Datastore: &datastore.Config{},
+		}
+	}
+	return config, nil
 }
