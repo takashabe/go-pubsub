@@ -39,15 +39,15 @@ func TestLoadDatastore(t *testing.T) {
 }
 
 func TestMemorySet(t *testing.T) {
-	msgA := Dummy{ID: "a"}
-	msgB := Dummy{ID: "b"}
+	msgA := dummy{ID: "a"}
+	msgB := dummy{ID: "b"}
 
 	cases := []struct {
-		inputMsgs []Dummy
+		inputMsgs []dummy
 		expect    map[interface{}]interface{}
 	}{
 		{
-			[]Dummy{
+			[]dummy{
 				msgA, msgA, msgB,
 			},
 			map[interface{}]interface{}{
@@ -67,8 +67,8 @@ func TestMemorySet(t *testing.T) {
 }
 
 func TestMemoryGet(t *testing.T) {
-	msgA := Dummy{ID: "a"}
-	msgB := Dummy{ID: "b"}
+	msgA := dummy{ID: "a"}
+	msgB := dummy{ID: "b"}
 	baseStore := Memory{
 		Store: map[interface{}]interface{}{"a": msgA, "b": msgB},
 	}
@@ -101,8 +101,8 @@ func TestMemoryGet(t *testing.T) {
 }
 
 func TestMemoryDelete(t *testing.T) {
-	msgA := Dummy{ID: "a"}
-	msgB := Dummy{ID: "b"}
+	msgA := dummy{ID: "a"}
+	msgB := dummy{ID: "b"}
 	baseStore := Memory{
 		Store: map[interface{}]interface{}{"a": msgA, "b": msgB},
 	}

@@ -20,6 +20,8 @@ type ResourceSubscription struct {
 	Push       PushConfig `json:"push_config"`
 	AckTimeout int64      `json:"ack_deadline_seconds"`
 }
+
+// PushConfig represent parmeter of push message
 type PushConfig struct {
 	Endpoint string            `json:"endpoint"`
 	Attr     map[string]string `json:"attributes"`
@@ -56,7 +58,7 @@ func (s *SubscriptionServer) Create(w http.ResponseWriter, r *http.Request, id s
 		Error(w, http.StatusNotFound, err, "failed to create subscription")
 		return
 	}
-	Json(w, http.StatusCreated, subscriptionToResource(sub))
+	JSON(w, http.StatusCreated, subscriptionToResource(sub))
 
 	stats.GetSubscriptionAdapter().AddSubscription(sub.Name, 1)
 }
@@ -68,7 +70,7 @@ func (s *SubscriptionServer) Get(w http.ResponseWriter, r *http.Request, id stri
 		Error(w, http.StatusNotFound, err, "not found subscription")
 		return
 	}
-	Json(w, http.StatusOK, subscriptionToResource(sub))
+	JSON(w, http.StatusOK, subscriptionToResource(sub))
 }
 
 // List is gets subscription list
@@ -83,7 +85,7 @@ func (s *SubscriptionServer) List(w http.ResponseWriter, r *http.Request) {
 	for _, sub := range subs {
 		resourceSubs = append(resourceSubs, subscriptionToResource(sub))
 	}
-	Json(w, http.StatusOK, resourceSubs)
+	JSON(w, http.StatusOK, resourceSubs)
 }
 
 // RequestPull is represents request json for Pull
@@ -118,7 +120,7 @@ func (s *SubscriptionServer) Pull(w http.ResponseWriter, r *http.Request, id str
 		Error(w, http.StatusNotFound, err, "not found message")
 		return
 	}
-	Json(w, http.StatusOK, ResponsePull{Messages: msgs})
+	JSON(w, http.StatusOK, ResponsePull{Messages: msgs})
 }
 
 // RequestAck represent request ack API json
@@ -145,7 +147,7 @@ func (s *SubscriptionServer) Ack(w http.ResponseWriter, r *http.Request, id stri
 		Error(w, http.StatusNotFound, err, "failed to ack message")
 		return
 	}
-	Json(w, http.StatusOK, "")
+	JSON(w, http.StatusOK, "")
 }
 
 // RequestModifyAck represent request ModifyAck API json
@@ -175,7 +177,7 @@ func (s *SubscriptionServer) ModifyAck(w http.ResponseWriter, r *http.Request, i
 			return
 		}
 	}
-	Json(w, http.StatusOK, "")
+	JSON(w, http.StatusOK, "")
 }
 
 // Delete is delete subscription
@@ -189,7 +191,7 @@ func (s *SubscriptionServer) Delete(w http.ResponseWriter, r *http.Request, id s
 		Error(w, http.StatusInternalServerError, err, "failed to delete subscription")
 		return
 	}
-	Json(w, http.StatusNoContent, "")
+	JSON(w, http.StatusNoContent, "")
 
 	stats.GetSubscriptionAdapter().AddSubscription(sub.Name, -1)
 }

@@ -38,7 +38,7 @@ func TestMySQLSetAndGet(t *testing.T) {
 	}{
 		{
 			"a",
-			&Dummy{ID: "a"},
+			&dummy{ID: "a"},
 		},
 	}
 	for i, c := range cases {
@@ -62,7 +62,7 @@ func TestMySQLSetAndGet(t *testing.T) {
 		if !ok {
 			t.Fatalf("#%d: failed to convert []byte, got err %v", i, err)
 		}
-		m, err := DecodeDummy(data)
+		m, err := decodeDummy(data)
 		if err != nil {
 			t.Fatalf("#%d: failed to decode data, got err %v", i, err)
 		}
@@ -80,7 +80,7 @@ func TestMySQLDelete(t *testing.T) {
 	}{
 		{
 			"a",
-			&Dummy{ID: "a"},
+			&dummy{ID: "a"},
 			ErrNotFoundEntry,
 		},
 	}
@@ -104,7 +104,7 @@ func TestMySQLDelete(t *testing.T) {
 		// get
 		_, err = client.Get(c.key)
 		if errors.Cause(err) != c.expectErr {
-			t.Errorf("#%d: ", i, c.key, err)
+			t.Errorf("#%d: failed to get entry, key=%v, got err %v", i, c.key, err)
 		}
 	}
 }
@@ -120,12 +120,12 @@ func TestMySQLDump(t *testing.T) {
 	}{
 		{
 			[]kv{
-				{id: "a", value: &Dummy{ID: "a"}},
-				{id: "b", value: &Dummy{ID: "b"}},
+				{id: "a", value: &dummy{ID: "a"}},
+				{id: "b", value: &dummy{ID: "b"}},
 			},
 			map[interface{}]interface{}{
-				"a": &Dummy{ID: "a"},
-				"b": &Dummy{ID: "b"},
+				"a": &dummy{ID: "a"},
+				"b": &dummy{ID: "b"},
 			},
 		},
 	}
@@ -152,7 +152,7 @@ func TestMySQLDump(t *testing.T) {
 
 		replaces := make(map[interface{}]interface{}, len(c.inputEntries))
 		for k, v := range dump {
-			m, err := DecodeDummy(v.([]byte))
+			m, err := decodeDummy(v.([]byte))
 			if err != nil {
 				t.Fatalf("#%d: failed to decode data, got err %v", i, err)
 			}

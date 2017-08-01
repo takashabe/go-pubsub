@@ -136,7 +136,7 @@ func (mss *MessageStatusStore) CollectReadableMessage(size int) ([]*Message, err
 		if ms.Readable() {
 			m, err := globalMessage.Get(ms.MessageID)
 			if err != nil {
-				log.Println("failed to get message, id=%s, error=%v", ms.MessageID, err)
+				log.Printf("failed to get message, id=%s, error=%v", ms.MessageID, err)
 				continue
 			}
 			res = append(res, m)

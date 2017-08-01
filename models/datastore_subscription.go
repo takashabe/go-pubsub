@@ -71,6 +71,7 @@ func decodeGobSubscription(e []byte) (*Subscription, error) {
 	return res, nil
 }
 
+// Get return item via datastore
 func (d *DatastoreSubscription) Get(key string) (*Subscription, error) {
 	v, err := d.store.Get(d.prefix(key))
 	if err != nil {
@@ -82,12 +83,14 @@ func (d *DatastoreSubscription) Get(key string) (*Subscription, error) {
 	return decodeRawSubscription(v)
 }
 
+// CollectByTopicID returns all Subscription depends topic ids
 func (d *DatastoreSubscription) CollectByTopicID(topicID string) ([]*Subscription, error) {
 	return d.collectByField(func(s *Subscription) bool {
 		return s.TopicID == topicID
 	})
 }
 
+// List return all Subscription slice
 func (d *DatastoreSubscription) List() ([]*Subscription, error) {
 	return d.collectByField(func(s *Subscription) bool {
 		return true
@@ -131,6 +134,7 @@ func (d *DatastoreSubscription) collectByField(fn func(ms *Subscription) bool) (
 	return res, nil
 }
 
+// Set save item to datastore
 func (d *DatastoreSubscription) Set(sub *Subscription) error {
 	v, err := datastore.EncodeGob(sub)
 	if err != nil {
@@ -139,6 +143,7 @@ func (d *DatastoreSubscription) Set(sub *Subscription) error {
 	return d.store.Set(d.prefix(sub.Name), v)
 }
 
+// Delete delete item
 func (d *DatastoreSubscription) Delete(key string) error {
 	return d.store.Delete(d.prefix(key))
 }

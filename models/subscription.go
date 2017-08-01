@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Subscription is subscription object
 type Subscription struct {
 	Name               string              `json:"name"`
 	TopicID            string              `json:"topic"`
@@ -20,19 +21,19 @@ type Subscription struct {
 	AbortPush   bool          `json:"-"`
 	PushRunning bool          `json:"-"`
 	PushSize    int           `json:"-"`
-	abortMu     sync.RWMutex  `json:"-"`
-	runningMu   sync.RWMutex  `json:"-"`
-	sizeMu      sync.RWMutex  `json:"-"`
+	abortMu     sync.RWMutex
+	runningMu   sync.RWMutex
+	sizeMu      sync.RWMutex
 }
 
+// push variables
 const (
-	// push variables
 	PushInterval = 10 * time.Second
 	MaxPushSize  = 1000
 	MinPushSize  = 1
 )
 
-// Create Subscription, if not exist already same name Subscription
+// NewSubscription return initialized subscription, if not exist already same name Subscription
 func NewSubscription(name, topicName string, timeout int64, endpoint string, attr map[string]string) (*Subscription, error) {
 	if _, err := GetSubscription(name); err == nil {
 		return nil, ErrAlreadyExistSubscription
@@ -116,17 +117,17 @@ func (s *Subscription) Pull(size int) ([]*PullMessage, error) {
 	return pullMsgs, nil
 }
 
-// sentState is state of send push message
-type sentState int
+// SentState is state of send push message
+type SentState int
 
 const (
-	_ sentState = iota
+	_ SentState = iota
 	sentSucceed
 	sentFailed
 	notSent
 )
 
-func (s sentState) String() string {
+func (s SentState) String() string {
 	switch s {
 	case sentSucceed:
 		return "Succeed"
@@ -140,7 +141,7 @@ func (s sentState) String() string {
 }
 
 // Push send message to push endpoint, returns send flag and error
-func (s *Subscription) Push(size int) (sentState, error) {
+func (s *Subscription) Push(size int) (SentState, error) {
 	msgs, err := s.Message.CollectReadableMessage(size)
 	if err != nil {
 		// empty message is non error
@@ -162,7 +163,7 @@ func (s *Subscription) Push(size int) (sentState, error) {
 	return sentSucceed, nil
 }
 
-// Succeed Message delivery. remove sent Message.
+// Ack succeed Message delivery. remove sent Message.
 func (s *Subscription) Ack(ids ...string) error {
 	// collect MessageID list dependent to AckID
 	for _, id := range ids {

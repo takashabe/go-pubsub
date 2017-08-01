@@ -11,12 +11,14 @@ type Attributes struct {
 	mu   sync.Mutex
 }
 
+// Set set item to attributes
 func (a *Attributes) Set(key, value string) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	a.Attr[key] = value
 }
 
+// Get return item from attributes
 func (a *Attributes) Get(key string) (string, bool) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -24,6 +26,7 @@ func (a *Attributes) Get(key string) (string, bool) {
 	return v, ok
 }
 
+// Dump returns all item from attributes
 func (a *Attributes) Dump() map[string]string {
 	return a.Attr
 }

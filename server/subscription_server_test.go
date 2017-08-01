@@ -247,7 +247,7 @@ func TestPull(t *testing.T) {
 	for i, c := range cases {
 		var buf bytes.Buffer
 		if err := json.NewEncoder(&buf).Encode(c.inputBody); err != nil {
-			t.Fatal("#%d: failed to encode struct")
+			t.Fatal("failed to encode struct")
 		}
 		client := dummyClient(t)
 		res, err := client.Post(

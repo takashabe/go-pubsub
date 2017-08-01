@@ -71,6 +71,7 @@ func decodeGobMessageStatus(e []byte) (*MessageStatus, error) {
 	return res, nil
 }
 
+// Get return item via datastore
 func (d *DatastoreMessageStatus) Get(key string) (*MessageStatus, error) {
 	v, err := d.store.Get(d.prefix(key))
 	if err != nil {
@@ -103,6 +104,7 @@ func (d *DatastoreMessageStatus) List() ([]*MessageStatus, error) {
 	})
 }
 
+// Set save item to datastore
 func (d *DatastoreMessageStatus) Set(ms *MessageStatus) error {
 	v, err := datastore.EncodeGob(ms)
 	if err != nil {
@@ -111,11 +113,12 @@ func (d *DatastoreMessageStatus) Set(ms *MessageStatus) error {
 	return d.store.Set(d.prefix(ms.ID), v)
 }
 
+// Delete delete item
 func (d *DatastoreMessageStatus) Delete(key string) error {
 	return d.store.Delete(d.prefix(key))
 }
 
-// SelectByIDs returns all MessageStatus depends ids
+// CollectByIDs returns all MessageStatus depends ids
 func (d *DatastoreMessageStatus) CollectByIDs(ids ...string) ([]*MessageStatus, error) {
 	return d.collectByField(func(ms *MessageStatus) bool {
 		for _, id := range ids {

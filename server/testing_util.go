@@ -11,7 +11,7 @@ import (
 	"time"
 
 	fixture "github.com/takashabe/go-fixture"
-	_ "github.com/takashabe/go-fixture/mysql"
+	_ "github.com/takashabe/go-fixture/mysql" // mysql driver
 	"github.com/takashabe/go-message-queue/datastore"
 	"github.com/takashabe/go-message-queue/models"
 )
@@ -163,7 +163,7 @@ func pullMessage(t *testing.T, ts *httptest.Server, sub string, size int) *http.
 	}
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(reqData); err != nil {
-		t.Fatal("#%d: failed to encode struct")
+		t.Fatal("failed to encode struct")
 	}
 	client := dummyClient(t)
 	res, err := client.Post(

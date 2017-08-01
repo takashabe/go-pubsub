@@ -7,6 +7,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// Config represent yaml config
 type Config struct {
 	Datastore *datastore.Config `yaml:"datastore"`
 }

@@ -26,7 +26,7 @@ func TestRedisSetAndGet(t *testing.T) {
 	}{
 		{
 			"a",
-			&Dummy{ID: "a"},
+			&dummy{ID: "a"},
 		},
 	}
 	for i, c := range cases {
@@ -45,7 +45,7 @@ func TestRedisSetAndGet(t *testing.T) {
 		if err != nil {
 			t.Fatalf("#%d: failed to get, key=%v, got err %v", i, c.key, err)
 		}
-		m, err := DecodeDummy(data)
+		m, err := decodeDummy(data)
 		if err != nil {
 			t.Fatalf("#%d: failed to decode data, got err %v", i, err)
 		}

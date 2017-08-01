@@ -17,11 +17,11 @@ type Push struct {
 
 // PushRequest is represent a send push http request
 type PushRequest struct {
-	Message        *Message `message`
-	SubscriptionID string   `subscription`
+	Message        *Message
+	SubscriptionID string
 }
 
-// Create Push object
+// NewPush return initialized Push object
 func NewPush(endpoint string, attributes map[string]string) (*Push, error) {
 	if len(endpoint) == 0 {
 		return &Push{

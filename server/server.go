@@ -67,8 +67,8 @@ func Error(w http.ResponseWriter, code int, err error, msg string) {
 	Respond(w, code, e)
 }
 
-// Json is wrapped Respond when success response
-func Json(w http.ResponseWriter, code int, src interface{}) {
+// JSON is wrapped Respond when success response
+func JSON(w http.ResponseWriter, code int, src interface{}) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	Respond(w, code, src)
 }
@@ -102,6 +102,7 @@ type Server struct {
 	cfg *Config
 }
 
+// NewServer return initialized server
 func NewServer(path string) (*Server, error) {
 	c, err := LoadConfigFromFile(path)
 	if err != nil {
@@ -112,6 +113,7 @@ func NewServer(path string) (*Server, error) {
 	}, nil
 }
 
+// InitDatastore prepare datastore initialize
 func (s *Server) InitDatastore() error {
 	datastore.SetGlobalConfig(s.cfg.Datastore)
 	if err := models.InitDatastoreTopic(); err != nil {
@@ -129,6 +131,7 @@ func (s *Server) InitDatastore() error {
 	return nil
 }
 
+// Run start server
 func (s *Server) Run(port int) error {
 	log.Println("starting server...")
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), routes())

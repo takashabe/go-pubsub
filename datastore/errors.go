@@ -2,8 +2,8 @@ package datastore
 
 import "github.com/pkg/errors"
 
+// datastore errors
 var (
-	// datastore errors
 	ErrNotFoundEntry             = errors.New("not found entry")
 	ErrInvalidEntry              = errors.New("invalid entry")
 	ErrNotMatchTypeMessage       = errors.New("not match type message")

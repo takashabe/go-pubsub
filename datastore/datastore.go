@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/garyburd/redigo/redis"
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/pkg/errors"
 )
 
@@ -21,7 +21,7 @@ type Datastore interface {
 	Dump() (map[interface{}]interface{}, error)
 }
 
-// Load backend datastore from cnofiguration json file.
+// LoadDatastore load backend datastore from cnofiguration json file.
 func LoadDatastore(cfg *Config) (Datastore, error) {
 	if cfg == nil {
 		return NewMemory(nil), nil
@@ -36,6 +36,7 @@ func LoadDatastore(cfg *Config) (Datastore, error) {
 	return NewMemory(nil), nil
 }
 
+// EncodeGob return encoeded bytes by gob
 func EncodeGob(s interface{}) ([]byte, error) {
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(s); err != nil {
@@ -71,20 +72,20 @@ func SpecifyDump(d Datastore, key string) (map[interface{}]interface{}, error) {
 	return res, nil
 }
 
-// Datastore driver at "in memory"
+// Memory is datastore driver for "in memory"
 type Memory struct {
 	Store map[interface{}]interface{}
 	mu    sync.RWMutex
 }
 
-// Create memory object
+// NewMemory create memory object
 func NewMemory(_ *Config) *Memory {
 	return &Memory{
 		Store: make(map[interface{}]interface{}),
 	}
 }
 
-// Save item
+// Set save item
 func (m *Memory) Set(key, value interface{}) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -93,7 +94,7 @@ func (m *Memory) Set(key, value interface{}) error {
 	return nil
 }
 
-// Get item
+// Get get item
 func (m *Memory) Get(key interface{}) (interface{}, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -105,7 +106,7 @@ func (m *Memory) Get(key interface{}) (interface{}, error) {
 	return v, nil
 }
 
-// Delete item
+// Delete delete item
 func (m *Memory) Delete(key interface{}) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -114,7 +115,7 @@ func (m *Memory) Delete(key interface{}) error {
 	return nil
 }
 
-// Dump store values
+// Dump dump store values
 func (m *Memory) Dump() (map[interface{}]interface{}, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
@@ -122,6 +123,7 @@ func (m *Memory) Dump() (map[interface{}]interface{}, error) {
 	return m.Store, nil
 }
 
+// Redis is datastore driver for redis
 type Redis struct {
 	Pool *redis.Pool
 }
@@ -154,6 +156,7 @@ func newPool(addr string) *redis.Pool {
 	}
 }
 
+// Set save item
 func (r *Redis) Set(key, value interface{}) error {
 	conn := r.Pool.Get()
 	defer conn.Close()
@@ -162,6 +165,7 @@ func (r *Redis) Set(key, value interface{}) error {
 	return err
 }
 
+// Get get item
 func (r *Redis) Get(key interface{}) (interface{}, error) {
 	conn := r.Pool.Get()
 	defer conn.Close()
@@ -173,6 +177,7 @@ func (r *Redis) Get(key interface{}) (interface{}, error) {
 	return v, nil
 }
 
+// Delete delete item
 func (r *Redis) Delete(key interface{}) error {
 	conn := r.Pool.Get()
 	defer conn.Close()
@@ -181,10 +186,12 @@ func (r *Redis) Delete(key interface{}) error {
 	return err
 }
 
+// Dump return stored items
 func (r *Redis) Dump() (map[interface{}]interface{}, error) {
 	return r.DumpPrefix("")
 }
 
+// DumpPrefix return stored items when match prefix key
 func (r *Redis) DumpPrefix(p string) (map[interface{}]interface{}, error) {
 	conn := r.Pool.Get()
 	defer conn.Close()
@@ -243,6 +250,7 @@ func NewMySQL(cfg *Config) (*MySQL, error) {
 	}, nil
 }
 
+// Set save item
 func (m *MySQL) Set(key, value interface{}) error {
 	stmt, err := m.Conn.Prepare(`INSERT INTO mq (id, value) VALUES (?, ?) 
 		ON DUPLICATE KEY UPDATE value=?`)
@@ -257,6 +265,7 @@ func (m *MySQL) Set(key, value interface{}) error {
 	return nil
 }
 
+// Get get item
 func (m *MySQL) Get(key interface{}) (interface{}, error) {
 	stmt, err := m.Conn.Prepare("SELECT value FROM mq WHERE id=?")
 	if err != nil {
@@ -271,6 +280,7 @@ func (m *MySQL) Get(key interface{}) (interface{}, error) {
 	return s.value, nil
 }
 
+// Delete delete item
 func (m *MySQL) Delete(key interface{}) error {
 	stmt, err := m.Conn.Prepare("DELETE FROM mq WHERE id=?")
 	if err != nil {
@@ -284,6 +294,7 @@ func (m *MySQL) Delete(key interface{}) error {
 	return nil
 }
 
+// Dump return stored items
 func (m *MySQL) Dump() (map[interface{}]interface{}, error) {
 	rows, err := m.Conn.Query("SELECT id, value FROM mq")
 	if err != nil {
@@ -294,6 +305,7 @@ func (m *MySQL) Dump() (map[interface{}]interface{}, error) {
 	return m.convertRowsToMap(rows)
 }
 
+// DumpPrefix return stored items when match prefix key
 func (m *MySQL) DumpPrefix(p string) (map[interface{}]interface{}, error) {
 	stmt, err := m.Conn.Prepare("SELECT id, value FROM mq WHERE id like ?")
 	if err != nil {

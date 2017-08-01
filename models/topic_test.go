@@ -32,15 +32,15 @@ func TestNewTopic(t *testing.T) {
 			_, err = NewTopic(s)
 		}
 		if err != c.expectErr {
-			t.Errorf("%#d: want %v, got %v", i, c.expectErr, err)
+			t.Errorf("#%d: want %v, got %v", i, c.expectErr, err)
 		}
 
 		list, err := globalTopics.List()
 		if err != nil {
-			t.Fatalf("%#d: want no error, got %v", i, err)
+			t.Fatalf("#%d: want no error, got %v", i, err)
 		}
 		if len(list) != len(c.expectExistTopics) {
-			t.Fatalf("%#d: want %d, got %d", i, len(c.expectExistTopics), len(list))
+			t.Fatalf("#%d: want %d, got %d", i, len(c.expectExistTopics), len(list))
 		}
 		for i2, s := range c.expectExistTopics {
 			if _, err = globalTopics.Get(s); err != nil {
@@ -65,10 +65,10 @@ func TestGetTopic(t *testing.T) {
 	for i, c := range cases {
 		got, err := GetTopic(c.input)
 		if errors.Cause(err) != c.expectErr {
-			t.Fatalf("%#d: want %v, got %v", i, c.expectErr, err)
+			t.Fatalf("#%d: want %v, got %v", i, c.expectErr, err)
 		}
 		if c.expectTopicName != "" && c.expectTopicName != got.Name {
-			t.Errorf("%#d: want %s, got %s", i, c.expectTopicName, got.Name)
+			t.Errorf("#%d: want %s, got %s", i, c.expectTopicName, got.Name)
 		}
 	}
 }

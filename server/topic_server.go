@@ -19,7 +19,7 @@ func (s *TopicServer) Create(w http.ResponseWriter, r *http.Request, id string) 
 		Error(w, http.StatusNotFound, err, "failed to create topic")
 		return
 	}
-	Json(w, http.StatusCreated, t)
+	JSON(w, http.StatusCreated, t)
 
 	stats.GetTopicAdapter().AddTopic(t.Name, 1)
 }
@@ -31,7 +31,7 @@ func (s *TopicServer) Get(w http.ResponseWriter, r *http.Request, id string) {
 		Error(w, http.StatusNotFound, err, "not found topic")
 		return
 	}
-	Json(w, http.StatusOK, t)
+	JSON(w, http.StatusOK, t)
 }
 
 // List is gets topic list
@@ -42,7 +42,7 @@ func (s *TopicServer) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sort.Sort(models.ByTopicName(t))
-	Json(w, http.StatusOK, t)
+	JSON(w, http.StatusOK, t)
 }
 
 // ResponseListSubscription represent response json of ListSubscription
@@ -69,7 +69,7 @@ func (s *TopicServer) ListSubscription(w http.ResponseWriter, r *http.Request, i
 	for _, s := range subs {
 		res.SubscriptionNames = append(res.SubscriptionNames, s.Name)
 	}
-	Json(w, http.StatusOK, res)
+	JSON(w, http.StatusOK, res)
 }
 
 // Delete is delete topic
@@ -83,7 +83,7 @@ func (s *TopicServer) Delete(w http.ResponseWriter, r *http.Request, id string) 
 		Error(w, http.StatusInternalServerError, err, "failed to delete topic")
 		return
 	}
-	Json(w, http.StatusNoContent, "")
+	JSON(w, http.StatusNoContent, "")
 
 	stats.GetTopicAdapter().AddTopic(t.Name, -1)
 }
@@ -93,6 +93,8 @@ type PublishData struct {
 	Data []byte            `json:"data"`
 	Attr map[string]string `json:"attributes"`
 }
+
+// PublishDatas represent PublishData group
 type PublishDatas struct {
 	Messages []PublishData `json:"messages"`
 }
@@ -127,7 +129,7 @@ func (s *TopicServer) Publish(w http.ResponseWriter, r *http.Request, id string)
 		}
 		pubIDs = append(pubIDs, id)
 	}
-	Json(w, http.StatusOK, ResponsePublish{MessageIDs: pubIDs})
+	JSON(w, http.StatusOK, ResponsePublish{MessageIDs: pubIDs})
 
 	stats.GetTopicAdapter().AddMessage(t.Name)
 }

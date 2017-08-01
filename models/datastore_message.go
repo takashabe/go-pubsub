@@ -57,6 +57,7 @@ func decodeGobMessage(e []byte) (*Message, error) {
 	return res, nil
 }
 
+// Get return item via datastore
 func (d *DatastoreMessage) Get(key string) (*Message, error) {
 	v, err := d.store.Get(d.prefix(key))
 	if err != nil {
@@ -68,6 +69,7 @@ func (d *DatastoreMessage) Get(key string) (*Message, error) {
 	return decodeRawMessage(v)
 }
 
+// Set save item to datastore
 func (d *DatastoreMessage) Set(m *Message) error {
 	v, err := datastore.EncodeGob(m)
 	if err != nil {
@@ -76,6 +78,7 @@ func (d *DatastoreMessage) Set(m *Message) error {
 	return d.store.Set(d.prefix(m.ID), v)
 }
 
+// Delete delete item
 func (d *DatastoreMessage) Delete(key string) error {
 	return d.store.Delete(d.prefix(key))
 }

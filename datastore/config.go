@@ -1,5 +1,6 @@
 package datastore
 
+// GlobalConfig keep config
 // TODO: abort global variables
 var GlobalConfig *Config
 
@@ -14,6 +15,7 @@ type Config struct {
 	MySQL *MySQLConfig `yaml:"mysql"`
 }
 
+// RedisConfig represent config for the Redis
 type RedisConfig struct {
 	Addr     string `yaml:"addr"`
 	Host     string `yaml:"host"`
@@ -22,6 +24,7 @@ type RedisConfig struct {
 	Password string `yaml:"password"`
 }
 
+// MySQLConfig represent config for the MySQL
 type MySQLConfig struct {
 	Addr     string `yaml:"addr"`
 	Host     string `yaml:"host"`

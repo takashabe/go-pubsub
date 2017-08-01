@@ -5,12 +5,12 @@ import (
 	"encoding/gob"
 )
 
-type Dummy struct {
+type dummy struct {
 	ID string
 }
 
-func DecodeDummy(e []byte) (*Dummy, error) {
-	var res *Dummy
+func decodeDummy(e []byte) (*dummy, error) {
+	var res *dummy
 	buf := bytes.NewReader(e)
 	if err := gob.NewDecoder(buf).Decode(&res); err != nil {
 		return nil, err

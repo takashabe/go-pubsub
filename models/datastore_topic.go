@@ -55,6 +55,7 @@ func decodeGobTopic(e []byte) (*Topic, error) {
 	return res, nil
 }
 
+// Get return item via datastore
 func (d *DatastoreTopic) Get(key string) (*Topic, error) {
 	v, err := d.store.Get(d.prefix(key))
 	if err != nil {
@@ -66,6 +67,7 @@ func (d *DatastoreTopic) Get(key string) (*Topic, error) {
 	return decodeRawTopic(v)
 }
 
+// List return all topic slice
 func (d *DatastoreTopic) List() ([]*Topic, error) {
 	sources, err := datastore.SpecifyDump(d.store, d.prefix(""))
 	if err != nil {
@@ -82,6 +84,7 @@ func (d *DatastoreTopic) List() ([]*Topic, error) {
 	return res, nil
 }
 
+// Set save item to datastore
 func (d *DatastoreTopic) Set(topic *Topic) error {
 	v, err := datastore.EncodeGob(topic)
 	if err != nil {
@@ -90,6 +93,7 @@ func (d *DatastoreTopic) Set(topic *Topic) error {
 	return d.store.Set(d.prefix(topic.Name), v)
 }
 
+// Delete delete item
 func (d *DatastoreTopic) Delete(key string) error {
 	return d.store.Delete(d.prefix(key))
 }

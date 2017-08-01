@@ -7,7 +7,7 @@ type Topic struct {
 	Name string `json:"name"`
 }
 
-// Create topic, if not exist already topic name in GlobalTopics
+// NewTopic return initialized topic, if not exist already topic name in GlobalTopics
 func NewTopic(name string) (*Topic, error) {
 	if _, err := GetTopic(name); err == nil {
 		return nil, ErrAlreadyExistTopic
@@ -21,12 +21,12 @@ func NewTopic(name string) (*Topic, error) {
 	return t, nil
 }
 
-// Return topic object
+// GetTopic return topic object
 func GetTopic(name string) (*Topic, error) {
 	return globalTopics.Get(name)
 }
 
-// Return topic list
+// ListTopic returns topic list
 func ListTopic() ([]*Topic, error) {
 	return globalTopics.List()
 }

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	fixture "github.com/takashabe/go-fixture"
-	_ "github.com/takashabe/go-fixture/mysql"
+	_ "github.com/takashabe/go-fixture/mysql" // mysql driver
 	"github.com/takashabe/go-message-queue/datastore"
 
 	"github.com/go-sql-driver/mysql"
@@ -165,7 +165,7 @@ func mustGetSubscription(t *testing.T, id string) *Subscription {
 	return a
 }
 
-func WaitPushMessaging(t *testing.T, reqCount *int, messageSize int) {
+func waitPushMessaging(t *testing.T, reqCount *int, messageSize int) {
 	failCount := 0
 	for {
 		if *reqCount >= messageSize {

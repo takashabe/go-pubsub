@@ -13,7 +13,7 @@ import (
 	"github.com/takashabe/go-message-queue/datastore"
 )
 
-func testUrl(t *testing.T, raw string) *url.URL {
+func testURL(t *testing.T, raw string) *url.URL {
 	url, err := url.Parse(raw)
 	if err != nil {
 		t.Fatalf("failed to parse URL: %s", raw)
@@ -31,7 +31,7 @@ func TestNewSubscription(t *testing.T) {
 		Message:            NewMessageStatusStore("A"),
 		DefaultAckDeadline: 0,
 		PushConfig: &Push{
-			Endpoint: testUrl(t, "localhost:8080"),
+			Endpoint: testURL(t, "localhost:8080"),
 			Attributes: &Attributes{
 				Attr: map[string]string{"key": "value"},
 			},
@@ -74,10 +74,10 @@ func TestNewSubscription(t *testing.T) {
 	for i, c := range cases {
 		got, err := NewSubscription(c.name, c.topicName, c.timeout, c.endpoint, c.attr)
 		if errors.Cause(err) != c.expectErr {
-			t.Fatalf("%#d: want %v, got %v", i, c.expectErr, err)
+			t.Fatalf("#%d: want %v, got %v", i, c.expectErr, err)
 		}
 		if !reflect.DeepEqual(got, c.expectObj) {
-			t.Errorf("%#d: want %#v, got %#v", i, c.expectObj, got)
+			t.Errorf("#%d: want %#v, got %#v", i, c.expectObj, got)
 		}
 	}
 }

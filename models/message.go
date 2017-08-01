@@ -23,6 +23,7 @@ func makeAckID() string {
 	return uuid.NewV1().String()
 }
 
+// NewMessage return initialized Message
 func NewMessage(id string, data []byte, attr map[string]string, subs []*Subscription) *Message {
 	m := &Message{
 		ID:           id,
@@ -37,6 +38,7 @@ func NewMessage(id string, data []byte, attr map[string]string, subs []*Subscrip
 	return m
 }
 
+// AddSubscription add depend subscription
 func (m *Message) AddSubscription(subID string) error {
 	m.SubscribeIDs = append(m.SubscribeIDs, subID)
 	return m.Save()
