@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/takashabe/go-message-queue/models"
+	"github.com/takashabe/go-message-queue/stats"
 )
 
 // SubscriptionServer is subscription frontend server
@@ -56,6 +57,8 @@ func (s *SubscriptionServer) Create(w http.ResponseWriter, r *http.Request, id s
 		return
 	}
 	Json(w, http.StatusCreated, subscriptionToResource(sub))
+
+	stats.GetSubscriptionAdapter().AddSubscription(sub.Name, 1)
 }
 
 // Get is get already exist subscription
@@ -187,4 +190,6 @@ func (s *SubscriptionServer) Delete(w http.ResponseWriter, r *http.Request, id s
 		return
 	}
 	Json(w, http.StatusNoContent, "")
+
+	stats.GetSubscriptionAdapter().AddSubscription(sub.Name, -1)
 }
