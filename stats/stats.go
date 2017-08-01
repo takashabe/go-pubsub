@@ -68,6 +68,27 @@ func GetSubscriptionAdapter() *SubscriptionAdapter {
 	}
 }
 
+func (t *SubscriptionAdapter) assembleMetricsKey(parts ...string) string {
+	key := t.prefix
+	for _, v := range parts {
+		key = key + "." + v
+	}
+	return key
+}
+
+// AddSubscription send metrics the topic
+func (t *SubscriptionAdapter) AddSubscription(subID string, num int) {
+	now := time.Now().Unix()
+	t.collect.Add(t.assembleMetricsKey("subscription_num"), float64(num))
+	t.collect.Gauge(t.assembleMetricsKey(subID, "created_at"), float64(now))
+}
+
+// AddMessage send metrics the added message
+func (t *SubscriptionAdapter) AddMessage(subID string) {
+	t.collect.Add(t.assembleMetricsKey("message_count"), 1)
+	t.collect.Add(t.assembleMetricsKey(subID, "message_count"), 1)
+}
+
 func init() {
 	// NOTE: buffer size
 	var buf bytes.Buffer
