@@ -65,7 +65,7 @@ func (c *CLI) parseArgs(args []string, p *param) error {
 	flags := flag.NewFlagSet("param", flag.ContinueOnError)
 	flags.SetOutput(c.ErrStream)
 
-	flags.StringVar(&p.file, "file", defaultFile, "")
+	flags.StringVar(&p.file, "file", defaultFile, "Config file. require anything config file.")
 
 	err := flags.Parse(args)
 	if err != nil {
