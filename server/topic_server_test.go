@@ -72,6 +72,36 @@ func TestCreateAndGetTopic(t *testing.T) {
 	}
 }
 
+func TestGetTopic(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	setupDummyTopics(t, ts)
+
+	cases := []struct {
+		input      string
+		expectCode int
+	}{
+		{"a", http.StatusOK},
+		{"d", http.StatusNotFound},
+	}
+	for i, c := range cases {
+		client := dummyClient(t)
+		req, err := http.NewRequest("GET", ts.URL+"/topic/"+c.input, nil)
+		if err != nil {
+			t.Fatalf("#%d: failed to create request", i)
+		}
+		res, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("#%d: failed to send request", i)
+		}
+		defer res.Body.Close()
+
+		if got := res.StatusCode; got != c.expectCode {
+			t.Errorf("#%d: want %d, got %d", i, c.expectCode, got)
+		}
+	}
+}
+
 func TestDelete(t *testing.T) {
 	ts := setupServer(t)
 	defer ts.Close()
