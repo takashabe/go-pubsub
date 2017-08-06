@@ -131,3 +131,31 @@ func (s *httpService) listTopicSubscriptions(ctx context.Context, id string) ([]
 
 	return subs.subscription, nil
 }
+
+func (s *httpService) publishMessages(ctx context.Context, id string, msg *Message) (string, error) {
+	b, err := msg.toPublish()
+	if err != nil {
+		return "", err
+	}
+	req, err := http.NewRequest("GET", s.topicURL+"/"+id+"/publish", b)
+	if err != nil {
+		return "", err
+	}
+	res, err := s.topicClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+
+	type ResponsePublish struct {
+		MessageIDs []string `json:"messageIDs"`
+	}
+	msgIDs := ResponsePublish{}
+	err = json.NewDecoder(res.Body).Decode(msgIDs)
+	if err != nil {
+		return "", err
+	}
+
+	// NOTE: expect sent a one message only
+	return msgIDs.MessageIDs[0], nil
+}

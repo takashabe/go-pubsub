@@ -8,8 +8,13 @@ type Topic struct {
 	s  service
 }
 
+// PublishResult is a result for publish message
+type PublishResult struct {
+	ready chan struct{}
+	err   error
+}
+
 // Exists return whether the topic exists on the server.
-	return false, nil
 func (t *Topic) Exists(ctx context.Context) (bool, error) {
 	return t.s.topicExists(ctx, t.id)
 }
@@ -31,4 +36,16 @@ func (t *Topic) Subscriptions(ctx context.Context) ([]*Subscription, error) {
 		subs = append(subs, newSubscription(id, t.s))
 	}
 	return subs, nil
+}
+
+// Publish asynchronously send message, and return immediate PublishResult
+func (t *Topic) Publish(ctx context.Context, msg *Message) *PublishResult {
+	pr := &PublishResult{
+		ready: make(chan struct{}),
+	}
+
+	// TODO: update PublishResult in another asynchronously function
+	t.s.publishMessages(ctx, t.id, msg)
+
+	return pr
 }
