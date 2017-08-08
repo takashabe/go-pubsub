@@ -33,19 +33,32 @@ type service interface {
 
 // httpService implemnet service interface for HTTP protocol
 type httpService struct {
-	topicURL    string
-	topicClient http.Client
-
-	subscriptionURL    string
-	subscriptionClient http.Client
+	publisher  restPublisher
+	subscriber restSubscriber
 }
 
-func (s *httpService) createTopic(ctx context.Context, id string) error {
-	req, err := http.NewRequest("PUT", s.topicURL+"/"+id, nil)
+type restPublisher struct {
+	serverURL  string
+	httpClient http.Client
+}
+
+type restSubscriber struct {
+	serverURL  string
+	httpClient http.Client
+}
+
+func (p *restPublisher) sendRequest(ctx context.Context, method, url string, body []byte) (*http.Response, error) {
+	req, err := http.NewRequest(method, serverURL+url, body)
 	if err != nil {
 		return err
 	}
-	res, err := s.topicClient.Do(req)
+
+	req = req.WithContext(ctx)
+	return p.httpClient.Do(req)
+}
+
+func (s *httpService) createTopic(ctx context.Context, id string) error {
+	res, err := s.publisher.sendRequest("PUT", id, nil)
 	if err != nil {
 		return err
 	}
@@ -55,11 +68,7 @@ func (s *httpService) createTopic(ctx context.Context, id string) error {
 }
 
 func (s *httpService) deleteTopic(ctx context.Context, id string) error {
-	req, err := http.NewRequest("DELETE", s.topicURL+"/"+id, nil)
-	if err != nil {
-		return err
-	}
-	res, err := s.topicClient.Do(req)
+	res, err := s.publisher.sendRequest("DELETE", id, nil)
 	if err != nil {
 		return err
 	}
@@ -69,11 +78,7 @@ func (s *httpService) deleteTopic(ctx context.Context, id string) error {
 }
 
 func (s *httpService) topicExists(ctx context.Context, id string) (bool, error) {
-	req, err := http.NewRequest("GET", s.topicURL+"/"+id, nil)
-	if err != nil {
-		return false, err
-	}
-	res, err := s.topicClient.Do(req)
+	rse, err := s.publisher.sendRequest("GET", id, nil)
 	if err != nil {
 		return false, err
 	}
@@ -83,11 +88,7 @@ func (s *httpService) topicExists(ctx context.Context, id string) (bool, error) 
 }
 
 func (s *httpService) listTopics(ctx context.Context) ([]string, error) {
-	req, err := http.NewRequest("GET", s.topicURL, nil)
-	if err != nil {
-		return nil, err
-	}
-	res, err := s.topicClient.Do(req)
+	res, err := s.publisher.sendRequest("GET", "", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -110,11 +111,7 @@ func (s *httpService) listTopics(ctx context.Context) ([]string, error) {
 }
 
 func (s *httpService) listTopicSubscriptions(ctx context.Context, id string) ([]string, error) {
-	req, err := http.NewRequest("GET", s.topicURL+"/"+id+"/subscriptions", nil)
-	if err != nil {
-		return nil, err
-	}
-	res, err := s.topicClient.Do(req)
+	res, err := s.publisher.sendRequest("GET", id+"/subscriptions", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -137,11 +134,7 @@ func (s *httpService) publishMessages(ctx context.Context, id string, msg *Messa
 	if err != nil {
 		return "", err
 	}
-	req, err := http.NewRequest("GET", s.topicURL+"/"+id+"/publish", b)
-	if err != nil {
-		return "", err
-	}
-	res, err := s.topicClient.Do(req)
+	req, err := s.publisher.sendRequest("GET", id+"/publish", b)
 	if err != nil {
 		return "", err
 	}
