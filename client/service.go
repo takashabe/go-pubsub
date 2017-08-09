@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 )
 
@@ -47,10 +48,10 @@ type restSubscriber struct {
 	httpClient http.Client
 }
 
-func (p *restPublisher) sendRequest(ctx context.Context, method, url string, body []byte) (*http.Response, error) {
-	req, err := http.NewRequest(method, serverURL+url, body)
+func (p *restPublisher) sendRequest(ctx context.Context, method, url string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequest(method, p.serverURL+url, body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	req = req.WithContext(ctx)
