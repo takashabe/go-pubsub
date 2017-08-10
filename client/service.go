@@ -59,7 +59,7 @@ func (p *restPublisher) sendRequest(ctx context.Context, method, url string, bod
 }
 
 func (s *httpService) createTopic(ctx context.Context, id string) error {
-	res, err := s.publisher.sendRequest("PUT", id, nil)
+	res, err := s.publisher.sendRequest(ctx, "PUT", id, nil)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (s *httpService) createTopic(ctx context.Context, id string) error {
 }
 
 func (s *httpService) deleteTopic(ctx context.Context, id string) error {
-	res, err := s.publisher.sendRequest("DELETE", id, nil)
+	res, err := s.publisher.sendRequest(ctx, "DELETE", id, nil)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (s *httpService) deleteTopic(ctx context.Context, id string) error {
 }
 
 func (s *httpService) topicExists(ctx context.Context, id string) (bool, error) {
-	rse, err := s.publisher.sendRequest("GET", id, nil)
+	res, err := s.publisher.sendRequest(ctx, "GET", id, nil)
 	if err != nil {
 		return false, err
 	}
@@ -89,7 +89,7 @@ func (s *httpService) topicExists(ctx context.Context, id string) (bool, error) 
 }
 
 func (s *httpService) listTopics(ctx context.Context) ([]string, error) {
-	res, err := s.publisher.sendRequest("GET", "", nil)
+	res, err := s.publisher.sendRequest(ctx, "GET", "", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func (s *httpService) listTopics(ctx context.Context) ([]string, error) {
 }
 
 func (s *httpService) listTopicSubscriptions(ctx context.Context, id string) ([]string, error) {
-	res, err := s.publisher.sendRequest("GET", id+"/subscriptions", nil)
+	res, err := s.publisher.sendRequest(ctx, "GET", id+"/subscriptions", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func (s *httpService) publishMessages(ctx context.Context, id string, msg *Messa
 	if err != nil {
 		return "", err
 	}
-	req, err := s.publisher.sendRequest("GET", id+"/publish", b)
+	res, err := s.publisher.sendRequest(ctx, "GET", id+"/publish", b)
 	if err != nil {
 		return "", err
 	}
