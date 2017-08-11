@@ -10,8 +10,27 @@ type Topic struct {
 
 // PublishResult is a result for publish message
 type PublishResult struct {
-	ready chan struct{}
+	done  chan struct{}
+	msgID string
 	err   error
+}
+
+// Get returns msgID and error
+func (p *PublishResult) Get(ctx context.Context) (string, error) {
+	// return result if already close done channel
+	select {
+	case <-p.done:
+		return p.msgID, p.err
+	default:
+	}
+
+	// waiting receive done channel and context channel
+	select {
+	case <-p.done:
+		return p.msgID, p.err
+	case <-ctx.Done():
+		return "", p.err
+	}
 }
 
 // Exists return whether the topic exists on the server.
@@ -41,11 +60,15 @@ func (t *Topic) Subscriptions(ctx context.Context) ([]*Subscription, error) {
 // Publish asynchronously send message, and return immediate PublishResult
 func (t *Topic) Publish(ctx context.Context, msg *Message) *PublishResult {
 	pr := &PublishResult{
-		ready: make(chan struct{}),
+		done: make(chan struct{}),
 	}
 
-	// TODO: update PublishResult in another asynchronously function
-	t.s.publishMessages(ctx, t.id, msg)
+	go func() {
+		msgID, err := t.s.publishMessages(ctx, t.id, msg)
+		pr.msgID = msgID
+		pr.err = err
+		close(pr.done)
+	}()
 
 	return pr
 }
