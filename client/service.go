@@ -49,13 +49,21 @@ type restSubscriber struct {
 }
 
 func (p *restPublisher) sendRequest(ctx context.Context, method, url string, body io.Reader) (*http.Response, error) {
-	req, err := http.NewRequest(method, p.serverURL+url, body)
+	return sendRequest(ctx, p.httpClient, method, p.serverURL+url, body)
+}
+
+func (s *restSubscriber) sendRequest(ctx context.Context, method, url string, body io.Reader) (*http.Response, error) {
+	return sendRequest(ctx, s.httpClient, method, s.serverURL+url, body)
+}
+
+func sendRequest(ctx context.Context, client http.Client, method, url string, body io.Reader) (*http.Response, error) {
+	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
 	}
 
 	req = req.WithContext(ctx)
-	return p.httpClient.Do(req)
+	return client.Do(req)
 }
 
 func (s *httpService) createTopic(ctx context.Context, id string) error {
