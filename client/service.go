@@ -1,10 +1,12 @@
 package client
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
 	"net/http"
+	"time"
 )
 
 // service is an accessor to server API used by this package
@@ -16,7 +18,7 @@ type service interface {
 	listTopicSubscriptions(ctx context.Context, id string) ([]string, error)
 
 	// TODO: implements
-	// createSubscription(ctx context.Context, id string, cfg SubscriptionConfig) error
+	createSubscription(ctx context.Context, id string, cfg SubscriptionConfig) error
 	// getSubscriptionConfig(ctx context.Context, id string) (SubscriptionConfig, string, error)
 	// listSubscriptions(ctx context.Context) []string
 	// deleteSubscription(ctx context.Context, id string) error
@@ -160,4 +162,37 @@ func (s *httpService) publishMessages(ctx context.Context, id string, msg *Messa
 
 	// NOTE: expect sent a one message only
 	return msgIDs.MessageIDs[0], nil
+}
+
+func (s *httpService) createSubscription(ctx context.Context, id string, cfg SubscriptionConfig) error {
+	// TODO: AckTimeout needs to determine upper and lower limits
+	if cfg.AckTimeout == 0 {
+		cfg.AckTimeout = 10 * time.Second
+	}
+
+	type RequestCreate struct {
+		Name       string      `json:"name"`
+		Topic      string      `json:"topic"`
+		PushConfig *PushConfig `json:"push_config"`
+		AckTimeout int64       `json:"ack_deadline_seconds"`
+	}
+	rc := &RequestCreate{
+		Name:       id,
+		Topic:      cfg.Topic.id,
+		PushConfig: cfg.PushConfig,
+		AckTimeout: int64(cfg.AckTimeout.Seconds()),
+	}
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(rc)
+	if err != nil {
+		return err
+	}
+
+	res, err := s.subscriber.sendRequest(ctx, "PUT", id, &buf)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	return nil
 }
