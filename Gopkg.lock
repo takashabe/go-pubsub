@@ -33,6 +33,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/takashabe/go-metrics"
+  packages = ["collect","forward"]
+  revision = "ba0c785c8bd8ca6b9620d0c34a8a555221c3c492"
+
+[[projects]]
+  branch = "master"
   name = "github.com/takashabe/go-router"
   packages = ["."]
   revision = "51eb62e3acb5ef5b1831667ba06cb0c9ae8c7c8e"
@@ -46,6 +52,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "621ba9cf11e75fe9630f546669ed2ab350cc7b2c621145d36afe2d7804b7a919"
+  inputs-digest = "5d3e8e0be558133924fa5c8a89aef1f814513c0db71171eb8ee3975145994140"
   solver-name = "gps-cdcl"
   solver-version = 1
