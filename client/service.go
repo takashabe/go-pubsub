@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // service is an accessor to server API used by this package
@@ -75,7 +77,7 @@ func (s *httpService) createTopic(ctx context.Context, id string) error {
 	}
 	defer res.Body.Close()
 
-	return nil
+	return verifyHTTPStatusCode(http.StatusCreated, res)
 }
 
 func (s *httpService) deleteTopic(ctx context.Context, id string) error {
@@ -85,7 +87,7 @@ func (s *httpService) deleteTopic(ctx context.Context, id string) error {
 	}
 	defer res.Body.Close()
 
-	return nil
+	return verifyHTTPStatusCode(http.StatusNoContent, res)
 }
 
 func (s *httpService) topicExists(ctx context.Context, id string) (bool, error) {
@@ -194,5 +196,12 @@ func (s *httpService) createSubscription(ctx context.Context, id string, cfg Sub
 	}
 	defer res.Body.Close()
 
+	return verifyHTTPStatusCode(http.StatusCreated, res)
+}
+
+func verifyHTTPStatusCode(expect int, res *http.Response) error {
+	if c := res.StatusCode; c != expect {
+		return errors.Errorf("HTTP response error: expecte status code %d, but received %d", expect, c)
+	}
 	return nil
 }
