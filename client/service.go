@@ -21,7 +21,7 @@ type service interface {
 
 	// TODO: implements
 	createSubscription(ctx context.Context, id string, cfg SubscriptionConfig) error
-	// getSubscriptionConfig(ctx context.Context, id string) (SubscriptionConfig, string, error)
+	getSubscriptionConfig(ctx context.Context, id string) (SubscriptionConfig, string, error)
 	// listSubscriptions(ctx context.Context) []string
 	// deleteSubscription(ctx context.Context, id string) error
 	// subscriptionExists(ctx context.Context, id string) (bool, error)
@@ -197,6 +197,16 @@ func (s *httpService) createSubscription(ctx context.Context, id string, cfg Sub
 	defer res.Body.Close()
 
 	return verifyHTTPStatusCode(http.StatusCreated, res)
+}
+
+func (s *httpService) getSubscriptionConfig(ctx context.Context, id string) (SubscriptionConfig, string, error) {
+	res, err := s.subscriber.sendRequest(ctx, "GET", id, nil)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	return verifyHTTPStatusCode(http.StatusOK, res)
 }
 
 func verifyHTTPStatusCode(expect int, res *http.Response) error {
