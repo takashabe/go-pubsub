@@ -23,7 +23,7 @@ type service interface {
 	createSubscription(ctx context.Context, id string, cfg SubscriptionConfig) error
 	getSubscriptionConfig(ctx context.Context, id string) (*SubscriptionConfig, error)
 	listSubscriptions(ctx context.Context) ([]string, error)
-	// deleteSubscription(ctx context.Context, id string) error
+	deleteSubscription(ctx context.Context, id string) error
 	// subscriptionExists(ctx context.Context, id string) (bool, error)
 	// modifyPushConfig(ctx context.Context, id string, cfg PushConfig) error
 
@@ -240,6 +240,16 @@ func (s *httpService) listSubscriptions(ctx context.Context) ([]string, error) {
 		ret = append(ret, v.Name)
 	}
 	return ret, nil
+}
+
+func (s *httpService) deleteSubscription(ctx context.Context, id string) error {
+	res, err := s.subscriber.sendRequest(ctx, "DELETE", id, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	return verifyHTTPStatusCode(http.StatusNoContent, res)
 }
 
 func verifyHTTPStatusCode(expect int, res *http.Response) error {
