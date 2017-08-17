@@ -166,26 +166,28 @@ func (s *httpService) publishMessages(ctx context.Context, id string, msg *Messa
 	return msgIDs.MessageIDs[0], nil
 }
 
+// ResourceSusbscription represent body of request/response the Subscription parameter
+type ResourceSusbscription struct {
+	Name       string      `json:"name"`
+	Topic      string      `json:"topic"`
+	PushConfig *PushConfig `json:"push_config"`
+	AckTimeout int64       `json:"ack_deadline_seconds"`
+}
+
 func (s *httpService) createSubscription(ctx context.Context, id string, cfg SubscriptionConfig) error {
 	// TODO: AckTimeout needs to determine upper and lower limits
 	if cfg.AckTimeout == 0 {
 		cfg.AckTimeout = 10 * time.Second
 	}
 
-	type RequestCreate struct {
-		Name       string      `json:"name"`
-		Topic      string      `json:"topic"`
-		PushConfig *PushConfig `json:"push_config"`
-		AckTimeout int64       `json:"ack_deadline_seconds"`
-	}
-	rc := &RequestCreate{
+	rs := &ResourceSusbscription{
 		Name:       id,
 		Topic:      cfg.Topic.id,
 		PushConfig: cfg.PushConfig,
 		AckTimeout: int64(cfg.AckTimeout.Seconds()),
 	}
 	var buf bytes.Buffer
-	err := json.NewEncoder(&buf).Encode(rc)
+	err := json.NewEncoder(&buf).Encode(rs)
 	if err != nil {
 		return err
 	}
