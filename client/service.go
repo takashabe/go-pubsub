@@ -223,7 +223,7 @@ func (s *httpService) getSubscriptionConfig(ctx context.Context, id string) (*Su
 }
 
 func (s *httpService) listSubscriptions(ctx context.Context) ([]string, error) {
-	res, err := s.publisher.sendRequest(ctx, "GET", "", nil)
+	res, err := s.subscriber.sendRequest(ctx, "GET", "", nil)
 	if err != nil {
 		return nil, err
 	}
