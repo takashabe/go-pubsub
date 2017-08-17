@@ -33,7 +33,7 @@ type service interface {
 	//
 	// ack(ctx context.Context, subID string, ackIDs []string) error
 
-	close() error
+	// close() error
 }
 
 // httpService implemnet service interface for HTTP protocol
