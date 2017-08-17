@@ -21,8 +21,8 @@ type service interface {
 
 	// TODO: implements
 	createSubscription(ctx context.Context, id string, cfg SubscriptionConfig) error
-	getSubscriptionConfig(ctx context.Context, id string) (SubscriptionConfig, string, error)
-	// listSubscriptions(ctx context.Context) []string
+	getSubscriptionConfig(ctx context.Context, id string) (*SubscriptionConfig, error)
+	// listSubscriptions(ctx context.Context) ([]string, error)
 	// deleteSubscription(ctx context.Context, id string) error
 	// subscriptionExists(ctx context.Context, id string) (bool, error)
 	// modifyPushConfig(ctx context.Context, id string, cfg PushConfig) error
@@ -201,14 +201,25 @@ func (s *httpService) createSubscription(ctx context.Context, id string, cfg Sub
 	return verifyHTTPStatusCode(http.StatusCreated, res)
 }
 
-func (s *httpService) getSubscriptionConfig(ctx context.Context, id string) (SubscriptionConfig, string, error) {
+func (s *httpService) getSubscriptionConfig(ctx context.Context, id string) (*SubscriptionConfig, error) {
 	res, err := s.subscriber.sendRequest(ctx, "GET", id, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer res.Body.Close()
 
-	return verifyHTTPStatusCode(http.StatusOK, res)
+	rs := &ResourceSusbscription{}
+	err = json.NewDecoder(res.Body).Decode(rs)
+	if err != nil {
+		return nil, err
+	}
+	cfg := &SubscriptionConfig{
+		Topic:      newTopic(rs.Topic, s),
+		PushConfig: rs.PushConfig,
+		AckTimeout: time.Duration(rs.AckTimeout),
+	}
+
+	return cfg, nil
 }
 
 func verifyHTTPStatusCode(expect int, res *http.Response) error {

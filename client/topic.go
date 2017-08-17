@@ -8,6 +8,13 @@ type Topic struct {
 	s  service
 }
 
+func newTopic(id string, s service) *Topic {
+	return &Topic{
+		id: id,
+		s:  s,
+	}
+}
+
 // PublishResult is a result for publish message
 type PublishResult struct {
 	done  chan struct{}
