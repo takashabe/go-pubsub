@@ -180,6 +180,34 @@ func (s *SubscriptionServer) ModifyAck(w http.ResponseWriter, r *http.Request, i
 	JSON(w, http.StatusOK, "")
 }
 
+// RequestModifyPush represent request ModifyPush API json
+type RequestModifyPush struct {
+	PushConfig *PushConfig `json:"push_config"`
+}
+
+// ModifyPush is modify push parameters
+func (s *SubscriptionServer) ModifyPush(w http.ResponseWriter, r *http.Request, id string) {
+	// parse request
+	var req RequestModifyPush
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		Error(w, http.StatusNotFound, err, "failed to parsed request")
+		return
+	}
+
+	// modify push
+	sub, err := models.GetSubscription(id)
+	if err != nil {
+		Error(w, http.StatusNotFound, err, "not found subscription")
+		return
+	}
+	err = sub.SetPushConfig(req.PushConfig.Endpoint, req.PushConfig.Attr)
+	if err != nil {
+		Error(w, http.StatusInternalServerError, err, "failed to modify push config")
+		return
+	}
+	JSON(w, http.StatusOK, "")
+}
+
 // Delete is delete subscription
 func (s *SubscriptionServer) Delete(w http.ResponseWriter, r *http.Request, id string) {
 	sub, err := models.GetSubscription(id)

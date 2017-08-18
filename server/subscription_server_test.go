@@ -471,3 +471,52 @@ func TestModifyAck(t *testing.T) {
 		t.Errorf("want status code %d, got %d", http.StatusNotFound, got)
 	}
 }
+
+func TestModifyPush(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	setupDummyTopics(t, ts)
+	createDummySubscription(t, ts, ResourceSubscription{
+		Name:  "A",
+		Topic: "a",
+		Push:  PushConfig{Endpoint: "localhost:12345", Attr: nil},
+	})
+
+	requestModifyPush := func(body RequestModifyPush) *http.Response {
+		var buf bytes.Buffer
+		if err := json.NewEncoder(&buf).Encode(body); err != nil {
+			t.Fatalf("failed to encode json, got err %v", err)
+		}
+		client := dummyClient(t)
+		res, err := client.Post(
+			fmt.Sprintf("%s/subscription/%s/push/modify", ts.URL, "A"),
+			"application/json", &buf)
+		if err != nil {
+			t.Fatalf("failed to send request, got err %v", err)
+		}
+		return res
+	}
+
+	cases := []struct {
+		body   RequestModifyPush
+		expect int
+	}{
+		{
+			RequestModifyPush{
+				PushConfig: &PushConfig{Endpoint: "localhost:8080", Attr: nil},
+			},
+			http.StatusOK,
+		},
+		{
+			RequestModifyPush{},
+			http.StatusOK,
+		},
+	}
+	for i, c := range cases {
+		res := requestModifyPush(c.body)
+		defer res.Body.Close()
+		if c.expect != res.StatusCode {
+			t.Errorf("#%d: want status code %d, got %d", i, c.expect, res.StatusCode)
+		}
+	}
+}

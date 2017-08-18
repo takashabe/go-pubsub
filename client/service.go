@@ -25,7 +25,7 @@ type service interface {
 	listSubscriptions(ctx context.Context) ([]string, error)
 	deleteSubscription(ctx context.Context, id string) error
 	subscriptionExists(ctx context.Context, id string) (bool, error)
-	// modifyPushConfig(ctx context.Context, id string, cfg PushConfig) error
+	modifyPushConfig(ctx context.Context, id string, cfg PushConfig) error
 
 	// modifyAckDeadline(ctx context.Context, subID string, deadline time.Duration, ackIDs []string) error
 	// pullMessages(ctx context.Context, subID string, maxMessages int) ([]*Message, error)
@@ -260,6 +260,10 @@ func (s *httpService) subscriptionExists(ctx context.Context, id string) (bool, 
 	defer res.Body.Close()
 
 	return http.StatusOK == res.StatusCode, nil
+}
+
+func (s *httpService) modifyPushConfig(ctx context.Context, id string, cfg PushConfig) error {
+
 }
 
 func verifyHTTPStatusCode(expect int, res *http.Response) error {

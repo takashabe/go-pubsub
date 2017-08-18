@@ -82,43 +82,40 @@ func setupDummyTopics(t *testing.T, ts *httptest.Server) {
 	}
 }
 
+func createDummySubscription(t *testing.T, ts *httptest.Server, resource ResourceSubscription) {
+	client := dummyClient(t)
+	b, err := json.Marshal(resource)
+	if err != nil {
+		t.Fatal("failed to encode json")
+	}
+	req, err := http.NewRequest("PUT",
+		fmt.Sprintf("%s/subscription/%s", ts.URL, resource.Name), bytes.NewBuffer(b))
+	if err != nil {
+		t.Fatal("failed to create request")
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		t.Fatal("failed to send request")
+	}
+	defer res.Body.Close()
+}
+
 func setupDummyTopicAndSub(t *testing.T, ts *httptest.Server) {
 	setupDummyTopics(t, ts)
-	reqs := []struct {
-		name string
-		body ResourceSubscription
-	}{
-		{
-			"A",
-			ResourceSubscription{
-				Topic:      "a",
-				AckTimeout: 10,
-			},
+	reqs := []ResourceSubscription{
+		ResourceSubscription{
+			Name:       "A",
+			Topic:      "a",
+			AckTimeout: 10,
 		},
-		{
-			"B",
-			ResourceSubscription{
-				Topic:      "a",
-				AckTimeout: 10,
-			},
+		ResourceSubscription{
+			Name:       "B",
+			Topic:      "a",
+			AckTimeout: 10,
 		},
 	}
-	for i, r := range reqs {
-		client := dummyClient(t)
-		b, err := json.Marshal(r.body)
-		if err != nil {
-			t.Fatalf("#%d: failed to encode json", i)
-		}
-		req, err := http.NewRequest("PUT",
-			fmt.Sprintf("%s/subscription/%s", ts.URL, r.name), bytes.NewBuffer(b))
-		if err != nil {
-			t.Fatalf("#%d: failed to create request", i)
-		}
-		res, err := client.Do(req)
-		if err != nil {
-			t.Fatalf("#%d: failed to send request", i)
-		}
-		defer res.Body.Close()
+	for _, r := range reqs {
+		createDummySubscription(t, ts, r)
 	}
 }
 
