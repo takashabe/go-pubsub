@@ -517,6 +517,9 @@ func TestModifyPush(t *testing.T) {
 		defer res.Body.Close()
 		if c.expect != res.StatusCode {
 			t.Errorf("#%d: want status code %d, got %d", i, c.expect, res.StatusCode)
+			if msg, err := ioutil.ReadAll(res.Body); err == nil {
+				t.Logf("\treceive message: %s", msg)
+			}
 		}
 	}
 }

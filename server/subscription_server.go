@@ -200,6 +200,9 @@ func (s *SubscriptionServer) ModifyPush(w http.ResponseWriter, r *http.Request, 
 		Error(w, http.StatusNotFound, err, "not found subscription")
 		return
 	}
+	if req.PushConfig == nil {
+		req.PushConfig = &PushConfig{}
+	}
 	err = sub.SetPushConfig(req.PushConfig.Endpoint, req.PushConfig.Attr)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err, "failed to modify push config")
