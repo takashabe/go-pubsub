@@ -93,6 +93,7 @@ func routes() *router.Router {
 	r.Post(subscriptionRoot+"/:id/pull", ss.Pull)
 	r.Post(subscriptionRoot+"/:id/ack", ss.Ack)
 	r.Post(subscriptionRoot+"/:id/ack/modify", ss.ModifyAck)
+	r.Post(subscriptionRoot+"/:id/push/modify", ss.ModifyPush)
 	r.Delete(subscriptionRoot+"/:id", ss.Delete)
 	return r
 }
