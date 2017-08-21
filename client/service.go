@@ -245,7 +245,7 @@ func (s *httpService) listSubscriptions(ctx context.Context) ([]string, error) {
 func (s *httpService) deleteSubscription(ctx context.Context, id string) error {
 	res, err := s.subscriber.sendRequest(ctx, "DELETE", id, nil)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer res.Body.Close()
 
@@ -255,7 +255,7 @@ func (s *httpService) deleteSubscription(ctx context.Context, id string) error {
 func (s *httpService) subscriptionExists(ctx context.Context, id string) (bool, error) {
 	res, err := s.subscriber.sendRequest(ctx, "GET", id, nil)
 	if err != nil {
-		return nil, err
+		return false, err
 	}
 	defer res.Body.Close()
 
