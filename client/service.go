@@ -25,7 +25,7 @@ type service interface {
 	listSubscriptions(ctx context.Context) ([]string, error)
 	deleteSubscription(ctx context.Context, id string) error
 	subscriptionExists(ctx context.Context, id string) (bool, error)
-	modifyPushConfig(ctx context.Context, id string, cfg PushConfig) error
+	modifyPushConfig(ctx context.Context, id string, cfg *PushConfig) error
 
 	// modifyAckDeadline(ctx context.Context, subID string, deadline time.Duration, ackIDs []string) error
 	// pullMessages(ctx context.Context, subID string, maxMessages int) ([]*Message, error)
@@ -262,8 +262,28 @@ func (s *httpService) subscriptionExists(ctx context.Context, id string) (bool, 
 	return http.StatusOK == res.StatusCode, nil
 }
 
-func (s *httpService) modifyPushConfig(ctx context.Context, id string, cfg PushConfig) error {
+// ResourceModifyPush represent the payload of the ModifyPush API
+type ResourceModifyPush struct {
+	PushConfig *PushConfig `json:"push_config"`
+}
 
+func (s *httpService) modifyPushConfig(ctx context.Context, id string, cfg *PushConfig) error {
+	payload := &ResourceModifyPush{
+		PushConfig: cfg,
+	}
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(payload)
+	if err != nil {
+		return err
+	}
+
+	res, err := s.subscriber.sendRequest(ctx, "POST", id+"/push/modify", &buf)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	return nil
 }
 
 func verifyHTTPStatusCode(expect int, res *http.Response) error {
