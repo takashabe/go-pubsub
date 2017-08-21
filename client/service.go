@@ -283,7 +283,7 @@ func (s *httpService) modifyPushConfig(ctx context.Context, id string, cfg *Push
 	}
 	defer res.Body.Close()
 
-	return nil
+	return verifyHTTPStatusCode(http.StatusOK, res)
 }
 
 func verifyHTTPStatusCode(expect int, res *http.Response) error {
