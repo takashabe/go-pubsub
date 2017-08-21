@@ -175,8 +175,7 @@ type ResourceSusbscription struct {
 }
 
 func (s *httpService) createSubscription(ctx context.Context, id string, cfg SubscriptionConfig) error {
-	// TODO: AckTimeout needs to determine upper and lower limits
-	if cfg.AckTimeout == 0 {
+	if !isValidAckDeadlineRange(cfg.AckTimeout) {
 		cfg.AckTimeout = 10 * time.Second
 	}
 
@@ -291,4 +290,9 @@ func verifyHTTPStatusCode(expect int, res *http.Response) error {
 		return errors.Errorf("HTTP response error: expecte status code %d, but received %d", expect, c)
 	}
 	return nil
+}
+
+func isValidAckDeadlineRange(deadline time.Duration) bool {
+	// TODO: AckDeadline needs to determine upper and lower limits
+	return deadline > 0
 }
