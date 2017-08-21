@@ -27,7 +27,7 @@ type service interface {
 	subscriptionExists(ctx context.Context, id string) (bool, error)
 	modifyPushConfig(ctx context.Context, id string, cfg *PushConfig) error
 
-	// modifyAckDeadline(ctx context.Context, subID string, deadline time.Duration, ackIDs []string) error
+	modifyAckDeadline(ctx context.Context, subID string, deadline time.Duration, ackIDs []string) error
 	// pullMessages(ctx context.Context, subID string, maxMessages int) ([]*Message, error)
 	publishMessages(ctx context.Context, topicID string, msg *Message) (string, error)
 	//
@@ -277,6 +277,36 @@ func (s *httpService) modifyPushConfig(ctx context.Context, id string, cfg *Push
 	}
 
 	res, err := s.subscriber.sendRequest(ctx, "POST", id+"/push/modify", &buf)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	return verifyHTTPStatusCode(http.StatusOK, res)
+}
+
+// ResourceModifyAck represent the payload of the ModifyAck API
+type ResourceModifyAck struct {
+	AckIDs             []string `json:"ack_ids"`
+	AckDeadlineSeconds int64    `json:"ack_deadline_seconds"`
+}
+
+func (s *httpService) modifyAckDeadline(ctx context.Context, subID string, deadline time.Duration, ackIDs []string) error {
+	if !isValidAckDeadlineRange(deadline) {
+		return errors.New("request error: invalid AckDeadline")
+	}
+
+	payload := &ResourceModifyAck{
+		AckIDs:             ackIDs,
+		AckDeadlineSeconds: int64(deadline.Seconds()),
+	}
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(payload)
+	if err != nil {
+		return err
+	}
+
+	res, err := s.subscriber.sendRequest(ctx, "POST", subID+"/ack/modify", &buf)
 	if err != nil {
 		return err
 	}
