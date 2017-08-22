@@ -3,6 +3,8 @@ package client
 import (
 	"context"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // Subscription is a accessor to a server subscription
@@ -39,6 +41,30 @@ func (s *Subscription) Config(ctx context.Context) (*SubscriptionConfig, error) 
 // Delete deletes the Subscription
 func (s *Subscription) Delete(ctx context.Context) error {
 	return s.s.deleteSubscription(ctx, s.id)
+}
+
+// Receive calls fn for the fetched messages from the Subscription.
+// send a nack requests when an error occurs via the Pull API.
+func (s *Subscription) Receive(ctx context.Context, fn func(ctx context.Context, msg *Message)) error {
+	msgs, err := s.s.pullMessages(ctx, s.id, 1)
+	if err != nil {
+		// send nack request to the pulled messages
+		if msgs != nil {
+			ackIDs := []string{}
+			for _, msg := range msgs {
+				ackIDs = append(ackIDs, msg.AckID)
+			}
+			if nackErr := s.s.modifyAckDeadline(ctx, s.id, 0, ackIDs); nackErr != nil {
+				errors.Wrapf(err, "failed to nack messages: %s", nackErr.Error())
+			}
+		}
+		return err
+	}
+
+	for _, msg := range msgs {
+		fn(ctx, msg)
+	}
+	return nil
 }
 
 // Ack calls Ack API for the ackIDs
