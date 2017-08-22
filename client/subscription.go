@@ -40,3 +40,8 @@ func (s *Subscription) Config(ctx context.Context) (*SubscriptionConfig, error) 
 func (s *Subscription) Delete(ctx context.Context) error {
 	return s.s.deleteSubscription(ctx, s.id)
 }
+
+// Ack calls Ack API for the ackIDs
+func (s *Subscription) Ack(ctx context.Context, ackIDs []string) error {
+	return s.s.ack(ctx, s.id, ackIDs)
+}
