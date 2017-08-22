@@ -13,13 +13,14 @@ import (
 
 // service is an accessor to server API used by this package
 type service interface {
+	// handle topic
 	createTopic(ctx context.Context, id string) error
 	deleteTopic(ctx context.Context, id string) error
 	topicExists(ctx context.Context, id string) (bool, error)
 	listTopics(ctx context.Context) ([]string, error)
 	listTopicSubscriptions(ctx context.Context, id string) ([]string, error)
 
-	// TODO: implements
+	// handle subscription
 	createSubscription(ctx context.Context, id string, cfg SubscriptionConfig) error
 	getSubscriptionConfig(ctx context.Context, id string) (*SubscriptionConfig, error)
 	listSubscriptions(ctx context.Context) ([]string, error)
@@ -27,13 +28,11 @@ type service interface {
 	subscriptionExists(ctx context.Context, id string) (bool, error)
 	modifyPushConfig(ctx context.Context, id string, cfg *PushConfig) error
 
+	// handle message
 	modifyAckDeadline(ctx context.Context, subID string, deadline time.Duration, ackIDs []string) error
 	pullMessages(ctx context.Context, subID string, maxMessages int) ([]*Message, error)
 	publishMessages(ctx context.Context, topicID string, msg *Message) (string, error)
-
 	ack(ctx context.Context, subID string, ackIDs []string) error
-
-	// close() error
 }
 
 // httpService implemnet service interface for HTTP protocol
