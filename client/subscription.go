@@ -35,3 +35,8 @@ func newSubscription(id string, s service) *Subscription {
 func (s *Subscription) Config(ctx context.Context) (*SubscriptionConfig, error) {
 	return s.s.getSubscriptionConfig(ctx, s.id)
 }
+
+// Delete deletes the Subscription
+func (s *Subscription) Delete(ctx context.Context) error {
+	return s.s.deleteSubscription(ctx, s.id)
+}
