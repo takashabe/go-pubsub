@@ -54,6 +54,7 @@ func (s *Subscription) Receive(ctx context.Context, fn func(ctx context.Context,
 			for _, msg := range msgs {
 				ackIDs = append(ackIDs, msg.AckID)
 			}
+			// nack is represented by setting AckDeadline to zero
 			if nackErr := s.s.modifyAckDeadline(ctx, s.id, 0, ackIDs); nackErr != nil {
 				errors.Wrapf(err, "failed to nack messages: %s", nackErr.Error())
 			}
