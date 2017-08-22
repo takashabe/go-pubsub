@@ -9,11 +9,11 @@ import (
 
 // Message is a message sent to and received from the server
 type Message struct {
-	ID          string
-	Data        []byte
-	Attributes  map[string]string
-	AckID       string
-	PublishTime time.Time
+	ID          string            `json:"message_id"`
+	Data        []byte            `json:"data"`
+	Attributes  map[string]string `json:"attributes"`
+	AckID       string            `json:"-"`
+	PublishTime time.Time         `json:"publish_time"`
 }
 
 // PublishMessage represent format of publish message

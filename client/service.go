@@ -28,7 +28,7 @@ type service interface {
 	modifyPushConfig(ctx context.Context, id string, cfg *PushConfig) error
 
 	modifyAckDeadline(ctx context.Context, subID string, deadline time.Duration, ackIDs []string) error
-	// pullMessages(ctx context.Context, subID string, maxMessages int) ([]*Message, error)
+	pullMessages(ctx context.Context, subID string, maxMessages int) ([]*Message, error)
 	publishMessages(ctx context.Context, topicID string, msg *Message) (string, error)
 	//
 	// ack(ctx context.Context, subID string, ackIDs []string) error
@@ -313,6 +313,51 @@ func (s *httpService) modifyAckDeadline(ctx context.Context, subID string, deadl
 	defer res.Body.Close()
 
 	return verifyHTTPStatusCode(http.StatusOK, res)
+}
+
+// ResourcePullRequest represent the payload of the request Pull API
+type ResourcePullRequest struct {
+	MaxMessages int `json:"max_messages"`
+}
+
+// ResourcePullResponse represent the payload of the response Pull API
+type ResourcePullResponse struct {
+	AckID   string   `json:"ack_id"`
+	Message *Message `json:"message"`
+}
+
+func (s *httpService) pullMessages(ctx context.Context, subID string, maxMessages int) ([]*Message, error) {
+	if maxMessages <= 0 {
+		maxMessages = 1
+	}
+
+	payload := &ResourcePullRequest{
+		MaxMessages: maxMessages,
+	}
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := s.subscriber.sendRequest(ctx, "POST", subID+"/ack/modify", &buf)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	rawMsgs := []*ResourcePullResponse{}
+	err = json.NewDecoder(res.Body).Decode(rawMsgs)
+	if err != nil {
+		return nil, err
+	}
+	msgs := []*Message{}
+	for _, raw := range rawMsgs {
+		raw.Message.AckID = raw.AckID
+		msgs = append(msgs, raw.Message)
+	}
+
+	return msgs, nil
 }
 
 func verifyHTTPStatusCode(expect int, res *http.Response) error {
