@@ -35,8 +35,8 @@ type service interface {
 	ack(ctx context.Context, subID string, ackIDs []string) error
 }
 
-// httpService implemnet service interface for HTTP protocol
-type httpService struct {
+// restService implemnet service interface for HTTP protocol
+type restService struct {
 	publisher  restPublisher
 	subscriber restSubscriber
 }
@@ -69,7 +69,7 @@ func sendRequest(ctx context.Context, client http.Client, method, url string, bo
 	return client.Do(req)
 }
 
-func (s *httpService) createTopic(ctx context.Context, id string) error {
+func (s *restService) createTopic(ctx context.Context, id string) error {
 	res, err := s.publisher.sendRequest(ctx, "PUT", id, nil)
 	if err != nil {
 		return err
@@ -79,7 +79,7 @@ func (s *httpService) createTopic(ctx context.Context, id string) error {
 	return verifyHTTPStatusCode(http.StatusCreated, res)
 }
 
-func (s *httpService) deleteTopic(ctx context.Context, id string) error {
+func (s *restService) deleteTopic(ctx context.Context, id string) error {
 	res, err := s.publisher.sendRequest(ctx, "DELETE", id, nil)
 	if err != nil {
 		return err
@@ -89,7 +89,7 @@ func (s *httpService) deleteTopic(ctx context.Context, id string) error {
 	return verifyHTTPStatusCode(http.StatusNoContent, res)
 }
 
-func (s *httpService) topicExists(ctx context.Context, id string) (bool, error) {
+func (s *restService) topicExists(ctx context.Context, id string) (bool, error) {
 	res, err := s.publisher.sendRequest(ctx, "GET", id, nil)
 	if err != nil {
 		return false, err
@@ -99,7 +99,7 @@ func (s *httpService) topicExists(ctx context.Context, id string) (bool, error) 
 	return http.StatusOK == res.StatusCode, nil
 }
 
-func (s *httpService) listTopics(ctx context.Context) ([]string, error) {
+func (s *restService) listTopics(ctx context.Context) ([]string, error) {
 	res, err := s.publisher.sendRequest(ctx, "GET", "", nil)
 	if err != nil {
 		return nil, err
@@ -122,7 +122,7 @@ func (s *httpService) listTopics(ctx context.Context) ([]string, error) {
 	return ret, nil
 }
 
-func (s *httpService) listTopicSubscriptions(ctx context.Context, id string) ([]string, error) {
+func (s *restService) listTopicSubscriptions(ctx context.Context, id string) ([]string, error) {
 	res, err := s.publisher.sendRequest(ctx, "GET", id+"/subscriptions", nil)
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func (s *httpService) listTopicSubscriptions(ctx context.Context, id string) ([]
 	return subs.subscription, nil
 }
 
-func (s *httpService) publishMessages(ctx context.Context, id string, msg *Message) (string, error) {
+func (s *restService) publishMessages(ctx context.Context, id string, msg *Message) (string, error) {
 	b, err := msg.toPublish()
 	if err != nil {
 		return "", err
@@ -173,7 +173,7 @@ type ResourceSusbscription struct {
 	AckTimeout int64       `json:"ack_deadline_seconds"`
 }
 
-func (s *httpService) createSubscription(ctx context.Context, id string, cfg SubscriptionConfig) error {
+func (s *restService) createSubscription(ctx context.Context, id string, cfg SubscriptionConfig) error {
 	if !isValidAckDeadlineRange(cfg.AckTimeout) {
 		cfg.AckTimeout = 10 * time.Second
 	}
@@ -199,7 +199,7 @@ func (s *httpService) createSubscription(ctx context.Context, id string, cfg Sub
 	return verifyHTTPStatusCode(http.StatusCreated, res)
 }
 
-func (s *httpService) getSubscriptionConfig(ctx context.Context, id string) (*SubscriptionConfig, error) {
+func (s *restService) getSubscriptionConfig(ctx context.Context, id string) (*SubscriptionConfig, error) {
 	res, err := s.subscriber.sendRequest(ctx, "GET", id, nil)
 	if err != nil {
 		return nil, err
@@ -220,7 +220,7 @@ func (s *httpService) getSubscriptionConfig(ctx context.Context, id string) (*Su
 	return cfg, nil
 }
 
-func (s *httpService) listSubscriptions(ctx context.Context) ([]string, error) {
+func (s *restService) listSubscriptions(ctx context.Context) ([]string, error) {
 	res, err := s.subscriber.sendRequest(ctx, "GET", "", nil)
 	if err != nil {
 		return nil, err
@@ -240,7 +240,7 @@ func (s *httpService) listSubscriptions(ctx context.Context) ([]string, error) {
 	return ret, nil
 }
 
-func (s *httpService) deleteSubscription(ctx context.Context, id string) error {
+func (s *restService) deleteSubscription(ctx context.Context, id string) error {
 	res, err := s.subscriber.sendRequest(ctx, "DELETE", id, nil)
 	if err != nil {
 		return err
@@ -250,7 +250,7 @@ func (s *httpService) deleteSubscription(ctx context.Context, id string) error {
 	return verifyHTTPStatusCode(http.StatusNoContent, res)
 }
 
-func (s *httpService) subscriptionExists(ctx context.Context, id string) (bool, error) {
+func (s *restService) subscriptionExists(ctx context.Context, id string) (bool, error) {
 	res, err := s.subscriber.sendRequest(ctx, "GET", id, nil)
 	if err != nil {
 		return false, err
@@ -265,7 +265,7 @@ type ResourceModifyPush struct {
 	PushConfig *PushConfig `json:"push_config"`
 }
 
-func (s *httpService) modifyPushConfig(ctx context.Context, id string, cfg *PushConfig) error {
+func (s *restService) modifyPushConfig(ctx context.Context, id string, cfg *PushConfig) error {
 	payload := &ResourceModifyPush{
 		PushConfig: cfg,
 	}
@@ -290,7 +290,7 @@ type ResourceModifyAck struct {
 	AckDeadlineSeconds int64    `json:"ack_deadline_seconds"`
 }
 
-func (s *httpService) modifyAckDeadline(ctx context.Context, subID string, deadline time.Duration, ackIDs []string) error {
+func (s *restService) modifyAckDeadline(ctx context.Context, subID string, deadline time.Duration, ackIDs []string) error {
 	if !isValidAckDeadlineRange(deadline) {
 		return errors.New("request error: invalid AckDeadline")
 	}
@@ -325,7 +325,7 @@ type ResourcePullResponse struct {
 	Message *Message `json:"message"`
 }
 
-func (s *httpService) pullMessages(ctx context.Context, subID string, maxMessages int) ([]*Message, error) {
+func (s *restService) pullMessages(ctx context.Context, subID string, maxMessages int) ([]*Message, error) {
 	if maxMessages <= 0 {
 		maxMessages = 1
 	}
@@ -364,7 +364,7 @@ type ResourceAck struct {
 	AckIDs []string `json:"ack_ids"`
 }
 
-func (s *httpService) ack(ctx context.Context, subID string, ackIDs []string) error {
+func (s *restService) ack(ctx context.Context, subID string, ackIDs []string) error {
 	payload := &ResourceAck{
 		AckIDs: ackIDs,
 	}
