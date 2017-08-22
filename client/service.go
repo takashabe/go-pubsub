@@ -30,8 +30,8 @@ type service interface {
 	modifyAckDeadline(ctx context.Context, subID string, deadline time.Duration, ackIDs []string) error
 	pullMessages(ctx context.Context, subID string, maxMessages int) ([]*Message, error)
 	publishMessages(ctx context.Context, topicID string, msg *Message) (string, error)
-	//
-	// ack(ctx context.Context, subID string, ackIDs []string) error
+
+	ack(ctx context.Context, subID string, ackIDs []string) error
 
 	// close() error
 }
@@ -358,6 +358,30 @@ func (s *httpService) pullMessages(ctx context.Context, subID string, maxMessage
 	}
 
 	return msgs, nil
+}
+
+// ResourceAck represent the payload of the Ack API
+type ResourceAck struct {
+	AckIDs []string `json:"ack_ids"`
+}
+
+func (s *httpService) ack(ctx context.Context, subID string, ackIDs []string) error {
+	payload := &ResourceAck{
+		AckIDs: ackIDs,
+	}
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(payload)
+	if err != nil {
+		return err
+	}
+
+	res, err := s.subscriber.sendRequest(ctx, "POST", subID+"/ack", &buf)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	return verifyHTTPStatusCode(http.StatusOK, res)
 }
 
 func verifyHTTPStatusCode(expect int, res *http.Response) error {
