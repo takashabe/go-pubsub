@@ -1,6 +1,9 @@
 package client
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 // Subscription is a accessor to a server subscription
 type Subscription struct {
@@ -26,4 +29,9 @@ func newSubscription(id string, s service) *Subscription {
 		id: id,
 		s:  s,
 	}
+}
+
+// Config returns the current configuration for the Subscription
+func (s *Subscription) Config(ctx context.Context) (*SubscriptionConfig, error) {
+	return s.s.getSubscriptionConfig(ctx, s.id)
 }
