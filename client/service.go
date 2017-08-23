@@ -174,6 +174,9 @@ type ResourceSusbscription struct {
 }
 
 func (s *restService) createSubscription(ctx context.Context, id string, cfg SubscriptionConfig) error {
+	if cfg.Topic == nil {
+		return errors.New("require non-nil topic")
+	}
 	if !isValidAckDeadlineRange(cfg.AckTimeout) {
 		cfg.AckTimeout = 10 * time.Second
 	}
