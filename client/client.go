@@ -59,7 +59,7 @@ func NewClient(ctx context.Context, addr string) (*Client, error) {
 				httpClient: httpClient,
 			},
 		},
-	}
+	}, nil
 }
 
 // CreateTopic creates new Topic
