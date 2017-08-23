@@ -20,6 +20,11 @@ type SubscriptionConfig struct {
 	AckTimeout time.Duration
 }
 
+// SubscriptionConfigToUpdate is updatable parameter for the existed Subscription
+type SubscriptionConfigToUpdate struct {
+	PushConfig *PushConfig
+}
+
 // PushConfig represent parameter of the push mode in Subscription
 type PushConfig struct {
 	Endpoint   string
@@ -71,4 +76,9 @@ func (s *Subscription) Receive(ctx context.Context, fn func(ctx context.Context,
 // Ack calls Ack API for the ackIDs
 func (s *Subscription) Ack(ctx context.Context, ackIDs []string) error {
 	return s.s.ack(ctx, s.id, ackIDs)
+}
+
+// Update updates an existing Subscription
+func (s *Subscription) Update(ctx context.Context, cfg *SubscriptionConfigToUpdate) error {
+	return s.s.modifyPushConfig(ctx, s.id, cfg.PushConfig)
 }
