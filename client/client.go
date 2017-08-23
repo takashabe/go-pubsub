@@ -99,3 +99,21 @@ func (c *Client) CreateSubscription(ctx context.Context, id string, cfg Subscrip
 
 	return newSubscription(id, c.s), nil
 }
+
+// Subscription returns reference of the subscription
+func (c *Client) Subscription(id string) *Subscription {
+	return newSubscription(id, c.s)
+}
+
+// Subscriptions returns all existing the subscription list
+func (c *Client) Subscriptions(ctx context.Context) ([]*Subscription, error) {
+	ids, err := c.s.listSubscriptions(ctx)
+	if err != nil {
+		return nil, err
+	}
+	subscriptions := []*Subscription{}
+	for _, id := range ids {
+		subscriptions = append(subscriptions, newSubscription(id, c.s))
+	}
+	return subscriptions, nil
+}
