@@ -37,8 +37,8 @@ type service interface {
 
 // restService implemnet service interface for HTTP protocol
 type restService struct {
-	publisher  restPublisher
-	subscriber restSubscriber
+	publisher  *restPublisher
+	subscriber *restSubscriber
 }
 
 type restPublisher struct {
