@@ -42,6 +42,9 @@ type Client struct {
 
 // NewClient returns a new pubsub client
 func NewClient(ctx context.Context, addr string) (*Client, error) {
+	if addr[len(addr)-1] != '/' {
+		addr = addr + "/"
+	}
 	if _, err := url.Parse(addr); err != nil {
 		return nil, err
 	}
@@ -51,11 +54,11 @@ func NewClient(ctx context.Context, addr string) (*Client, error) {
 	return &Client{
 		s: &restService{
 			publisher: &restPublisher{
-				serverURL:  addr,
+				serverURL:  addr + "topic/",
 				httpClient: httpClient,
 			},
 			subscriber: &restSubscriber{
-				serverURL:  addr,
+				serverURL:  addr + "subscription/",
 				httpClient: httpClient,
 			},
 		},
