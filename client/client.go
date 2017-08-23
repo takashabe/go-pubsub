@@ -72,6 +72,24 @@ func (c *Client) CreateTopic(ctx context.Context, id string) (*Topic, error) {
 	return newTopic(id, c.s), nil
 }
 
+// Topic returns reference of the topic
+func (c *Client) Topic(id string) *Topic {
+	return newTopic(id, c.s)
+}
+
+// Topics returns existing the topic list
+func (c *Client) Topics(ctx context.Context) ([]*Topic, error) {
+	ids, err := c.s.listTopics(ctx)
+	if err != nil {
+		return nil, err
+	}
+	topics := []*Topic{}
+	for _, id := range ids {
+		topics = append(topics, newTopic(id, c.s))
+	}
+	return topics, nil
+}
+
 // CreateSubscription creates new Subscription
 func (c *Client) CreateSubscription(ctx context.Context, id string, cfg SubscriptionConfig) (*Subscription, error) {
 	err := c.s.createSubscription(ctx, id, cfg)
