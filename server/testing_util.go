@@ -63,7 +63,7 @@ func setupServer(t *testing.T) *httptest.Server {
 	}
 
 	// setup http server
-	return httptest.NewServer(routes())
+	return httptest.NewServer(Routes())
 }
 
 func setupDummyTopics(t *testing.T, ts *httptest.Server) {

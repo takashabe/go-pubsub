@@ -73,7 +73,8 @@ func JSON(w http.ResponseWriter, code int, src interface{}) {
 	Respond(w, code, src)
 }
 
-func routes() *router.Router {
+// Routes returns initialized for the topic and subscription router
+func Routes() *router.Router {
 	r := router.NewRouter()
 
 	ts := TopicServer{}
@@ -135,5 +136,5 @@ func (s *Server) InitDatastore() error {
 // Run start server
 func (s *Server) Run(port int) error {
 	log.Println("starting server...")
-	return http.ListenAndServe(fmt.Sprintf(":%d", port), routes())
+	return http.ListenAndServe(fmt.Sprintf(":%d", port), Routes())
 }
