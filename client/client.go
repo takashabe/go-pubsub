@@ -2,8 +2,11 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"io"
+	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -35,4 +38,46 @@ func (m *Message) toPublish() (io.Reader, error) {
 // Client is a client for server
 type Client struct {
 	s service
+}
+
+// NewClient returns a new pubsub client
+func NewClient(ctx context.Context, addr string) (*Client, error) {
+	if _, err := url.Parse(addr); err != nil {
+		return nil, err
+	}
+
+	// TODO: enable to designate any client
+	httpClient := http.Client{}
+	return &Client{
+		s: &restService{
+			publisher: &restPublisher{
+				serverURL:  addr,
+				httpClient: httpClient,
+			},
+			subscriber: &restSubscriber{
+				serverURL:  addr,
+				httpClient: httpClient,
+			},
+		},
+	}
+}
+
+// CreateTopic creates new Topic
+func (c *Client) CreateTopic(ctx context.Context, id string) (*Topic, error) {
+	err := c.s.createTopic(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return newTopic(id, c.s), nil
+}
+
+// CreateSubscription creates new Subscription
+func (c *Client) CreateSubscription(ctx context.Context, id string, cfg SubscriptionConfig) (*Subscription, error) {
+	err := c.s.createSubscription(ctx, id, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return newSubscription(id, c.s), nil
 }
