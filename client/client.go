@@ -21,8 +21,8 @@ type Message struct {
 
 // PublishMessage represent format of publish message
 type PublishMessage struct {
-	Data       []byte
-	Attributes map[string]string
+	Data       []byte            `json:"data"`
+	Attributes map[string]string `json:"attributes"`
 }
 
 func (m *Message) toPublish() (io.Reader, error) {
