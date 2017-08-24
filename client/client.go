@@ -1,10 +1,7 @@
 package client
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -25,14 +22,11 @@ type PublishMessage struct {
 	Attributes map[string]string `json:"attributes"`
 }
 
-func (m *Message) toPublish() (io.Reader, error) {
-	var buf bytes.Buffer
-	p := &PublishMessage{
+func (m *Message) toPublish() PublishMessage {
+	return PublishMessage{
 		Data:       m.Data,
 		Attributes: m.Attributes,
 	}
-	err := json.NewEncoder(&buf).Encode(p)
-	return &buf, err
 }
 
 // Client is a client for server

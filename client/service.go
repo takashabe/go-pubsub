@@ -141,22 +141,32 @@ func (s *restService) listTopicSubscriptions(ctx context.Context, id string) ([]
 	return subs.subscription, nil
 }
 
+// ResourcePublishRequest represent the payload of the request Publish API
+type ResourcePublishRequest struct {
+	Messages []PublishMessage `json:"messages"`
+}
+
+// ResourcePublishResponse represent the payload of the response Publish API
+type ResourcePublishResponse struct {
+	MessageIDs []string `json:"message_ids"`
+}
+
 func (s *restService) publishMessages(ctx context.Context, id string, msg *Message) (string, error) {
-	b, err := msg.toPublish()
+	// TODO: acceptable the Message slice in args
+	b := &ResourcePublishRequest{Messages: []PublishMessage{msg.toPublish()}}
+	var buf bytes.Buffer
+	err := json.NewEncoder(&buf).Encode(b)
 	if err != nil {
 		return "", err
 	}
-	res, err := s.publisher.sendRequest(ctx, "GET", id+"/publish", b)
+	res, err := s.publisher.sendRequest(ctx, "POST", id+"/publish", &buf)
 	if err != nil {
 		return "", err
 	}
 	defer res.Body.Close()
 
-	type ResponsePublish struct {
-		MessageIDs []string `json:"messageIDs"`
-	}
-	msgIDs := ResponsePublish{}
-	err = json.NewDecoder(res.Body).Decode(msgIDs)
+	msgIDs := ResourcePublishResponse{}
+	err = json.NewDecoder(res.Body).Decode(&msgIDs)
 	if err != nil {
 		return "", err
 	}
