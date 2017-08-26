@@ -352,7 +352,7 @@ func (s *restService) pullMessages(ctx context.Context, subID string, maxMessage
 		return nil, err
 	}
 
-	res, err := s.subscriber.sendRequest(ctx, "POST", subID+"/ack/modify", &buf)
+	res, err := s.subscriber.sendRequest(ctx, "POST", subID+"/pull", &buf)
 	if err != nil {
 		return nil, err
 	}
