@@ -51,6 +51,7 @@ func (s *Subscription) Delete(ctx context.Context) error {
 // Receive calls fn for the fetched messages from the Subscription.
 // send a nack requests when an error occurs via the Pull API.
 func (s *Subscription) Receive(ctx context.Context, fn func(ctx context.Context, msg *Message)) error {
+	// TODO: number of receive message extract to ReceiveConfig
 	msgs, err := s.s.pullMessages(ctx, s.id, 1)
 	if err != nil {
 		// send nack request to the pulled messages

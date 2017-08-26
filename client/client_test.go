@@ -5,6 +5,7 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/takashabe/go-message-queue/server"
 )
@@ -33,6 +34,21 @@ func createDummyTopics(t *testing.T, ts *httptest.Server) {
 		}
 	}
 }
+
+func createDummySubscriptions(t *testing.T, ts *httptest.Server, topic *Topic) {
+	ctx := context.Background()
+	client, err := NewClient(ctx, ts.URL)
+	if err != nil {
+		t.Fatalf("failed to NewClient, error=%v", err)
+	}
+	for _, id := range []string{"sub1", "sub2"} {
+		client.CreateSubscription(ctx, id, SubscriptionConfig{
+			Topic:      topic,
+			AckTimeout: time.Second,
+		})
+	}
+}
+
 func TestCreateTopic(t *testing.T) {
 	ts := setupServer(t)
 	defer ts.Close()
@@ -107,6 +123,71 @@ func TestPublish(t *testing.T) {
 			if msgID := <-idCh; msgID == "" {
 				t.Errorf("#%d-%d: want non-empty message id", i, cntCh)
 			}
+		}
+	}
+}
+
+func TestReceiveAndAck(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	createDummyTopics(t, ts)
+	ctx := context.Background()
+	client, err := NewClient(ctx, ts.URL)
+	if err != nil {
+		t.Fatalf("want non-error, got %v", err)
+	}
+	createDummySubscriptions(t, ts, client.Topic("topic1"))
+
+	cases := []struct {
+		inputs []*Message
+	}{
+		{
+			[]*Message{
+				&Message{Data: []byte(`msg1`)},
+				&Message{Data: []byte(`msg2`), Attributes: map[string]string{"msg2": "foo"}},
+			},
+		},
+	}
+	for i, c := range cases {
+		// publish message and collect message ids
+		topic := client.Topic("topic1")
+		msgIDs := []string{}
+		for mi, msg := range c.inputs {
+			result := topic.Publish(ctx, msg)
+			id, err := result.Get(ctx)
+			if err != nil {
+				t.Fatalf("#%d-%d: failed to publish message, error=%v", i, mi, err)
+			}
+			msgIDs = append(msgIDs, id)
+		}
+
+		sub := client.Subscription("sub1")
+		ackIDs := []string{}
+		for j := 0; j < len(msgIDs); j++ {
+			err := sub.Receive(ctx, func(ctx context.Context, msg *Message) {
+				// expect: the received message ID exists in recently published messages
+				contain := false
+				for _, pid := range msgIDs {
+					if msg.ID == pid {
+						contain = true
+						break
+					}
+				}
+				if !contain {
+					t.Errorf("#%d: want message id %s contain publish messaged", i, msg.ID)
+				}
+
+				// collect AckID
+				ackIDs = append(ackIDs, msg.AckID)
+			})
+			if err != nil {
+				t.Fatalf("#%d: want non-error, got %v", i, err)
+			}
+		}
+
+		err := sub.Ack(ctx, ackIDs)
+		if err != nil {
+			t.Fatalf("#%d: want non-error, got %v", i, err)
 		}
 	}
 }
