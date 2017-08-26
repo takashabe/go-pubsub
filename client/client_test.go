@@ -209,6 +209,9 @@ func TestReceiveAndAck(t *testing.T) {
 			}
 			msgIDs = append(msgIDs, id)
 		}
+		if len(msgIDs) != len(c.inputs) {
+			t.Fatalf("#%d: want message size %d, got %d", i, len(c.inputs), len(msgIDs))
+		}
 
 		sub := client.Subscription("sub1")
 		ackIDs := []string{}

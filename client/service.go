@@ -360,6 +360,12 @@ func (s *restService) pullMessages(ctx context.Context, subID string, maxMessage
 	}
 	defer res.Body.Close()
 
+	if err := verifyHTTPStatusCode(http.StatusOK, res); err != nil {
+		var errBuf bytes.Buffer
+		io.Copy(&errBuf, res.Body)
+		return nil, errors.Wrapf(err, "message: %s", errBuf.String())
+	}
+
 	rawMsgs := &ResourcePullResponse{}
 	err = json.NewDecoder(res.Body).Decode(rawMsgs)
 	if err != nil {
