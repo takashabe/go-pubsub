@@ -136,6 +136,10 @@ func (s *SubscriptionServer) Ack(w http.ResponseWriter, r *http.Request, id stri
 		Error(w, http.StatusNotFound, err, "failed to parsed request")
 		return
 	}
+	if len(req.AckIDs) == 0 {
+		Error(w, http.StatusNotFound, nil, "invalid request payload")
+		return
+	}
 
 	// ack message
 	sub, err := models.GetSubscription(id)
