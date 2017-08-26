@@ -77,6 +77,55 @@ func TestCreateTopic(t *testing.T) {
 	}
 }
 
+func TestCreateSubscription(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	createDummyTopics(t, ts)
+
+	ctx := context.Background()
+	client, err := NewClient(ctx, ts.URL)
+	if err != nil {
+		t.Fatalf("failed to NewClient, error=%v", err)
+	}
+
+	cases := []struct {
+		inputID  string
+		inputCfg SubscriptionConfig
+		expect   *Subscription
+	}{
+		{
+			"sub1",
+			SubscriptionConfig{
+				Topic: client.Topic("topic1"),
+			},
+			&Subscription{id: "sub1", s: client.s},
+		},
+	}
+	for i, c := range cases {
+		sub, err := client.CreateSubscription(ctx, c.inputID, c.inputCfg)
+		if err != nil {
+			t.Fatalf("#%d: want non error, got %v", i, err)
+		}
+		if !reflect.DeepEqual(c.expect, sub) {
+			t.Errorf("#%d: want %v, got %v", i, c.expect, sub)
+		}
+
+		subs, err := c.inputCfg.Topic.Subscriptions(ctx)
+		if err != nil {
+			t.Fatalf("#%d: want non error, got %v", i, err)
+		}
+		contain := false
+		for _, s := range subs {
+			if s.id == sub.id {
+				contain = true
+			}
+		}
+		if !contain {
+			t.Errorf("#%d: want Subscriptions contain %s", i, sub.id)
+		}
+	}
+}
+
 func TestPublish(t *testing.T) {
 	ts := setupServer(t)
 	defer ts.Close()
