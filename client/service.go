@@ -334,8 +334,10 @@ type ResourcePullRequest struct {
 
 // ResourcePullResponse represent the payload of the response Pull API
 type ResourcePullResponse struct {
-	AckID   string   `json:"ack_id"`
-	Message *Message `json:"message"`
+	Messages []struct {
+		AckID   string   `json:"ack_id"`
+		Message *Message `json:"message"`
+	} `json:"receive_messages"`
 }
 
 func (s *restService) pullMessages(ctx context.Context, subID string, maxMessages int) ([]*Message, error) {
@@ -358,13 +360,13 @@ func (s *restService) pullMessages(ctx context.Context, subID string, maxMessage
 	}
 	defer res.Body.Close()
 
-	rawMsgs := []*ResourcePullResponse{}
+	rawMsgs := &ResourcePullResponse{}
 	err = json.NewDecoder(res.Body).Decode(rawMsgs)
 	if err != nil {
 		return nil, err
 	}
 	msgs := []*Message{}
-	for _, raw := range rawMsgs {
+	for _, raw := range rawMsgs.Messages {
 		raw.Message.AckID = raw.AckID
 		msgs = append(msgs, raw.Message)
 	}
