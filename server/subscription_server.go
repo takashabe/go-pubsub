@@ -91,7 +91,7 @@ func (s *SubscriptionServer) List(w http.ResponseWriter, r *http.Request) {
 // RequestPull is represents request json for Pull
 type RequestPull struct {
 	// TODO: ReturnImmediately bool
-	MaxMessages int
+	MaxMessages int `json:"max_messages"`
 }
 
 // ResponsePull is represents response json for Pull
