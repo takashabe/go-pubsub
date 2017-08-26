@@ -65,8 +65,7 @@ func (s *Subscription) Receive(ctx context.Context, fn func(ctx context.Context,
 			for _, msg := range msgs {
 				ackIDs = append(ackIDs, msg.AckID)
 			}
-			// nack is represented by setting AckDeadline to zero
-			if nackErr := s.s.modifyAckDeadline(ctx, s.id, 0, ackIDs); nackErr != nil {
+			if nackErr := s.Nack(ctx, ackIDs); nackErr != nil {
 				errors.Wrapf(err, "failed to nack messages: %s", nackErr.Error())
 			}
 		}
@@ -82,6 +81,13 @@ func (s *Subscription) Receive(ctx context.Context, fn func(ctx context.Context,
 // Ack calls Ack API for the ackIDs
 func (s *Subscription) Ack(ctx context.Context, ackIDs []string) error {
 	return s.s.ack(ctx, s.id, ackIDs)
+}
+
+// Nack releases messages from the Subscription.
+// As a result, another subscriber can pull message.
+func (s *Subscription) Nack(ctx context.Context, ackIDs []string) error {
+	// nack is represented by setting AckDeadline to zero
+	return s.s.modifyAckDeadline(ctx, s.id, 0, ackIDs)
 }
 
 // Update updates an existing Subscription
