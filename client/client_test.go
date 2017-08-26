@@ -118,6 +118,14 @@ func TestCreateSubscription(t *testing.T) {
 			t.Errorf("#%d: want %v, got %v", i, c.expect, sub)
 		}
 
+		exists, err := sub.Exists(ctx)
+		if err != nil {
+			t.Fatalf("#%d: want non error, got %v", i, err)
+		}
+		if !exists {
+			t.Fatalf("#%d: want exists, but not exists", i)
+		}
+
 		subs, err := c.inputCfg.Topic.Subscriptions(ctx)
 		if err != nil {
 			t.Fatalf("#%d: want non error, got %v", i, err)

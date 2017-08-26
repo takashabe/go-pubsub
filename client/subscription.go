@@ -38,6 +38,11 @@ func newSubscription(id string, s service) *Subscription {
 	}
 }
 
+// Exists return whether the subscription exists on the server.
+func (s *Subscription) Exists(ctx context.Context) (bool, error) {
+	return s.s.subscriptionExists(ctx, s.id)
+}
+
 // Config returns the current configuration for the Subscription
 func (s *Subscription) Config(ctx context.Context) (*SubscriptionConfig, error) {
 	return s.s.getSubscriptionConfig(ctx, s.id)
