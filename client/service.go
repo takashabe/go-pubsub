@@ -129,16 +129,16 @@ func (s *restService) listTopicSubscriptions(ctx context.Context, id string) ([]
 	}
 	defer res.Body.Close()
 
-	type subIDs struct {
-		subscription []string
+	type SubIDs struct {
+		Subscription []string `json:"subscriptions"`
 	}
-	subs := subIDs{}
-	err = json.NewDecoder(res.Body).Decode(subs)
+	subs := SubIDs{}
+	err = json.NewDecoder(res.Body).Decode(&subs)
 	if err != nil {
 		return nil, err
 	}
 
-	return subs.subscription, nil
+	return subs.Subscription, nil
 }
 
 // ResourcePublishRequest represent the payload of the request Publish API
