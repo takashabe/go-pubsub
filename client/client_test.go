@@ -74,6 +74,14 @@ func TestCreateTopic(t *testing.T) {
 		if !reflect.DeepEqual(c.expect, topic) {
 			t.Errorf("#%d: want %v, got %v", i, c.expect, topic)
 		}
+
+		exists, err := topic.Exists(ctx)
+		if err != nil {
+			t.Fatalf("#%d: want non error, got %v", i, err)
+		}
+		if !exists {
+			t.Fatalf("#%d: want exists, but not exists", i)
+		}
 	}
 }
 
