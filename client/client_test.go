@@ -273,7 +273,7 @@ func TestReceiveAndAck(t *testing.T) {
 	}
 }
 
-func TestNack(t *testing.T) {
+func TestAckAndNack(t *testing.T) {
 	ts := setupServer(t)
 	defer ts.Close()
 	createDummyTopics(t, ts)
