@@ -49,6 +49,30 @@ func createDummySubscriptions(t *testing.T, ts *httptest.Server, topic *Topic) {
 	}
 }
 
+func publishDummyMessage(t *testing.T, topic *Topic) []string {
+	return publishMessages(t, topic, []*Message{
+		&Message{Data: []byte(`msg1`)},
+		&Message{Data: []byte(`msg2`), Attributes: map[string]string{"msg2": "foo"}},
+	})
+}
+
+func publishMessages(t *testing.T, topic *Topic, msgs []*Message) []string {
+	ctx := context.Background()
+	msgIDs := []string{}
+	for _, msg := range msgs {
+		result := topic.Publish(ctx, msg)
+		id, err := result.Get(ctx)
+		if err != nil {
+			t.Fatalf("failed to publish message, error=%v", err)
+		}
+		msgIDs = append(msgIDs, id)
+	}
+	if len(msgIDs) != len(msgs) {
+		t.Fatalf("want message size %d, got %d", len(msgs), len(msgIDs))
+	}
+	return msgIDs
+}
+
 func TestCreateTopic(t *testing.T) {
 	ts := setupServer(t)
 	defer ts.Close()
@@ -214,20 +238,7 @@ func TestReceiveAndAck(t *testing.T) {
 		},
 	}
 	for i, c := range cases {
-		// publish message and collect message ids
-		topic := client.Topic("topic1")
-		msgIDs := []string{}
-		for mi, msg := range c.inputs {
-			result := topic.Publish(ctx, msg)
-			id, err := result.Get(ctx)
-			if err != nil {
-				t.Fatalf("#%d-%d: failed to publish message, error=%v", i, mi, err)
-			}
-			msgIDs = append(msgIDs, id)
-		}
-		if len(msgIDs) != len(c.inputs) {
-			t.Fatalf("#%d: want message size %d, got %d", i, len(c.inputs), len(msgIDs))
-		}
+		msgIDs := publishMessages(t, client.Topic("topic1"), c.inputs)
 
 		sub := client.Subscription("sub1")
 		ackIDs := []string{}
