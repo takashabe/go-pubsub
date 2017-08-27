@@ -2,8 +2,10 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -268,5 +270,66 @@ func TestReceiveAndAck(t *testing.T) {
 		if err != nil {
 			t.Fatalf("#%d: want non-error, got %v", i, err)
 		}
+	}
+}
+
+func TestNack(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	createDummyTopics(t, ts)
+	ctx := context.Background()
+	client, err := NewClient(ctx, ts.URL)
+	if err != nil {
+		t.Fatalf("want non-error, got %v", err)
+	}
+	createDummySubscriptions(t, ts, client.Topic("topic1"))
+
+	cases := []struct {
+		fn func(sub *Subscription, ackIDs []string)
+	}{
+		{
+			func(sub *Subscription, ackIDs []string) {
+				err := sub.Ack(ctx, ackIDs)
+				if err != nil {
+					t.Errorf("want non error, got %v", err)
+				}
+				// expect can't pull message after the Ack
+				err = sub.Receive(ctx, func(ctx context.Context, msg *Message) {})
+				errMsg := `{"reason":"not found message"}`
+				if !strings.Contains(err.Error(), errMsg) {
+					t.Errorf("want error message contain %s, got %v", errMsg, err)
+				}
+			},
+		},
+		{
+			func(sub *Subscription, ackIDs []string) {
+				err := sub.Nack(ctx, ackIDs)
+				if err != nil {
+					t.Errorf("want non error, got %v", err)
+				}
+				// expect can't pull message after the Ack
+				err = sub.Receive(ctx, func(ctx context.Context, msg *Message) {})
+				if err != nil {
+					t.Errorf("want non error, got %v", err)
+				}
+			},
+		},
+	}
+	for i, c := range cases {
+		sub, err := client.CreateSubscription(ctx, fmt.Sprintf("sub-%d", i), SubscriptionConfig{
+			Topic: client.Topic("topic1"),
+		})
+		if err != nil {
+			t.Fatalf("#%d: want non error, got %v", i, err)
+		}
+
+		// publish and receive one message
+		publishMessages(t, client.Topic("topic1"), []*Message{&Message{Data: []byte(`msg1`)}})
+		var ackIDs []string
+		sub.Receive(ctx, func(ctx context.Context, msg *Message) {
+			ackIDs = []string{msg.AckID}
+		})
+
+		c.fn(sub, ackIDs)
 	}
 }
