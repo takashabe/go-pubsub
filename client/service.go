@@ -304,10 +304,6 @@ type ResourceModifyAck struct {
 }
 
 func (s *restService) modifyAckDeadline(ctx context.Context, subID string, deadline time.Duration, ackIDs []string) error {
-	if !isValidAckDeadlineRange(deadline) {
-		return errors.New("request error: invalid AckDeadline")
-	}
-
 	payload := &ResourceModifyAck{
 		AckIDs:             ackIDs,
 		AckDeadlineSeconds: int64(deadline.Seconds()),
