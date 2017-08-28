@@ -107,17 +107,17 @@ func (s *restService) listTopics(ctx context.Context) ([]string, error) {
 	defer res.Body.Close()
 
 	type topicID struct {
-		name string
+		Name string
 	}
 	ids := []topicID{}
-	err = json.NewDecoder(res.Body).Decode(ids)
+	err = json.NewDecoder(res.Body).Decode(&ids)
 	if err != nil {
 		return nil, err
 	}
 
 	ret := []string{}
 	for _, v := range ids {
-		ret = append(ret, v.name)
+		ret = append(ret, v.Name)
 	}
 	return ret, nil
 }
@@ -240,8 +240,8 @@ func (s *restService) listSubscriptions(ctx context.Context) ([]string, error) {
 	}
 	defer res.Body.Close()
 
-	subs := []ResourceSusbscription{}
-	err = json.NewDecoder(res.Body).Decode(subs)
+	subs := []*ResourceSusbscription{}
+	err = json.NewDecoder(res.Body).Decode(&subs)
 	if err != nil {
 		return nil, err
 	}
