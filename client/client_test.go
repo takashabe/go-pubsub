@@ -271,6 +271,36 @@ func TestListSubscription(t *testing.T) {
 	}
 }
 
+func TestDeleteTopic(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	createDummyTopics(t, ts)
+	ctx := context.Background()
+	client, err := NewClient(ctx, ts.URL)
+	if err != nil {
+		t.Fatalf("want non-error, got %v", err)
+	}
+
+	// delete topic1
+	topic1 := client.Topic("topic1")
+	err = topic1.Delete(ctx)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+
+	// check listTopics
+	expect := []*Topic{
+		client.Topic("topic2"),
+	}
+	topics, err := client.Topics(ctx)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	if !reflect.DeepEqual(expect, topics) {
+		t.Errorf("want topic list %v, got %v", expect, topics)
+	}
+}
+
 func TestPublish(t *testing.T) {
 	ts := setupServer(t)
 	defer ts.Close()
