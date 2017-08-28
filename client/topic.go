@@ -15,6 +15,13 @@ func newTopic(id string, s service) *Topic {
 	}
 }
 
+// ByTopicID implements sort.Interface for the Topic.id
+type ByTopicID []*Topic
+
+func (a ByTopicID) Len() int           { return len(a) }
+func (a ByTopicID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ByTopicID) Less(i, j int) bool { return a[i].id < a[j].id }
+
 // PublishResult is a result for publish message
 type PublishResult struct {
 	done  chan struct{}

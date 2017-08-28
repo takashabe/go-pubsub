@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http/httptest"
 	"reflect"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -168,6 +169,46 @@ func TestCreateSubscription(t *testing.T) {
 	}
 }
 
+func TestListTopics(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	ctx := context.Background()
+	client, err := NewClient(ctx, ts.URL)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+
+	cases := []struct {
+		input  []string
+		expect []*Topic
+	}{
+		{
+			[]string{"a", "b"},
+			[]*Topic{client.Topic("a"), client.Topic("b")},
+		},
+		{
+			[]string{"c"},
+			[]*Topic{client.Topic("a"), client.Topic("b"), client.Topic("c")},
+		},
+	}
+	for i, c := range cases {
+		for _, id := range c.input {
+			_, err := client.CreateTopic(ctx, id)
+			if err != nil {
+				t.Fatalf("#%d: want non error, got %v", i, err)
+			}
+		}
+
+		topics, err := client.Topics(ctx)
+		sort.Sort(ByTopicID(topics))
+		if err != nil {
+			t.Fatalf("#%d: want non error, got %v", i, err)
+		}
+		if !reflect.DeepEqual(topics, c.expect) {
+			t.Errorf("#%d: want topic list %v, got %v", i, c.expect, topics)
+		}
+	}
+}
 func TestPublish(t *testing.T) {
 	ts := setupServer(t)
 	defer ts.Close()
