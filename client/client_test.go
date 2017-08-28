@@ -301,6 +301,37 @@ func TestDeleteTopic(t *testing.T) {
 	}
 }
 
+func TestDeleteSubscription(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	createDummyTopics(t, ts)
+	ctx := context.Background()
+	client, err := NewClient(ctx, ts.URL)
+	if err != nil {
+		t.Fatalf("want non-error, got %v", err)
+	}
+	createDummySubscriptions(t, ts, client.Topic("topic1"))
+
+	// delete sub1
+	sub1 := client.Subscription("sub1")
+	err = sub1.Delete(ctx)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+
+	// check listSubscriptions
+	expect := []*Subscription{
+		client.Subscription("sub2"),
+	}
+	subs, err := client.Subscriptions(ctx)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	if !reflect.DeepEqual(expect, subs) {
+		t.Errorf("want subscription list %v, got %v", expect, subs)
+	}
+}
+
 func TestPublish(t *testing.T) {
 	ts := setupServer(t)
 	defer ts.Close()
