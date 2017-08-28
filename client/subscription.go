@@ -38,6 +38,13 @@ func newSubscription(id string, s service) *Subscription {
 	}
 }
 
+// BySubscriptionID implements sort.Interface for the Subscription.id
+type BySubscriptionID []*Subscription
+
+func (a BySubscriptionID) Len() int           { return len(a) }
+func (a BySubscriptionID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a BySubscriptionID) Less(i, j int) bool { return a[i].id < a[j].id }
+
 // Exists return whether the subscription exists on the server.
 func (s *Subscription) Exists(ctx context.Context) (bool, error) {
 	return s.s.subscriptionExists(ctx, s.id)

@@ -209,6 +209,68 @@ func TestListTopics(t *testing.T) {
 		}
 	}
 }
+
+func TestListSubscription(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	ctx := context.Background()
+	client, err := NewClient(ctx, ts.URL)
+	if err != nil {
+		t.Fatalf("want non error, got %v", err)
+	}
+	createDummyTopics(t, ts)
+
+	cases := []struct {
+		inputSubs     []string
+		inputTopic    string
+		expectAll     []*Subscription
+		expectInTopic []*Subscription
+	}{
+		{
+			[]string{"a", "b"},
+			"topic1",
+			[]*Subscription{client.Subscription("a"), client.Subscription("b")},
+			[]*Subscription{client.Subscription("a"), client.Subscription("b")},
+		},
+		{
+			[]string{"c"},
+			"topic2",
+			[]*Subscription{client.Subscription("a"), client.Subscription("b"), client.Subscription("c")},
+			[]*Subscription{client.Subscription("c")},
+		},
+	}
+	for i, c := range cases {
+		for _, id := range c.inputSubs {
+			_, err := client.CreateSubscription(ctx, id, SubscriptionConfig{
+				Topic: client.Topic(c.inputTopic),
+			})
+			if err != nil {
+				t.Fatalf("#%d: want non error, got %v", i, err)
+			}
+		}
+
+		// check all subscriptions
+		subs, err := client.Subscriptions(ctx)
+		sort.Sort(BySubscriptionID(subs))
+		if err != nil {
+			t.Fatalf("#%d: want non error, got %v", i, err)
+		}
+		if !reflect.DeepEqual(subs, c.expectAll) {
+			t.Errorf("#%d: want Subscription list %v, got %v", i, c.expectAll, subs)
+		}
+
+		// check subscriptions in the topic
+		subs, err = client.Topic(c.inputTopic).Subscriptions(ctx)
+		sort.Sort(BySubscriptionID(subs))
+		if err != nil {
+			t.Fatalf("#%d: want non error, got %v", i, err)
+		}
+		if !reflect.DeepEqual(subs, c.expectInTopic) {
+			t.Errorf("#%d: want topic list %v, got %v", i, c.expectInTopic, subs)
+		}
+	}
+}
+
 func TestPublish(t *testing.T) {
 	ts := setupServer(t)
 	defer ts.Close()
