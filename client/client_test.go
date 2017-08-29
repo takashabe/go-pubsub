@@ -497,3 +497,43 @@ func TestAckAndNack(t *testing.T) {
 		c.fn(sub, ackIDs)
 	}
 }
+
+func TestConfigUpdateSubscription(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	createDummyTopics(t, ts)
+	ctx := context.Background()
+	client, err := NewClient(ctx, ts.URL)
+	if err != nil {
+		t.Fatalf("want non-error, got %v", err)
+	}
+	createDummySubscriptions(t, ts, client.Topic("topic1"))
+
+	sub := client.Subscription("sub1")
+	originConf, err := sub.Config(ctx)
+	if err != nil {
+		t.Fatalf("want non-error, got %v", err)
+	}
+
+	toUpdate := &PushConfig{
+		Endpoint:   ts.URL,
+		Attributes: map[string]string{"a": "b"},
+	}
+	err = sub.Update(ctx, &SubscriptionConfigToUpdate{PushConfig: toUpdate})
+	if err != nil {
+		t.Fatalf("want non-error, got %v", err)
+	}
+	updatedConf, err := sub.Config(ctx)
+	if err != nil {
+		t.Fatalf("want non-error, got %v", err)
+	}
+
+	if reflect.DeepEqual(originConf, updatedConf) {
+		t.Errorf("want differ config from in before and after update")
+	}
+	expectUpdateConf := originConf
+	expectUpdateConf.PushConfig = updatedConf.PushConfig
+	if !reflect.DeepEqual(expectUpdateConf, updatedConf) {
+		t.Errorf("want update config %v, got %v", expectUpdateConf, updatedConf)
+	}
+}
