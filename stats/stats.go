@@ -126,6 +126,11 @@ func (t *SubscriptionAdapter) AddSubscription(subID string, num int) {
 func (t *SubscriptionAdapter) AddMessage(subID string) {
 	t.collect.Add(t.assembleMetricsKey("message_count"), 1)
 	t.collect.Add(t.assembleMetricsKey(subID, "message_count"), 1)
+func prepareMetrics() {
+	// NOTE: premise that following metrics keys is Counter type
+	for _, key := range getSummaryKeys() {
+		collector.Add(key, 0)
+	}
 }
 
 // Summary returns summary of the all stats
@@ -181,4 +186,6 @@ func init() {
 		log.Fatal(err)
 	}
 	forwarder = f
+
+	prepareMetrics()
 }
