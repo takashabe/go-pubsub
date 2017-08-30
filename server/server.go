@@ -96,6 +96,14 @@ func Routes() *router.Router {
 	r.Post(subscriptionRoot+"/:id/ack/modify", ss.ModifyAck)
 	r.Post(subscriptionRoot+"/:id/push/modify", ss.ModifyPush)
 	r.Delete(subscriptionRoot+"/:id", ss.Delete)
+
+	ms := Monitoring{}
+	monitoringRoot := "/stats"
+	r.Get(monitoringRoot+"/", ms.Summary)
+	r.Get(monitoringRoot+"/topic", ms.TopicSummary)
+	r.Get(monitoringRoot+"/topic/:id", ms.TopicDetail)
+	r.Get(monitoringRoot+"/subscription", ms.SubscriptionSummary)
+	r.Get(monitoringRoot+"/subscription/:id", ms.SubscriptionDetail)
 	return r
 }
 
