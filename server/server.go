@@ -36,6 +36,8 @@ func Respond(w http.ResponseWriter, code int, src interface{}) {
 	var err error
 
 	switch s := src.(type) {
+	case []byte:
+		body = s
 	case string:
 		body = []byte(s)
 	case *ErrorResponse, ErrorResponse:
