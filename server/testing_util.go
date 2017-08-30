@@ -67,19 +67,23 @@ func setupServer(t *testing.T) *httptest.Server {
 }
 
 func setupDummyTopics(t *testing.T, ts *httptest.Server) {
-	client := dummyClient(t)
-	puts := []string{"a", "b", "c"}
-	for i, p := range puts {
-		req, err := http.NewRequest("PUT", ts.URL+"/topic/"+p, nil)
-		if err != nil {
-			t.Fatalf("#%d: failed to create request", i)
-		}
-		res, err := client.Do(req)
-		if err != nil {
-			t.Fatalf("#%d: failed to send request", i)
-		}
-		defer res.Body.Close()
+	topics := []string{"a", "b", "c"}
+	for _, id := range topics {
+		createDummyTopic(t, ts, id)
 	}
+}
+
+func createDummyTopic(t *testing.T, ts *httptest.Server, id string) {
+	client := dummyClient(t)
+	req, err := http.NewRequest("PUT", ts.URL+"/topic/"+id, nil)
+	if err != nil {
+		t.Fatal("failed to create request")
+	}
+	res, err := client.Do(req)
+	if err != nil {
+		t.Fatal("failed to send request")
+	}
+	defer res.Body.Close()
 }
 
 func createDummySubscription(t *testing.T, ts *httptest.Server, resource ResourceSubscription) {
