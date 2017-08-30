@@ -15,8 +15,19 @@ var (
 	forwarder forward.MetricsWriter
 )
 
-// buffer is output buffer from the MetricsWriter
-var buffer bytes.Buffer
+// buf is output buffer from the MetricsWriter
+var buf = &buffer{}
+
+// buffer is wrapped bytes.Buffer
+type buffer struct {
+	bytes.Buffer
+}
+
+// ReadOnce call Reset() after the return Bytes()
+func (b *buffer) ReadOnce() []byte {
+	defer b.Reset()
+	return b.Bytes()
+}
 
 // TODO: improve holding methods for the metrics keys
 func getSummaryKeys() []string {
@@ -123,7 +134,7 @@ func Summary() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return buffer.Bytes(), nil
+	return buf.ReadOnce(), nil
 }
 
 // TopicSummary returns summary of the topic stats
@@ -132,7 +143,7 @@ func TopicSummary() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return buffer.Bytes(), nil
+	return buf.ReadOnce(), nil
 }
 
 // SubscriptionSummary returns summary of the subscription stats
@@ -141,7 +152,7 @@ func SubscriptionSummary() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return buffer.Bytes(), nil
+	return buf.ReadOnce(), nil
 }
 
 // TopicDetail returns detail of the topic stats
@@ -150,7 +161,7 @@ func TopicDetail(id string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return buffer.Bytes(), nil
+	return buf.ReadOnce(), nil
 }
 
 // SubscriptionDetail returns detail of the subscription stats
@@ -159,13 +170,13 @@ func SubscriptionDetail(id string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return buffer.Bytes(), nil
+	return buf.ReadOnce(), nil
 }
 
 func init() {
 	// NOTE: leak buffer size
 	collector = collect.NewSimpleCollector()
-	f, err := forward.NewSimpleWriter(collector, &buffer)
+	f, err := forward.NewSimpleWriter(collector, buf)
 	if err != nil {
 		log.Fatal(err)
 	}
