@@ -34,6 +34,19 @@ func TestSummary(t *testing.T) {
 			},
 			[]byte(`{"topic.topic_num":3.0,"subscription.subscription_num":0.0,"topic.message_count":2.0,"subscription.message_count":0.0}`),
 		},
+		{
+			func(client *http.Client) {
+				createDummySubscription(t, ts, ResourceSubscription{
+					Topic:      "topic1",
+					Name:       "sub1",
+					AckTimeout: 1,
+				})
+				setupPublishMessages(t, ts, "topic1", PublishDatas{
+					Messages: []PublishData{PublishData{Data: []byte(`test1`), Attr: nil}},
+				})
+			},
+			[]byte(`{"topic.topic_num":3.0,"subscription.subscription_num":1.0,"topic.message_count":3.0,"subscription.message_count":1.0}`),
+		},
 	}
 	for i, c := range cases {
 		client := dummyClient(t)
