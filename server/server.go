@@ -37,6 +37,10 @@ func Respond(w http.ResponseWriter, code int, src interface{}) {
 
 	switch s := src.(type) {
 	case []byte:
+		if !json.Valid(s) {
+			Error(w, http.StatusInternalServerError, err, "invalid json")
+			return
+		}
 		body = s
 	case string:
 		body = []byte(s)
