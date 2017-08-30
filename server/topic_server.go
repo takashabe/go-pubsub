@@ -131,5 +131,5 @@ func (s *TopicServer) Publish(w http.ResponseWriter, r *http.Request, id string)
 	}
 	JSON(w, http.StatusOK, ResponsePublish{MessageIDs: pubIDs})
 
-	stats.GetTopicAdapter().AddMessage(t.Name)
+	stats.GetTopicAdapter().AddMessage(t.Name, len(datas.Messages))
 }

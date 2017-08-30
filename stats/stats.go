@@ -86,9 +86,9 @@ func (t *TopicAdapter) AddTopic(topicID string, num int) {
 }
 
 // AddMessage send metrics the added message
-func (t *TopicAdapter) AddMessage(topicID string) {
-	t.collect.Add(t.assembleMetricsKey("message_count"), 1)
-	t.collect.Add(t.assembleMetricsKey(topicID, "message_count"), 1)
+func (t *TopicAdapter) AddMessage(topicID string, num int) {
+	t.collect.Add(t.assembleMetricsKey("message_count"), float64(num))
+	t.collect.Add(t.assembleMetricsKey(topicID, "message_count"), float64(num))
 }
 
 // SubscriptionAdapter is adapter of operation metrics for Subscription
@@ -123,9 +123,11 @@ func (t *SubscriptionAdapter) AddSubscription(subID string, num int) {
 }
 
 // AddMessage send metrics the added message
-func (t *SubscriptionAdapter) AddMessage(subID string) {
-	t.collect.Add(t.assembleMetricsKey("message_count"), 1)
-	t.collect.Add(t.assembleMetricsKey(subID, "message_count"), 1)
+func (t *SubscriptionAdapter) AddMessage(subID string, num int) {
+	t.collect.Add(t.assembleMetricsKey("message_count"), float64(num))
+	t.collect.Add(t.assembleMetricsKey(subID, "message_count"), float64(num))
+}
+
 func prepareMetrics() {
 	// NOTE: premise that following metrics keys is Counter type
 	for _, key := range getSummaryKeys() {
