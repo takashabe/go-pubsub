@@ -1,6 +1,9 @@
 package models
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+	"github.com/takashabe/go-message-queue/stats"
+)
 
 // Topic is topic object
 type Topic struct {
@@ -52,6 +55,7 @@ func (t *Topic) Publish(data []byte, attr map[string]string) (string, error) {
 		if err := s.RegisterMessage(m); err != nil {
 			return "", err
 		}
+		stats.GetSubscriptionAdapter().AddMessage(s.Name, 1)
 	}
 	return m.ID, nil
 }
