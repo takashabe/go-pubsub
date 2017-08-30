@@ -15,6 +15,34 @@ var (
 	forwarder forward.MetricsWriter
 )
 
+// buffer is output buffer from the MetricsWriter
+var buffer bytes.Buffer
+
+// TODO: improve holding methods for the metrics keys
+func getSummaryKeys() []string {
+	return []string{"topic.topic_num", "subscription.subscription_num", "topic.message_count", "subscription.message_count"}
+}
+func getTopicSummaryKeys() []string {
+	return []string{"topic.topic_num", "topic.message_count"}
+}
+func getSubscriptionSummaryKeys() []string {
+	return []string{"subscription.subscription_num", "subscription.message_count"}
+}
+func getTopicDetailKeys(id string) []string {
+	adapter := GetTopicAdapter()
+	return []string{
+		adapter.assembleMetricsKey(id, "created_at"),
+		adapter.assembleMetricsKey(id, "message_count"),
+	}
+}
+func getSubscriptionDetailKeys(id string) []string {
+	adapter := GetSubscriptionAdapter()
+	return []string{
+		adapter.assembleMetricsKey(id, "created_at"),
+		adapter.assembleMetricsKey(id, "message_count"),
+	}
+}
+
 // TopicAdapter is adapter of operation metrics for Topic
 type TopicAdapter struct {
 	prefix  string
@@ -89,11 +117,55 @@ func (t *SubscriptionAdapter) AddMessage(subID string) {
 	t.collect.Add(t.assembleMetricsKey(subID, "message_count"), 1)
 }
 
+// Summary returns summary of the all stats
+func Summary() ([]byte, error) {
+	err := forwarder.FlushWithKeys(getSummaryKeys()...)
+	if err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
+// TopicSummary returns summary of the topic stats
+func TopicSummary() ([]byte, error) {
+	err := forwarder.FlushWithKeys(getTopicSummaryKeys()...)
+	if err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
+// SubscriptionSummary returns summary of the subscription stats
+func SubscriptionSummary() ([]byte, error) {
+	err := forwarder.FlushWithKeys(getSubscriptionSummaryKeys()...)
+	if err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
+// TopicDetail returns detail of the topic stats
+func TopicDetail(id string) ([]byte, error) {
+	err := forwarder.FlushWithKeys(getTopicDetailKeys(id)...)
+	if err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
+// SubscriptionDetail returns detail of the subscription stats
+func SubscriptionDetail(id string) ([]byte, error) {
+	err := forwarder.FlushWithKeys(getSubscriptionDetailKeys(id)...)
+	if err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
 func init() {
-	// NOTE: buffer size
-	var buf bytes.Buffer
+	// NOTE: leak buffer size
 	collector = collect.NewSimpleCollector()
-	f, err := forward.NewSimpleWriter(collector, &buf)
+	f, err := forward.NewSimpleWriter(collector, &buffer)
 	if err != nil {
 		log.Fatal(err)
 	}
