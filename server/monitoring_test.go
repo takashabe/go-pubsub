@@ -67,3 +67,39 @@ func TestSummary(t *testing.T) {
 		}
 	}
 }
+
+func TestTopicSummary(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+
+	cases := []struct {
+		prepare func(client *http.Client)
+		expect  []byte
+	}{
+		{
+			func(client *http.Client) {
+				createDummyTopic(t, ts, "topic1")
+				createDummyTopic(t, ts, "topic2")
+			},
+			[]byte(`{"topic.topic_num":2.0,"topic.message_count":0.0}`),
+		},
+	}
+	for i, c := range cases {
+		client := dummyClient(t)
+		c.prepare(client)
+
+		res, err := client.Get(ts.URL + "/stats/topic")
+		if err != nil {
+			t.Fatalf("#%d: want non error, got %v", i, err)
+		}
+		defer res.Body.Close()
+
+		payload, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			t.Fatalf("#%d: want non error, got %v", i, err)
+		}
+		if !reflect.DeepEqual(c.expect, payload) {
+			t.Errorf("#%d: want response payload %s, got %s", i, c.expect, payload)
+		}
+	}
+}
