@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/takashabe/go-message-queue/datastore"
 	"github.com/takashabe/go-message-queue/models"
+	"github.com/takashabe/go-message-queue/stats"
 	"github.com/takashabe/go-router"
 )
 
@@ -127,6 +128,12 @@ func NewServer(path string) (*Server, error) {
 	return &Server{
 		cfg: c,
 	}, nil
+}
+
+// PrepareServer settings datastore and stats configuration
+func (s *Server) PrepareServer() error {
+	stats.Initialize()
+	return s.InitDatastore()
 }
 
 // InitDatastore prepare datastore initialize
