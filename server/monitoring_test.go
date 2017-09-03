@@ -103,3 +103,54 @@ func TestTopicSummary(t *testing.T) {
 		}
 	}
 }
+
+func TestSubscriptionSummary(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+
+	cases := []struct {
+		prepare func(client *http.Client)
+		expect  []byte
+	}{
+		{
+			func(client *http.Client) {
+				createDummyTopic(t, ts, "topic1")
+				createDummySubscription(t, ts, ResourceSubscription{
+					Topic:      "topic1",
+					Name:       "sub1",
+					AckTimeout: 1,
+				})
+				createDummySubscription(t, ts, ResourceSubscription{
+					Topic:      "topic1",
+					Name:       "sub2",
+					AckTimeout: 1,
+				})
+				setupPublishMessages(t, ts, "topic1", PublishDatas{
+					Messages: []PublishData{
+						PublishData{Data: []byte(`test1`)},
+						PublishData{Data: []byte(`test2`)},
+					},
+				})
+			},
+			[]byte(`{"subscription.subscription_num":2.0,"subscription.message_count":4.0}`),
+		},
+	}
+	for i, c := range cases {
+		client := dummyClient(t)
+		c.prepare(client)
+
+		res, err := client.Get(ts.URL + "/stats/subscription")
+		if err != nil {
+			t.Fatalf("#%d: want non error, got %v", i, err)
+		}
+		defer res.Body.Close()
+
+		payload, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			t.Fatalf("#%d: want non error, got %v", i, err)
+		}
+		if !reflect.DeepEqual(c.expect, payload) {
+			t.Errorf("#%d: want response payload %s, got %s", i, c.expect, payload)
+		}
+	}
+}
