@@ -182,7 +182,6 @@ func SubscriptionDetail(id string) ([]byte, error) {
 
 // Initialize prepare collector and forwarder object
 func Initialize() {
-	// NOTE: leak buffer size
 	collector = collect.NewSimpleCollector()
 	f, err := forward.NewSimpleWriter(collector, buf)
 	if err != nil {
