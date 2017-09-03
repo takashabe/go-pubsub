@@ -21,6 +21,7 @@ const (
 	ExitCodeError = 10 + iota
 	ExitCodeParseError
 	ExitCodeInvalidArgsError
+	ExitCodeSetupServerError
 )
 
 var (
@@ -52,6 +53,11 @@ func (c *CLI) Run(args []string) int {
 	if err != nil {
 		fmt.Fprintf(c.ErrStream, "invalid args. failed to initialize server: %v", err)
 		return ExitCodeInvalidArgsError
+	}
+
+	if err := server.PrepareServer(); err != nil {
+		fmt.Fprintf(c.ErrStream, "failed to setup server: %v", err)
+		return ExitCodeSetupServerError
 	}
 
 	if err := server.Run(param.port); err != nil {
