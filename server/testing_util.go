@@ -37,8 +37,8 @@ func setupServer(t *testing.T) *httptest.Server {
 	if err != nil {
 		t.Fatalf("failed to NewServer, err=%v", err)
 	}
-	if err := s.InitDatastore(); err != nil {
-		t.Fatalf("failed to InitDatastore, err=%v", err)
+	if err := s.PrepareServer(); err != nil {
+		t.Fatalf("failed to PrepareServer, err=%v", err)
 	}
 
 	// flush datastore. only Redis
