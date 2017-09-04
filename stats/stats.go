@@ -80,9 +80,9 @@ func (t *TopicAdapter) assembleMetricsKey(parts ...string) string {
 
 // AddTopic send metrics the topic
 func (t *TopicAdapter) AddTopic(topicID string, num int) {
-	now := time.Now().Unix()
+	prepareDetailTopicMetrics(topicID)
 	t.collect.Add(t.assembleMetricsKey("topic_num"), float64(num))
-	t.collect.Gauge(t.assembleMetricsKey(topicID, "created_at"), float64(now))
+	t.collect.Gauge(t.assembleMetricsKey(topicID, "created_at"), float64(time.Now().Unix()))
 }
 
 // AddMessage send metrics the added message
@@ -117,9 +117,9 @@ func (t *SubscriptionAdapter) assembleMetricsKey(parts ...string) string {
 
 // AddSubscription send metrics the topic
 func (t *SubscriptionAdapter) AddSubscription(subID string, num int) {
-	now := time.Now().Unix()
+	prepareDetailSubscriptionMetrics(subID)
 	t.collect.Add(t.assembleMetricsKey("subscription_num"), float64(num))
-	t.collect.Gauge(t.assembleMetricsKey(subID, "created_at"), float64(now))
+	t.collect.Gauge(t.assembleMetricsKey(subID, "created_at"), float64(time.Now().Unix()))
 }
 
 // AddMessage send metrics the added message
@@ -135,8 +135,23 @@ func prepareMetrics() {
 	}
 }
 
+func prepareDetailTopicMetrics(id string) {
+	// TODO: improve
+	adapter := GetTopicAdapter()
+	collector.Gauge(adapter.assembleMetricsKey(id, "created_at"), 0)
+	collector.Add(adapter.assembleMetricsKey(id, "message_count"), 0)
+}
+
+func prepareDetailSubscriptionMetrics(id string) {
+	// TODO: improve
+	adapter := GetSubscriptionAdapter()
+	collector.Gauge(adapter.assembleMetricsKey(id, "created_at"), 0)
+	collector.Add(adapter.assembleMetricsKey(id, "message_count"), 0)
+}
+
 // Summary returns summary of the all stats
 func Summary() ([]byte, error) {
+	forwarder.AddMetrics(collector.GetMetricsKeys()...)
 	err := forwarder.FlushWithKeys(getSummaryKeys()...)
 	if err != nil {
 		return nil, err
