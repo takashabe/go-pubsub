@@ -218,3 +218,74 @@ func TestTopicDetail(t *testing.T) {
 		c.expect(startTime, res)
 	}
 }
+
+func TestSbuscriptionDetail(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+
+	cases := []struct {
+		prepare func(client *http.Client)
+		target  string
+		expect  func(startTime time.Time, res *http.Response)
+	}{
+		{
+			func(client *http.Client) {
+				createDummyTopic(t, ts, "topic1")
+				createDummySubscription(t, ts, ResourceSubscription{
+					Topic:      "topic1",
+					Name:       "sub1",
+					AckTimeout: 1,
+				})
+				createDummySubscription(t, ts, ResourceSubscription{
+					Topic:      "topic1",
+					Name:       "sub2",
+					AckTimeout: 1,
+				})
+				setupPublishMessages(t, ts, "topic1", PublishDatas{
+					Messages: []PublishData{
+						PublishData{Data: []byte(`test1`)},
+						PublishData{Data: []byte(`test2`)},
+					},
+				})
+			},
+			"sub1",
+			func(startTime time.Time, res *http.Response) {
+				type MetricJSON struct {
+					CreatedAt    float64 `json:"subscription.sub1.created_at"`
+					MessageCount float64 `json:"subscription.sub1.message_count"`
+				}
+				var j MetricJSON
+				err := json.NewDecoder(res.Body).Decode(&j)
+				if err != nil {
+					t.Fatalf("want non error, got %v", err)
+				}
+
+				// check period for the created_at
+				createTime := int64(j.CreatedAt)
+				now := time.Now().Unix()
+				if startTime.Unix() > createTime || now < createTime {
+					t.Errorf("want createTime between startTime and Now, createTime:%v, startTime:%v, Now:%v",
+						createTime, startTime.Unix(), now)
+				}
+				// check num for the message_count
+				actCnt := int(j.MessageCount)
+				if cnt := 2; actCnt != cnt {
+					t.Errorf("want message_count %d, got %d", cnt, actCnt)
+				}
+			},
+		},
+	}
+	for i, c := range cases {
+		client := dummyClient(t)
+		c.prepare(client)
+
+		startTime := time.Now()
+		res, err := client.Get(ts.URL + "/stats/subscription/" + c.target)
+		if err != nil {
+			t.Fatalf("#%d: want non error, got %v", i, err)
+		}
+		defer res.Body.Close()
+
+		c.expect(startTime, res)
+	}
+}
