@@ -161,6 +161,7 @@ func Summary() ([]byte, error) {
 
 // TopicSummary returns summary of the topic stats
 func TopicSummary() ([]byte, error) {
+	forwarder.AddMetrics(collector.GetMetricsKeys()...)
 	err := forwarder.FlushWithKeys(getTopicSummaryKeys()...)
 	if err != nil {
 		return nil, err
@@ -170,6 +171,7 @@ func TopicSummary() ([]byte, error) {
 
 // SubscriptionSummary returns summary of the subscription stats
 func SubscriptionSummary() ([]byte, error) {
+	forwarder.AddMetrics(collector.GetMetricsKeys()...)
 	err := forwarder.FlushWithKeys(getSubscriptionSummaryKeys()...)
 	if err != nil {
 		return nil, err
@@ -179,6 +181,7 @@ func SubscriptionSummary() ([]byte, error) {
 
 // TopicDetail returns detail of the topic stats
 func TopicDetail(id string) ([]byte, error) {
+	forwarder.AddMetrics(collector.GetMetricsKeys()...)
 	err := forwarder.FlushWithKeys(getTopicDetailKeys(id)...)
 	if err != nil {
 		return nil, err
@@ -188,6 +191,7 @@ func TopicDetail(id string) ([]byte, error) {
 
 // SubscriptionDetail returns detail of the subscription stats
 func SubscriptionDetail(id string) ([]byte, error) {
+	forwarder.AddMetrics(collector.GetMetricsKeys()...)
 	err := forwarder.FlushWithKeys(getSubscriptionDetailKeys(id)...)
 	if err != nil {
 		return nil, err
