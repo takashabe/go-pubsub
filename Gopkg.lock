@@ -29,13 +29,13 @@
   branch = "master"
   name = "github.com/takashabe/go-fixture"
   packages = [".","mysql"]
-  revision = "2a199f8685ccc6111c1cfa6d11c95286c706b718"
+  revision = "b49815f9e2d103367791be3eade174a4f7b20460"
 
 [[projects]]
   branch = "master"
   name = "github.com/takashabe/go-metrics"
   packages = ["collect","forward"]
-  revision = "ba0c785c8bd8ca6b9620d0c34a8a555221c3c492"
+  revision = "ef674649cbe10b674451bc7db8da6a00448b1833"
 
 [[projects]]
   branch = "master"
@@ -47,7 +47,7 @@
   branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "25c4ec802a7d637f88d584ab26798e94ad14c13b"
+  revision = "eb3733d160e74a9c7e442f435eb3bea458e1d19f"
 
 [solve-meta]
   analyzer-name = "dep"
