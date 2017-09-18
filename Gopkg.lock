@@ -35,7 +35,7 @@
   branch = "master"
   name = "github.com/takashabe/go-metrics"
   packages = ["collect","forward"]
-  revision = "ef674649cbe10b674451bc7db8da6a00448b1833"
+  revision = "d48324ae732b3d27fb5edb9ac46ad574561139d1"
 
 [[projects]]
   branch = "master"
