@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/takashabe/go-message-queue/stats"
 )
 
 // Subscription is subscription object
@@ -83,6 +84,7 @@ func (s *Subscription) RegisterMessage(msg *Message) error {
 	if err := s.Save(); err != nil {
 		return err
 	}
+	s.sendCurrentMessages()
 
 	// push
 	if !s.isPullMode() {
@@ -171,6 +173,8 @@ func (s *Subscription) Ack(ids ...string) error {
 			return err
 		}
 	}
+
+	s.sendCurrentMessages()
 	return nil
 }
 
@@ -357,6 +361,19 @@ func convertAckDeadlineSeconds(timeout int64) time.Duration {
 // Save is save to datastore
 func (s *Subscription) Save() error {
 	return getGlobalSubscription().Set(s)
+}
+
+func (s *Subscription) sendCurrentMessages() error {
+	msgs, err := s.Message.CollectAllMessages()
+	if err != nil {
+		return err
+	}
+	var msgIDs []string
+	for _, msg := range msgs {
+		msgIDs = append(msgIDs, msg.MessageID)
+	}
+	stats.GetSubscriptionAdapter().CurrentMessages(s.Name, msgIDs)
+	return nil
 }
 
 // BySubscriptionName implements sort.Interface for []*Subscription based on the ID

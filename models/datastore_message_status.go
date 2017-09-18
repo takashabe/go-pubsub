@@ -104,6 +104,13 @@ func (d *DatastoreMessageStatus) List() ([]*MessageStatus, error) {
 	})
 }
 
+// ListBySubscriptionID return all MessageStatus slice matched SubscriptionID
+func (d *DatastoreMessageStatus) ListBySubscriptionID(subID string) ([]*MessageStatus, error) {
+	return d.collectByField(func(ms *MessageStatus) bool {
+		return ms.SubscriptionID == subID
+	})
+}
+
 // Set save item to datastore
 func (d *DatastoreMessageStatus) Set(ms *MessageStatus) error {
 	v, err := datastore.EncodeGob(ms)

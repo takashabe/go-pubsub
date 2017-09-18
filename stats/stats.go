@@ -51,6 +51,7 @@ func getSubscriptionDetailKeys(id string) []string {
 	return []string{
 		adapter.assembleMetricsKey(id, "created_at"),
 		adapter.assembleMetricsKey(id, "message_count"),
+		adapter.assembleMetricsKey(id, "current_messages"),
 	}
 }
 
@@ -126,6 +127,11 @@ func (t *SubscriptionAdapter) AddSubscription(subID string, num int) {
 func (t *SubscriptionAdapter) AddMessage(subID string, num int) {
 	t.collect.Add(t.assembleMetricsKey("message_count"), float64(num))
 	t.collect.Add(t.assembleMetricsKey(subID, "message_count"), float64(num))
+}
+
+// CurrentMessages send metrics the added message
+func (t *SubscriptionAdapter) CurrentMessages(subID string, msgs []string) {
+	t.collect.Snapshot(t.assembleMetricsKey(subID, "current_messages"), msgs)
 }
 
 func prepareMetrics() {

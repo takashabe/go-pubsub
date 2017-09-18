@@ -151,6 +151,11 @@ func (mss *MessageStatusStore) CollectReadableMessage(size int) ([]*Message, err
 	return res, nil
 }
 
+// CollectAllMessages returns all Message
+func (mss *MessageStatusStore) CollectAllMessages() ([]*MessageStatus, error) {
+	return getGlobalMessageStatus().ListBySubscriptionID(mss.SubscriptionID)
+}
+
 // Deliver register AckID to message
 func (mss *MessageStatusStore) Deliver(msgID, ackID string) error {
 	ms, err := getGlobalMessageStatus().FindBySubscriptionIDAndMessageID(mss.SubscriptionID, msgID)
