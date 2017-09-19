@@ -101,3 +101,8 @@ func (s *Subscription) Nack(ctx context.Context, ackIDs []string) error {
 func (s *Subscription) Update(ctx context.Context, cfg *SubscriptionConfigToUpdate) error {
 	return s.s.modifyPushConfig(ctx, s.id, cfg.PushConfig)
 }
+
+// StatsDetail returns stats detail of the Subscription
+func (s *Subscription) StatsDetail(ctx context.Context) ([]byte, error) {
+	return s.s.statsSubscriptionDetail(ctx, s.id)
+}

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -33,12 +34,18 @@ type service interface {
 	pullMessages(ctx context.Context, subID string, maxMessages int) ([]*Message, error)
 	publishMessages(ctx context.Context, topicID string, msg *Message) (string, error)
 	ack(ctx context.Context, subID string, ackIDs []string) error
+
+	// monitoring
+	statsSummary(ctx context.Context) ([]byte, error)
+	statsTopicDetail(ctx context.Context, id string) ([]byte, error)
+	statsSubscriptionDetail(ctx context.Context, id string) ([]byte, error)
 }
 
 // restService implemnet service interface for HTTP protocol
 type restService struct {
 	publisher  *restPublisher
 	subscriber *restSubscriber
+	monitoring *restMonitoring
 }
 
 type restPublisher struct {
@@ -51,11 +58,20 @@ type restSubscriber struct {
 	httpClient http.Client
 }
 
+type restMonitoring struct {
+	serverURL  string
+	httpClient http.Client
+}
+
 func (p *restPublisher) sendRequest(ctx context.Context, method, url string, body io.Reader) (*http.Response, error) {
 	return sendRequest(ctx, p.httpClient, method, p.serverURL+url, body)
 }
 
 func (s *restSubscriber) sendRequest(ctx context.Context, method, url string, body io.Reader) (*http.Response, error) {
+	return sendRequest(ctx, s.httpClient, method, s.serverURL+url, body)
+}
+
+func (s *restMonitoring) sendRequest(ctx context.Context, method, url string, body io.Reader) (*http.Response, error) {
 	return sendRequest(ctx, s.httpClient, method, s.serverURL+url, body)
 }
 
@@ -398,6 +414,51 @@ func (s *restService) ack(ctx context.Context, subID string, ackIDs []string) er
 	defer res.Body.Close()
 
 	return verifyHTTPStatusCode(http.StatusOK, res)
+}
+
+func (s *restService) statsSummary(ctx context.Context) ([]byte, error) {
+	res, err := s.monitoring.sendRequest(ctx, "GET", "", nil)
+	if err != nil {
+		return nil, nil
+	}
+	defer res.Body.Close()
+
+	err = verifyHTTPStatusCode(http.StatusOK, res)
+	if err != nil {
+		return nil, err
+	}
+
+	return ioutil.ReadAll(res.Body)
+}
+
+func (s *restService) statsTopicDetail(ctx context.Context, id string) ([]byte, error) {
+	res, err := s.monitoring.sendRequest(ctx, "GET", "topic/"+id, nil)
+	if err != nil {
+		return nil, nil
+	}
+	defer res.Body.Close()
+
+	err = verifyHTTPStatusCode(http.StatusOK, res)
+	if err != nil {
+		return nil, err
+	}
+
+	return ioutil.ReadAll(res.Body)
+}
+
+func (s *restService) statsSubscriptionDetail(ctx context.Context, id string) ([]byte, error) {
+	res, err := s.monitoring.sendRequest(ctx, "GET", "subscription/"+id, nil)
+	if err != nil {
+		return nil, nil
+	}
+	defer res.Body.Close()
+
+	err = verifyHTTPStatusCode(http.StatusOK, res)
+	if err != nil {
+		return nil, err
+	}
+
+	return ioutil.ReadAll(res.Body)
 }
 
 func verifyHTTPStatusCode(expect int, res *http.Response) error {

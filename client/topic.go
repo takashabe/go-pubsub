@@ -86,3 +86,8 @@ func (t *Topic) Publish(ctx context.Context, msg *Message) *PublishResult {
 
 	return pr
 }
+
+// StatsDetail returns stats detail of the Topic
+func (t *Topic) StatsDetail(ctx context.Context) ([]byte, error) {
+	return t.s.statsTopicDetail(ctx, t.id)
+}

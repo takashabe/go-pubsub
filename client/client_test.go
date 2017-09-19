@@ -537,3 +537,69 @@ func TestConfigUpdateSubscription(t *testing.T) {
 		t.Errorf("want update config %v, got %v", expectUpdateConf, updatedConf)
 	}
 }
+
+func TestStatsSummary(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	ctx := context.Background()
+	client, err := NewClient(ctx, ts.URL)
+	if err != nil {
+		t.Fatalf("want non-error, got %v", err)
+	}
+	createDummyTopics(t, ts)
+	createDummySubscriptions(t, ts, client.Topic("topic1"))
+	publishDummyMessage(t, client.Topic("topic1"))
+
+	expect := []byte(`{"topic.topic_num":2.0,"subscription.subscription_num":2.0,"topic.message_count":2.0,"subscription.message_count":4.0}`)
+	payload, err := client.Stats(ctx)
+	if err != nil {
+		t.Fatalf("want non-error, got %v", err)
+	}
+	if !reflect.DeepEqual(expect, payload) {
+		t.Errorf("want payload %s, got %s", expect, payload)
+	}
+}
+
+func TestStatsTopicDetail(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	ctx := context.Background()
+	client, err := NewClient(ctx, ts.URL)
+	if err != nil {
+		t.Fatalf("want non-error, got %v", err)
+	}
+	createDummyTopics(t, ts)
+	createDummySubscriptions(t, ts, client.Topic("topic1"))
+	publishDummyMessage(t, client.Topic("topic1"))
+
+	expect := []byte(`"topic.topic1.message_count":2.0`)
+	payload, err := client.Topic("topic1").StatsDetail(ctx)
+	if err != nil {
+		t.Fatalf("want non-error, got %v", err)
+	}
+	if !strings.Contains(string(payload), string(expect)) {
+		t.Errorf("want contain %s, got %s", expect, payload)
+	}
+}
+
+func TestStatsSubscriptionDetail(t *testing.T) {
+	ts := setupServer(t)
+	defer ts.Close()
+	ctx := context.Background()
+	client, err := NewClient(ctx, ts.URL)
+	if err != nil {
+		t.Fatalf("want non-error, got %v", err)
+	}
+	createDummyTopics(t, ts)
+	createDummySubscriptions(t, ts, client.Topic("topic1"))
+	msgIDs := publishDummyMessage(t, client.Topic("topic1"))
+
+	expect := []byte(fmt.Sprintf("\"subscription.sub1.current_messages\":[\"%s\",\"%s\"]", msgIDs[0], msgIDs[1]))
+	payload, err := client.Subscription("sub1").StatsDetail(ctx)
+	if err != nil {
+		t.Fatalf("want non-error, got %v", err)
+	}
+	if !strings.Contains(string(payload), string(expect)) {
+		t.Errorf("want contain %s, got %s", expect, payload)
+	}
+}

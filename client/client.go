@@ -55,6 +55,10 @@ func NewClient(ctx context.Context, addr string) (*Client, error) {
 				serverURL:  addr + "subscription/",
 				httpClient: httpClient,
 			},
+			monitoring: &restMonitoring{
+				serverURL:  addr + "stats/",
+				httpClient: httpClient,
+			},
 		},
 	}, nil
 }
@@ -113,4 +117,9 @@ func (c *Client) Subscriptions(ctx context.Context) ([]*Subscription, error) {
 		subscriptions = append(subscriptions, newSubscription(id, c.s))
 	}
 	return subscriptions, nil
+}
+
+// Stats returns stats summary
+func (c *Client) Stats(ctx context.Context) ([]byte, error) {
+	return c.s.statsSummary(ctx)
 }
