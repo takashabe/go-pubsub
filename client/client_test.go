@@ -18,8 +18,8 @@ func setupServer(t *testing.T) *httptest.Server {
 	if err != nil {
 		t.Fatalf("failed to server.NewServer, error=%v", err)
 	}
-	if err := s.InitDatastore(); err != nil {
-		t.Fatalf("failed to server.InitDatastore, error=%v", err)
+	if err := s.PrepareServer(); err != nil {
+		t.Fatalf("failed to PrepareServer, error=%v", err)
 	}
 	return httptest.NewServer(server.Routes())
 }
