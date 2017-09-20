@@ -219,7 +219,7 @@ func TestTopicDetail(t *testing.T) {
 	}
 }
 
-func TestSbuscriptionDetail(t *testing.T) {
+func TestSubscriptionDetail(t *testing.T) {
 	ts := setupServer(t)
 	defer ts.Close()
 
