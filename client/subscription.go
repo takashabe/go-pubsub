@@ -9,7 +9,7 @@ import (
 
 // Subscription is a accessor to a server subscription
 type Subscription struct {
-	id string
+	ID string
 	s  service
 }
 
@@ -33,7 +33,7 @@ type PushConfig struct {
 
 func newSubscription(id string, s service) *Subscription {
 	return &Subscription{
-		id: id,
+		ID: id,
 		s:  s,
 	}
 }
@@ -43,28 +43,28 @@ type BySubscriptionID []*Subscription
 
 func (a BySubscriptionID) Len() int           { return len(a) }
 func (a BySubscriptionID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a BySubscriptionID) Less(i, j int) bool { return a[i].id < a[j].id }
+func (a BySubscriptionID) Less(i, j int) bool { return a[i].ID < a[j].ID }
 
 // Exists return whether the subscription exists on the server.
 func (s *Subscription) Exists(ctx context.Context) (bool, error) {
-	return s.s.subscriptionExists(ctx, s.id)
+	return s.s.subscriptionExists(ctx, s.ID)
 }
 
 // Config returns the current configuration for the Subscription
 func (s *Subscription) Config(ctx context.Context) (*SubscriptionConfig, error) {
-	return s.s.getSubscriptionConfig(ctx, s.id)
+	return s.s.getSubscriptionConfig(ctx, s.ID)
 }
 
 // Delete deletes the Subscription
 func (s *Subscription) Delete(ctx context.Context) error {
-	return s.s.deleteSubscription(ctx, s.id)
+	return s.s.deleteSubscription(ctx, s.ID)
 }
 
 // Receive calls fn for the fetched messages from the Subscription.
 // send a nack requests when an error occurs via the Pull API.
 func (s *Subscription) Receive(ctx context.Context, fn func(ctx context.Context, msg *Message)) error {
 	// TODO: number of receive message extract to ReceiveConfig
-	msgs, err := s.s.pullMessages(ctx, s.id, 1)
+	msgs, err := s.s.pullMessages(ctx, s.ID, 1)
 	if err != nil {
 		// send nack request to the pulled messages
 		if msgs != nil {
@@ -87,22 +87,22 @@ func (s *Subscription) Receive(ctx context.Context, fn func(ctx context.Context,
 
 // Ack calls Ack API for the ackIDs
 func (s *Subscription) Ack(ctx context.Context, ackIDs []string) error {
-	return s.s.ack(ctx, s.id, ackIDs)
+	return s.s.ack(ctx, s.ID, ackIDs)
 }
 
 // Nack releases messages from the Subscription.
 // As a result, another subscriber can pull message.
 func (s *Subscription) Nack(ctx context.Context, ackIDs []string) error {
 	// nack is represented by setting AckDeadline to zero
-	return s.s.modifyAckDeadline(ctx, s.id, 0, ackIDs)
+	return s.s.modifyAckDeadline(ctx, s.ID, 0, ackIDs)
 }
 
 // Update updates an existing Subscription
 func (s *Subscription) Update(ctx context.Context, cfg *SubscriptionConfigToUpdate) error {
-	return s.s.modifyPushConfig(ctx, s.id, cfg.PushConfig)
+	return s.s.modifyPushConfig(ctx, s.ID, cfg.PushConfig)
 }
 
 // StatsDetail returns stats detail of the Subscription
 func (s *Subscription) StatsDetail(ctx context.Context) ([]byte, error) {
-	return s.s.statsSubscriptionDetail(ctx, s.id)
+	return s.s.statsSubscriptionDetail(ctx, s.ID)
 }

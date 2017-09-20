@@ -90,8 +90,8 @@ func TestCreateTopic(t *testing.T) {
 		input  string
 		expect *Topic
 	}{
-		{"a", &Topic{id: "a", s: client.s}},
-		{"b", &Topic{id: "b", s: client.s}},
+		{"a", &Topic{ID: "a", s: client.s}},
+		{"b", &Topic{ID: "b", s: client.s}},
 	}
 	for i, c := range cases {
 		topic, err := client.CreateTopic(ctx, c.input)
@@ -133,7 +133,7 @@ func TestCreateSubscription(t *testing.T) {
 			SubscriptionConfig{
 				Topic: client.Topic("topic1"),
 			},
-			&Subscription{id: "sub1", s: client.s},
+			&Subscription{ID: "sub1", s: client.s},
 		},
 	}
 	for i, c := range cases {
@@ -159,12 +159,12 @@ func TestCreateSubscription(t *testing.T) {
 		}
 		contain := false
 		for _, s := range subs {
-			if s.id == sub.id {
+			if s.ID == sub.ID {
 				contain = true
 			}
 		}
 		if !contain {
-			t.Errorf("#%d: want Subscriptions contain %s", i, sub.id)
+			t.Errorf("#%d: want Subscriptions contain %s", i, sub.ID)
 		}
 	}
 }

@@ -209,7 +209,7 @@ func (s *restService) createSubscription(ctx context.Context, id string, cfg Sub
 
 	rs := &ResourceSusbscription{
 		Name:       id,
-		Topic:      cfg.Topic.id,
+		Topic:      cfg.Topic.ID,
 		PushConfig: cfg.PushConfig,
 		AckTimeout: int64(cfg.AckTimeout.Seconds()),
 	}

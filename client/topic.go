@@ -4,13 +4,13 @@ import "context"
 
 // Topic is a accessor to a server topic
 type Topic struct {
-	id string
+	ID string
 	s  service
 }
 
 func newTopic(id string, s service) *Topic {
 	return &Topic{
-		id: id,
+		ID: id,
 		s:  s,
 	}
 }
@@ -20,7 +20,7 @@ type ByTopicID []*Topic
 
 func (a ByTopicID) Len() int           { return len(a) }
 func (a ByTopicID) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a ByTopicID) Less(i, j int) bool { return a[i].id < a[j].id }
+func (a ByTopicID) Less(i, j int) bool { return a[i].ID < a[j].ID }
 
 // PublishResult is a result for publish message
 type PublishResult struct {
@@ -49,17 +49,17 @@ func (p *PublishResult) Get(ctx context.Context) (string, error) {
 
 // Exists return whether the topic exists on the server.
 func (t *Topic) Exists(ctx context.Context) (bool, error) {
-	return t.s.topicExists(ctx, t.id)
+	return t.s.topicExists(ctx, t.ID)
 }
 
 // Delete deletes the topic
 func (t *Topic) Delete(ctx context.Context) error {
-	return t.s.deleteTopic(ctx, t.id)
+	return t.s.deleteTopic(ctx, t.ID)
 }
 
 // Subscriptions returns subscription list matched topic
 func (t *Topic) Subscriptions(ctx context.Context) ([]*Subscription, error) {
-	subIDs, err := t.s.listTopicSubscriptions(ctx, t.id)
+	subIDs, err := t.s.listTopicSubscriptions(ctx, t.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func (t *Topic) Publish(ctx context.Context, msg *Message) *PublishResult {
 	}
 
 	go func() {
-		msgID, err := t.s.publishMessages(ctx, t.id, msg)
+		msgID, err := t.s.publishMessages(ctx, t.ID, msg)
 		pr.msgID = msgID
 		pr.err = err
 		close(pr.done)
@@ -89,5 +89,5 @@ func (t *Topic) Publish(ctx context.Context, msg *Message) *PublishResult {
 
 // StatsDetail returns stats detail of the Topic
 func (t *Topic) StatsDetail(ctx context.Context) ([]byte, error) {
-	return t.s.statsTopicDetail(ctx, t.id)
+	return t.s.statsTopicDetail(ctx, t.ID)
 }
