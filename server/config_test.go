@@ -18,8 +18,7 @@ func TestLoadConfig(t *testing.T) {
 			&Config{
 				&datastore.Config{
 					Redis: &datastore.RedisConfig{
-						Host: "localhost",
-						Port: 6379,
+						Addr: "localhost:6379",
 						DB:   0,
 					},
 					MySQL: nil,
@@ -33,8 +32,7 @@ func TestLoadConfig(t *testing.T) {
 				&datastore.Config{
 					Redis: nil,
 					MySQL: &datastore.MySQLConfig{
-						Host: "localhost",
-						Port: 3306,
+						Addr: "localhost:3306",
 					},
 				},
 			},

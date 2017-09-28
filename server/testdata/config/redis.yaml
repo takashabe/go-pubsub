@@ -1,5 +1,4 @@
 datastore:
   redis:
-    host: localhost
-    port: 6379
+    addr: "localhost:6379"
     db: 0
