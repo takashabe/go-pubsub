@@ -156,6 +156,6 @@ func (s *Server) InitDatastore() error {
 
 // Run start server
 func (s *Server) Run(port int) error {
-	log.Println("starting server...")
+	log.Printf("Pubsub server running at http://localhost:%d/", port)
 	return http.ListenAndServe(fmt.Sprintf(":%d", port), Routes())
 }
