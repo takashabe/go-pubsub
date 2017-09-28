@@ -11,6 +11,7 @@ import (
 // default parameters
 const (
 	defaultFile = "config/app.yaml"
+	defaultPort = 8080
 )
 
 // Exit codes. used only in Run()
@@ -72,6 +73,7 @@ func (c *CLI) parseArgs(args []string, p *param) error {
 	flags.SetOutput(c.ErrStream)
 
 	flags.StringVar(&p.file, "file", defaultFile, "Config file. require anything config file.")
+	flags.IntVar(&p.port, "port", defaultPort, "Running port. require unused port.")
 
 	err := flags.Parse(args)
 	if err != nil {
