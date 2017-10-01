@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -352,6 +353,9 @@ type ResourcePullResponse struct {
 	} `json:"receive_messages"`
 }
 
+// ErrNotFoundMessage represent currently not exist message on the subscription server
+var ErrNotFoundMessage = errors.New("not found message")
+
 func (s *restService) pullMessages(ctx context.Context, subID string, maxMessages int) ([]*Message, error) {
 	if maxMessages <= 0 {
 		maxMessages = 1
@@ -375,6 +379,9 @@ func (s *restService) pullMessages(ctx context.Context, subID string, maxMessage
 	if err := verifyHTTPStatusCode(http.StatusOK, res); err != nil {
 		var errBuf bytes.Buffer
 		io.Copy(&errBuf, res.Body)
+		if strings.Contains(errBuf.String(), "not found message") {
+			return nil, ErrNotFoundMessage
+		}
 		return nil, errors.Wrapf(err, "message: %s", errBuf.String())
 	}
 

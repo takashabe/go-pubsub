@@ -459,9 +459,8 @@ func TestAckAndNack(t *testing.T) {
 				}
 				// expect can't pull message after the Ack
 				err = sub.Receive(ctx, func(ctx context.Context, msg *Message) {})
-				errMsg := `{"reason":"not found message"}`
-				if !strings.Contains(err.Error(), errMsg) {
-					t.Errorf("want error message contain %s, got %v", errMsg, err)
+				if err != ErrNotFoundMessage {
+					t.Errorf("want error %v, got %v", ErrNotFoundMessage, err)
 				}
 			},
 		},
