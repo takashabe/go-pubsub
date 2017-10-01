@@ -419,7 +419,7 @@ func (s *restService) ack(ctx context.Context, subID string, ackIDs []string) er
 func (s *restService) statsSummary(ctx context.Context) ([]byte, error) {
 	res, err := s.monitoring.sendRequest(ctx, "GET", "", nil)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 	defer res.Body.Close()
 
@@ -434,7 +434,7 @@ func (s *restService) statsSummary(ctx context.Context) ([]byte, error) {
 func (s *restService) statsTopicDetail(ctx context.Context, id string) ([]byte, error) {
 	res, err := s.monitoring.sendRequest(ctx, "GET", "topic/"+id, nil)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 	defer res.Body.Close()
 
@@ -449,7 +449,7 @@ func (s *restService) statsTopicDetail(ctx context.Context, id string) ([]byte, 
 func (s *restService) statsSubscriptionDetail(ctx context.Context, id string) ([]byte, error) {
 	res, err := s.monitoring.sendRequest(ctx, "GET", "subscription/"+id, nil)
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 	defer res.Body.Close()
 
