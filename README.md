@@ -1,17 +1,56 @@
-# go-message-queue
+# go-pubsub
 
-## todo
+Provide pubsub server and simple stats monitoring, available both by REST API.
 
-* gRPC interface
-* monitoring stats
-* redundancy
-* authenticate
+You can select the background datastore of pubsub server one out of in  the `in-memory`, `mysql` and `redis`.
 
-### interface
+If you need pubsub client library, import `client` packages. Currently available client library is `Go` only.
 
-* REST API
+## Installation
 
-### components
+```
+go get -u github.com/takashabe/go-pubsub
+```
+
+## Usage
+
+### Start server
+
+```
+make build # need once at first
+cmd/pubsub/pubsub
+```
+
+Options:
+
+* file: Config file. require anything config file. (default "config/app.yaml")
+* port: Running port. require unused port. (default 8080)
+
+#### Config file format
+
+Syntax based on the `YAML`, require `datastore` element and it configration parameters. If empty the parameters of `datastore`, used `in-memory` datastore.
+
+Examples:
+
+```
+# MySQL
+datastore:
+  mysql:
+    addr: "localhost:3306"
+    user: mq
+    password: ""
+
+# Redis
+datastore:
+  redis:
+    addr: "localhost:6379"
+    db: 0
+
+# In-memory
+datasotre:
+```
+
+## Components
 
 | Component    | Features                                                                                                                                                  |
 | ------       | ------                                                                                                                                                    |
@@ -21,9 +60,9 @@
 | Subscription | * Recieve Subscriber pull request<br/> * Push Message to Subscriber                                                                                       |
 | Subscriber   | * Register some Subscription<br/>* Pull message from Subscription<br/>* Receive push Message from Subscription<br/> * Return ack response to Subscription |
 
-### message flow
+## Message flow
 
-#### quickstart
+### Quickstart
 
 _When do not specify created component(topic, subscription), Default component used._
 
@@ -31,7 +70,7 @@ _When do not specify created component(topic, subscription), Default component u
 2. Pull Message
 3. Subscriber return ack response
 
-#### use specific Topic and Subscription
+### Use specific Topic and Subscription
 
 1. Create Topic
 2. Create Subscription (optional: specify push endpoint)
@@ -39,9 +78,9 @@ _When do not specify created component(topic, subscription), Default component u
 4. Push or Pull Message from specific Subscription
 5. Subscriber retrun ack response
 
-### API
+## API
 
-#### Topic
+### Topic
 
 | Method             | URL                                   | Behavior                                                                                       |
 | ------             | ------                                | -----                                                                                          |
@@ -52,7 +91,7 @@ _When do not specify created component(topic, subscription), Default component u
 | list subscriptions | GET:    `/topic/{name}/subscriptions` | get toipc depends subscriptions                                                                |
 | publish            | POST:   `/topic/{name}/publish`       | create message<br/>save message to backend storage and deliver message to depends subscription |
 
-#### Subscription
+### Subscription
 
 | Method             | URL                                        | Behavior                                                                                  |
 | ------             | ------                                     | -----                                                                                     |
@@ -65,7 +104,7 @@ _When do not specify created component(topic, subscription), Default component u
 | modify push config | POST:   `/subscription/{name}/push/modify` | modify push config                                                                        |
 | list               | GET:    `/subscription/`                   | get subscripction list                                                                    |
 
-#### Monitoring
+### Monitoring
 
 | Method               | URL                               | Behavior                     |
 | ------               | ------                            | -----                        |
@@ -75,16 +114,8 @@ _When do not specify created component(topic, subscription), Default component u
 | subscription summary | GET: `/stats/subscription`        | subscription metrics summary |
 | subscription detail  | GET: `/stats/subscription/{name}` | subscription metrics detail  |
 
-### Datastore design
+## TODO
 
-#### features
-
-* select in some backend datastore
-* in memory, Redis, MySQL support
-
-#### desgin
-
-* datastore behavior like key-value store
-* when need redundancy, use Redis or MySQL
-* Save component is Topic, Subscription and Message
-* Message delete when all dependent subscription sent ack
+* gRPC interface
+* improve stats items
+* authenticate
