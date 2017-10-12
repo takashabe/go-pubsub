@@ -2,7 +2,7 @@ package models
 
 import (
 	"github.com/pkg/errors"
-	"github.com/takashabe/go-message-queue/stats"
+	"github.com/takashabe/go-pubsub/stats"
 )
 
 // Topic is topic object

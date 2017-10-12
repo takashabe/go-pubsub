@@ -8,9 +8,9 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
-	"github.com/takashabe/go-message-queue/datastore"
-	"github.com/takashabe/go-message-queue/models"
-	"github.com/takashabe/go-message-queue/stats"
+	"github.com/takashabe/go-pubsub/datastore"
+	"github.com/takashabe/go-pubsub/models"
+	"github.com/takashabe/go-pubsub/stats"
 	"github.com/takashabe/go-router"
 )
 

@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/takashabe/go-message-queue/server"
+	"github.com/takashabe/go-pubsub/server"
 )
 
 func main() {

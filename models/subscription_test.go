@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/takashabe/go-message-queue/datastore"
+	"github.com/takashabe/go-pubsub/datastore"
 )
 
 func testURL(t *testing.T, raw string) *url.URL {

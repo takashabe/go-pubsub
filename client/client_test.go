@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/takashabe/go-message-queue/server"
+	"github.com/takashabe/go-pubsub/server"
 )
 
 func setupServer(t *testing.T) *httptest.Server {

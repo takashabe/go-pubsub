@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/pkg/errors"
-	"github.com/takashabe/go-message-queue/datastore"
+	"github.com/takashabe/go-pubsub/datastore"
 )
 
 func TestNewTopic(t *testing.T) {

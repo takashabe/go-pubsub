@@ -1,2 +1,2 @@
-// Package client provides an accessor of message-queue API
+// Package client provides an accessor of pubsub API
 package client

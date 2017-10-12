@@ -3,7 +3,7 @@ package server
 import (
 	"io/ioutil"
 
-	"github.com/takashabe/go-message-queue/datastore"
+	"github.com/takashabe/go-pubsub/datastore"
 	yaml "gopkg.in/yaml.v2"
 )
 

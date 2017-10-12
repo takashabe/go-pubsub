@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/takashabe/go-message-queue/datastore"
+	"github.com/takashabe/go-pubsub/datastore"
 )
 
 func TestLoadConfig(t *testing.T) {

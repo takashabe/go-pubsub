@@ -7,7 +7,7 @@ import (
 
 	fixture "github.com/takashabe/go-fixture"
 	_ "github.com/takashabe/go-fixture/mysql" // mysql driver
-	"github.com/takashabe/go-message-queue/datastore"
+	"github.com/takashabe/go-pubsub/datastore"
 
 	"github.com/go-sql-driver/mysql"
 )

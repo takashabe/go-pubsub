@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	"github.com/takashabe/go-message-queue/stats"
+	"github.com/takashabe/go-pubsub/stats"
 )
 
 // Monitoring is monitoring frontend server

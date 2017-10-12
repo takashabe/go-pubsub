@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/takashabe/go-message-queue/stats"
+	"github.com/takashabe/go-pubsub/stats"
 )
 
 // Subscription is subscription object

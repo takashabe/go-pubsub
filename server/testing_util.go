@@ -12,8 +12,8 @@ import (
 
 	fixture "github.com/takashabe/go-fixture"
 	_ "github.com/takashabe/go-fixture/mysql" // mysql driver
-	"github.com/takashabe/go-message-queue/datastore"
-	"github.com/takashabe/go-message-queue/models"
+	"github.com/takashabe/go-pubsub/datastore"
+	"github.com/takashabe/go-pubsub/models"
 )
 
 func dummyClient(t *testing.T) *http.Client {

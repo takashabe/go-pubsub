@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"sort"
 
-	"github.com/takashabe/go-message-queue/models"
-	"github.com/takashabe/go-message-queue/stats"
+	"github.com/takashabe/go-pubsub/models"
+	"github.com/takashabe/go-pubsub/stats"
 )
 
 // TopicServer is topic frontend server

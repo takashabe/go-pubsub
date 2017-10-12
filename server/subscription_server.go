@@ -6,8 +6,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/takashabe/go-message-queue/models"
-	"github.com/takashabe/go-message-queue/stats"
+	"github.com/takashabe/go-pubsub/models"
+	"github.com/takashabe/go-pubsub/stats"
 )
 
 // SubscriptionServer is subscription frontend server
