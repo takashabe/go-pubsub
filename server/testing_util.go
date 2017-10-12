@@ -28,7 +28,7 @@ func dummyClient(t *testing.T) *http.Client {
 func setupServer(t *testing.T) *httptest.Server {
 	// setup datastore
 	var path string
-	if env := os.Getenv("GO_MESSAGE_QUEUE_CONFIG"); len(env) != 0 {
+	if env := os.Getenv("GO_PUBSUB_CONFIG"); len(env) != 0 {
 		path = env
 	} else {
 		path = "testdata/config/memory.yaml"

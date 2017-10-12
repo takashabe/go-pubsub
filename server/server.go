@@ -16,7 +16,7 @@ import (
 
 // PrintDebugf behaves like log.Printf only in the debug env
 func PrintDebugf(format string, args ...interface{}) {
-	if env := os.Getenv("GO_MESSAGE_QUEUE_DEBUG"); len(env) != 0 {
+	if env := os.Getenv("GO_PUBSUB_DEBUG"); len(env) != 0 {
 		log.Printf("[DEBUG] "+format+"\n", args...)
 	}
 }

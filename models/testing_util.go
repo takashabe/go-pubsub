@@ -13,7 +13,7 @@ import (
 )
 
 func createDatastoreConfig(t *testing.T) *datastore.Config {
-	switch os.Getenv("GO_MESSAGE_QUEUE_TEST_DATASTORE") {
+	switch os.Getenv("GO_PUBSUB_TEST_DATASTORE") {
 	case "mysql":
 		var defaultConfig = &datastore.Config{
 			MySQL: &datastore.MySQLConfig{
@@ -23,7 +23,7 @@ func createDatastoreConfig(t *testing.T) *datastore.Config {
 			},
 		}
 
-		dsn := os.Getenv("GO_MESSAGE_QUEUE_TEST_DSN")
+		dsn := os.Getenv("GO_PUBSUB_TEST_DSN")
 		if len(dsn) == 0 {
 			return defaultConfig
 		}

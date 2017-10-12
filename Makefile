@@ -1,7 +1,7 @@
 SUBPACKAGES := $(shell go list ./... | grep -v /vendor/)
-TEST_MYSQL := GO_MESSAGE_QUEUE_TEST_DATASTORE="mysql"; GO_MESSAGE_QUEUE_TEST_DSN="mq@tcp(localhost:3306)/mq"
-TEST_REDIS := GO_MESSAGE_QUEUE_TEST_DATASTORE="redis"
-SHOW_ENV := $(shell env | grep GO_MESSAGE_QUEUE)
+TEST_MYSQL := GO_PUBSUB_TEST_DATASTORE="mysql"; GO_PUBSUB_TEST_DSN="mq@tcp(localhost:3306)/mq"
+TEST_REDIS := GO_PUBSUB_TEST_DATASTORE="redis"
+SHOW_ENV := $(shell env | grep GO_PUBSUB)
 
 .PHONY: build test_all vet lint clean
 
@@ -25,7 +25,7 @@ test_mysql:
 	$(TEST_MYSQL) go test -v $(SUBPACKAGES)
 
 test_debug:
-	GO_ROUTER_ENABLE_LOGGING=1 GO_MESSAGE_QUEUE_DEBUG=1 go test ./ -v; go test ./models -v
+	GO_ROUTER_ENABLE_LOGGING=1 GO_PUBSUB_DEBUG=1 go test ./ -v; go test ./models -v
 
 test_all: test_memory test_redis test_mysql
 
