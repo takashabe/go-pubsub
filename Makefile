@@ -5,8 +5,8 @@ SHOW_ENV := $(shell env | grep GO_PUBSUB)
 
 .PHONY: build test_all vet lint clean
 
-build: cmd/queue/main.go
-	cd cmd/queue && go build -a
+build: cmd/pubsub/main.go
+	cd cmd/pubsub && go build -a
 
 test:
 	$(SHOW_ENV)
@@ -36,4 +36,4 @@ lint:
 	golint $(SUBPACKAGES)
 
 clean:
-	rm cmd/queue/queue
+	rm cmd/pubsub/pubsub
