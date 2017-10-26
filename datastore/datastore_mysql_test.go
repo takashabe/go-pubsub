@@ -2,6 +2,7 @@ package datastore
 
 import (
 	"database/sql"
+	"os"
 	"reflect"
 	"testing"
 
@@ -14,14 +15,21 @@ func dummyMySQL(t *testing.T) *MySQL {
 	c, err := NewMySQL(&Config{
 		MySQL: &MySQLConfig{
 			Addr:     "localhost:3306",
-			User:     "mq",
-			Password: "",
+			User:     getEnvWithDefault("MYSQL_USER", "mq"),
+			Password: getEnvWithDefault("MYSQL_PASSWORD", ""),
 		},
 	})
 	if err != nil {
 		t.Fatalf("failed to connect mysql, got err %v", err)
 	}
 	return c
+}
+
+func getEnvWithDefault(env, def string) string {
+	if v := os.Getenv(env); len(v) != 0 {
+		return v
+	}
+	return def
 }
 
 func clearTable(t *testing.T, db *sql.DB) {
