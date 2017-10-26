@@ -201,12 +201,15 @@ func (s *Subscription) SetPushConfig(endpoint string, attribute map[string]strin
 		if err := s.PushLoop(); err != nil {
 			return err
 		}
+	} else {
+		// set pull
+		if s.getRunning() {
+			if err := s.setAbortPush(true); err != nil {
+				return err
+			}
+		}
 	}
-	// set pull
-	if !s.getRunning() {
-		return nil
-	}
-	return s.setAbortPush(true)
+	return s.Save()
 }
 
 func (s *Subscription) isPullMode() bool {
