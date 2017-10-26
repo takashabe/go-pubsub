@@ -1,0 +1,41 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.9
+        environment:
+          DB_HOST: 127.0.0.1
+      - image: redis:4.0.2-alpine
+      - image: mysql:5.7
+        command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_bin --innodb-large-prefix=true --innodb-file-format=Barracuda
+        environment:
+          MYSQL_USER: mq
+          MYSQL_PASSWORD: mq
+          MYSQL_DATABASE: mq
+
+    working_directory: /go/src/github.com/takashabe/go-fixture
+
+    steps:
+      - checkout
+
+      - run:
+          name: Install dockerize
+          command: wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && tar -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+          environment:
+            DOCKERIZE_VERSION: v0.5.0
+
+      - run:
+          name: Wait for db startup
+          command: |
+            ./dockerize -wait tcp://localhost:3306 -timeout 1m
+            ./dockerize -wait tcp://localhost:6379 -timeout 1m
+
+      - run:
+          name: Install dependency
+          command: |
+            go get -u github.com/golang/dep/cmd/dep
+            make deps
+
+      - run:
+          name: Run unit tests
+          command: make test
