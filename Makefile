@@ -3,7 +3,7 @@ TEST_MYSQL := GO_PUBSUB_TEST_DATASTORE="mysql"; GO_PUBSUB_TEST_DSN="mq@tcp(local
 TEST_REDIS := GO_PUBSUB_TEST_DATASTORE="redis"
 SHOW_ENV := $(shell env | grep GO_PUBSUB)
 
-.PHONY: build test_all vet lint clean
+.PHONY: build test_all deps vet lint clean
 
 build: cmd/pubsub/main.go
 	cd cmd/pubsub && go build -a
@@ -28,6 +28,9 @@ test_debug:
 	GO_ROUTER_ENABLE_LOGGING=1 GO_PUBSUB_DEBUG=1 go test ./ -v; go test ./models -v
 
 test_all: test_memory test_redis test_mysql
+
+deps:
+	dep ensure
 
 vet:
 	go vet $(SUBPACKAGES)
