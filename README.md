@@ -1,5 +1,7 @@
 # go-pubsub
 
+[![CircleCI](https://circleci.com/gh/takashabe/go-pubsub.svg?style=shield)](https://circleci.com/gh/takashabe/go-pubsub)
+
 Provide pubsub server and simple stats monitoring, available both by REST API.
 
 You can select the background datastore of pubsub server one out of in  the `in-memory`, `mysql` and `redis`.
