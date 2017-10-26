@@ -4,8 +4,8 @@
 [[projects]]
   name = "github.com/garyburd/redigo"
   packages = ["internal","redis"]
-  revision = "433969511232c397de61b1442f9fd49ec06ae9ba"
-  version = "v1.1.0"
+  revision = "34a326de1fea52965fa5ad664d3fc7163dd4b0a1"
+  version = "v1.2.0"
 
 [[projects]]
   name = "github.com/go-sql-driver/mysql"
@@ -29,19 +29,19 @@
   branch = "master"
   name = "github.com/takashabe/go-fixture"
   packages = [".","mysql"]
-  revision = "b49815f9e2d103367791be3eade174a4f7b20460"
+  revision = "93344fe2ab78d906f0f2d65d3c0098113d03d040"
 
 [[projects]]
   branch = "master"
   name = "github.com/takashabe/go-metrics"
   packages = ["collect","forward"]
-  revision = "d402cb672628e08db2ecba0504331819d367856b"
+  revision = "2a80f4dcf10c7b4f9acb4d721577ed4ffb06d0a3"
 
 [[projects]]
   branch = "master"
   name = "github.com/takashabe/go-router"
   packages = ["."]
-  revision = "51eb62e3acb5ef5b1831667ba06cb0c9ae8c7c8e"
+  revision = "07733195ff252cd6efcbe9071cd9d6458ff47b74"
 
 [[projects]]
   branch = "v2"
