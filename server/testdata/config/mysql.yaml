@@ -1,5 +1,5 @@
 datastore:
   mysql:
     host: "localhost:3306"
-    user: mq
+    user: pubsub
     password: ""
