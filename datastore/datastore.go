@@ -145,6 +145,8 @@ func NewRedis(cfg *Config) (*Redis, error) {
 func newPool(addr string) *redis.Pool {
 	return &redis.Pool{
 		MaxIdle:     3,
+		MaxActive:   1,
+		Wait:        true,
 		IdleTimeout: 240 * time.Second,
 		Dial: func() (redis.Conn, error) {
 			return redis.Dial("tcp", addr)
