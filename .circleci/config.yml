@@ -5,8 +5,8 @@ jobs:
       - image: circleci/golang:1.9
         environment:
           DB_HOST: 127.0.0.1
-          MYSQL_USER: mq
-          MYSQL_PASSWORD: mq
+          DB_USER: mq
+          DB_PASSWORD: mq
       - image: redis:4.0.2-alpine
       - image: mysql:5.7
         command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_bin --innodb-large-prefix=true --innodb-file-format=Barracuda

@@ -15,8 +15,8 @@ func dummyMySQL(t *testing.T) *MySQL {
 	c, err := NewMySQL(&Config{
 		MySQL: &MySQLConfig{
 			Addr:     "localhost:3306",
-			User:     getEnvWithDefault("MYSQL_USER", "mq"),
-			Password: getEnvWithDefault("MYSQL_PASSWORD", ""),
+			User:     getEnvWithDefault("DB_USER", "mq"),
+			Password: getEnvWithDefault("DB_PASSWORD", ""),
 		},
 	})
 	if err != nil {
