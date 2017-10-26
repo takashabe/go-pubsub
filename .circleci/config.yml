@@ -35,7 +35,9 @@ jobs:
           name: Install dependency
           command: |
             go get -u github.com/golang/dep/cmd/dep
-            make deps
+            dep init
+            dep ensure -v
+            # make deps
 
       - run:
           name: Run unit tests
