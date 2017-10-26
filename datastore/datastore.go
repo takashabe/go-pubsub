@@ -237,7 +237,7 @@ type generalSchema struct {
 // NewMySQL return MySQL client
 func NewMySQL(cfg *Config) (*MySQL, error) {
 	c := cfg.MySQL
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/mq", c.User, c.Password, c.Addr))
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/pubsub", c.User, c.Password, c.Addr))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to connect mysql")
 	}
@@ -252,7 +252,7 @@ func NewMySQL(cfg *Config) (*MySQL, error) {
 
 // Set save item
 func (m *MySQL) Set(key, value interface{}) error {
-	stmt, err := m.Conn.Prepare(`INSERT INTO mq (id, value) VALUES (?, ?) 
+	stmt, err := m.Conn.Prepare(`INSERT INTO pubsub (id, value) VALUES (?, ?) 
 		ON DUPLICATE KEY UPDATE value=?`)
 	if err != nil {
 		return err
@@ -267,7 +267,7 @@ func (m *MySQL) Set(key, value interface{}) error {
 
 // Get get item
 func (m *MySQL) Get(key interface{}) (interface{}, error) {
-	stmt, err := m.Conn.Prepare("SELECT value FROM mq WHERE id=?")
+	stmt, err := m.Conn.Prepare("SELECT value FROM pubsub WHERE id=?")
 	if err != nil {
 		return nil, err
 	}
@@ -282,7 +282,7 @@ func (m *MySQL) Get(key interface{}) (interface{}, error) {
 
 // Delete delete item
 func (m *MySQL) Delete(key interface{}) error {
-	stmt, err := m.Conn.Prepare("DELETE FROM mq WHERE id=?")
+	stmt, err := m.Conn.Prepare("DELETE FROM pubsub WHERE id=?")
 	if err != nil {
 		return err
 	}
@@ -296,7 +296,7 @@ func (m *MySQL) Delete(key interface{}) error {
 
 // Dump return stored items
 func (m *MySQL) Dump() (map[interface{}]interface{}, error) {
-	rows, err := m.Conn.Query("SELECT id, value FROM mq")
+	rows, err := m.Conn.Query("SELECT id, value FROM pubsub")
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +307,7 @@ func (m *MySQL) Dump() (map[interface{}]interface{}, error) {
 
 // DumpPrefix return stored items when match prefix key
 func (m *MySQL) DumpPrefix(p string) (map[interface{}]interface{}, error) {
-	stmt, err := m.Conn.Prepare("SELECT id, value FROM mq WHERE id like ?")
+	stmt, err := m.Conn.Prepare("SELECT id, value FROM pubsub WHERE id like ?")
 	if err != nil {
 		return nil, err
 	}
