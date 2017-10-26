@@ -31,7 +31,7 @@ jobs:
           name: Wait for db startup
           command: |
             ./dockerize -wait tcp://localhost:3306 -timeout 1m
-            ./dockerize -wait tcp://localhost:6379 -timeout 1m
+            # ./dockerize -wait tcp://localhost:6379 -timeout 1m
 
       - run:
           name: Install dependency
