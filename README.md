@@ -39,7 +39,7 @@ Examples:
 datastore:
   mysql:
     addr: "localhost:3306"
-    user: mq
+    user: pubsub
     password: ""
 
 # Redis
