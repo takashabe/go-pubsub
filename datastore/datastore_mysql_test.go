@@ -34,7 +34,7 @@ func getEnvWithDefault(env, def string) string {
 
 func clearTable(t *testing.T, db *sql.DB) {
 	f := fixture.NewFixture(db, "mysql")
-	if err := f.LoadSQL("fixture/setup_mq_table.sql"); err != nil {
+	if err := f.LoadSQL("fixture/setup_table.sql"); err != nil {
 		t.Fatalf("failed to execute fixture, got err %v", err)
 	}
 }

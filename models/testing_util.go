@@ -78,7 +78,7 @@ func setupDatastore(t *testing.T) {
 		}
 	case *datastore.MySQL:
 		f := fixture.NewFixture(a.Conn, "mysql")
-		if err := f.LoadSQL("fixture/setup_mq_table.sql"); err != nil {
+		if err := f.LoadSQL("fixture/setup_table.sql"); err != nil {
 			t.Fatalf("failed to execute fixture, got err %v", err)
 		}
 	}
