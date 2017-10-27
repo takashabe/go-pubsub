@@ -1,6 +1,8 @@
 # go-pubsub
 
+[![GoDoc](https://godoc.org/github.com/takashabe/go-pubsub?status.svg)](https://godoc.org/github.com/takashabe/go-pubsub)
 [![CircleCI](https://circleci.com/gh/takashabe/go-pubsub.svg?style=shield)](https://circleci.com/gh/takashabe/go-pubsub)
+[![Go Report Card](https://goreportcard.com/badge/github.com/takashabe/go-pubsub)](https://goreportcard.com/report/github.com/takashabe/go-pubsub)
 
 Provide pubsub server and simple stats monitoring, available both by REST API.
 
