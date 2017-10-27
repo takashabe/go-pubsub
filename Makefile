@@ -1,5 +1,5 @@
 SUBPACKAGES := $(shell go list ./... | grep -v /vendor/)
-TEST_MYSQL := GO_PUBSUB_TEST_DATASTORE="mysql"; GO_PUBSUB_TEST_DSN="mq@tcp(localhost:3306)/mq"
+TEST_MYSQL := GO_PUBSUB_TEST_DATASTORE="mysql"
 TEST_REDIS := GO_PUBSUB_TEST_DATASTORE="redis"
 SHOW_ENV := $(shell env | grep GO_PUBSUB)
 

@@ -8,35 +8,16 @@ import (
 	fixture "github.com/takashabe/go-fixture"
 	_ "github.com/takashabe/go-fixture/mysql" // mysql driver
 	"github.com/takashabe/go-pubsub/datastore"
-
-	"github.com/go-sql-driver/mysql"
 )
 
 func createDatastoreConfig(t *testing.T) *datastore.Config {
 	switch os.Getenv("GO_PUBSUB_TEST_DATASTORE") {
 	case "mysql":
-		var defaultConfig = &datastore.Config{
-			MySQL: &datastore.MySQLConfig{
-				Addr:     "localhost:3306",
-				User:     "root",
-				Password: "",
-			},
-		}
-
-		dsn := os.Getenv("GO_PUBSUB_TEST_DSN")
-		if len(dsn) == 0 {
-			return defaultConfig
-		}
-
-		mysqlConfig, err := mysql.ParseDSN(dsn)
-		if err != nil {
-			return defaultConfig
-		}
 		return &datastore.Config{
 			MySQL: &datastore.MySQLConfig{
-				Addr:     mysqlConfig.Addr,
-				User:     mysqlConfig.User,
-				Password: mysqlConfig.Passwd,
+				Addr:     "localhost:3306",
+				User:     getEnvWithDefault("DB_USER", "pubsub"),
+				Password: getEnvWithDefault("DB_PASSWORD", ""),
 			},
 		}
 	case "redis":
@@ -54,6 +35,13 @@ func createDatastoreConfig(t *testing.T) *datastore.Config {
 		// use memory
 		return &datastore.Config{}
 	}
+}
+
+func getEnvWithDefault(env, def string) string {
+	if v := os.Getenv(env); len(v) != 0 {
+		return v
+	}
+	return def
 }
 
 func setupDatastore(t *testing.T) {
