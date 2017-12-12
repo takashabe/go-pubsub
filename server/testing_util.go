@@ -56,7 +56,10 @@ func setupServer(t *testing.T) *httptest.Server {
 			t.Fatalf("failed to FLUSHDB on Redis, got error %v", err)
 		}
 	case *datastore.MySQL:
-		f := fixture.NewFixture(a.Conn, "mysql")
+		f, err := fixture.NewFixture(a.Conn, "mysql")
+		if err != nil {
+			t.Fatalf("failed to initialize fixture, got err %v", err)
+		}
 		if err := f.LoadSQL("fixture/setup_table.sql"); err != nil {
 			t.Fatalf("failed to execute fixture, got err %v", err)
 		}
