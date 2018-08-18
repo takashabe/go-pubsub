@@ -13,7 +13,7 @@ If you need pubsub client library, import `client` packages. Currently available
 ## Installation
 
 ```
-go get -u github.com/takashabe/go-pubsub
+go get -u github.com/takashabe/go-pubsub/cmd/pubsub
 ```
 
 ## Usage
